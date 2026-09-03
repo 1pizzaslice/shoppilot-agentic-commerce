@@ -1,0 +1,8 @@
+.git
+.github
+.next
+coverage
+dist
+node_modules
+*.log
+.env*
