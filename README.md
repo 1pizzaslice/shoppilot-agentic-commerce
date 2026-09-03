@@ -82,6 +82,8 @@ corepack enable
 pnpm install
 cp .env.example .env
 docker compose up -d --wait
+pnpm db:migrate
+pnpm db:seed
 pnpm build
 ```
 
@@ -102,8 +104,31 @@ Readiness endpoints:
 - Worker: `pnpm --filter @shoppilot/worker start -- --health-check` after a
   build
 
-Run the Session 1 quality suite with `pnpm quality`. It checks repository
-hygiene, formatting, lint, strict types, offline unit tests, PostgreSQL/Redis
+Catalogue endpoints:
+
+- Capability discovery: `GET http://localhost:3001/.well-known/ucp`
+- OpenAPI 3.1 document: `GET http://localhost:3001/openapi.json`
+- Search: `POST http://localhost:3001/v1/catalog/search`
+- Product or slug lookup:
+  `GET http://localhost:3001/v1/catalog/products/:idOrSlug`
+
+For example, this returns in-stock running-shoe variants in UK size 8 at or
+below ₹4,000. Money is always sent as integer paise:
+
+```bash
+curl --request POST http://localhost:3001/v1/catalog/search \
+  --header 'content-type: application/json' \
+  --data '{"maxPricePaise":400000,"sizeUk":8,"productType":"running"}'
+```
+
+The discovery format is a small ShopPilot protocol inspired by UCP catalogue and
+capability concepts. It deliberately reports `ucpConformance: false`; this
+project does not claim UCP conformance. Product pages such as
+`http://localhost:3000/products/aero-pace` embed Schema.org `Product` and
+`Offer` JSON-LD sourced from the same PostgreSQL catalogue.
+
+Run the quality suite with `pnpm quality`. It checks repository hygiene,
+formatting, lint, strict types, offline unit tests, PostgreSQL/Redis
 integration, and production builds. Stop local infrastructure with
 `docker compose down`; named volumes preserve data unless explicitly removed.
 
@@ -116,6 +141,6 @@ Compose.
 
 ## Current state
 
-Repository foundation is implemented on the Session 1 branch. See
+The catalogue and merchant surface are implemented on the Session 2 branch. See
 [current project state](docs/STATUS.md) for verified commands and the exact next
 action.
