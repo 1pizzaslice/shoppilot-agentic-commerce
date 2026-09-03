@@ -1,0 +1,37 @@
+# Dependencies and package-manager state
+node_modules/
+.pnpm-store/
+
+# Builds and caches
+.next/
+dist/
+build/
+.turbo/
+*.tsbuildinfo
+.cache/
+
+# Test output
+coverage/
+playwright-report/
+test-results/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Runtime state
+logs/
+*.log
+tmp/
+.tmp/
+data/
+
+# Local tooling and editors
+.codex-log/
+.vscode/
+.idea/
+.DS_Store
+
