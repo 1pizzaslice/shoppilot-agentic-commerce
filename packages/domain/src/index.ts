@@ -1,4 +1,21 @@
 export {
+  catalogueErrorSchema,
+  catalogueProductSchema,
+  catalogueProductSummarySchema,
+  catalogueSearchResponseSchema,
+  catalogueSearchSchema,
+  catalogueVariantSchema,
+  compatibleAddonSchema,
+  currencySchema,
+  productTypeSchema,
+  type CatalogueProduct,
+  type CatalogueProductSummary,
+  type CatalogueReader,
+  type CatalogueSearch,
+  type CatalogueSearchResponse,
+  type CatalogueVariant,
+} from "./catalogue.js";
+export {
   parseApiEnvironment,
   parseWebEnvironment,
   parseWorkerEnvironment,
