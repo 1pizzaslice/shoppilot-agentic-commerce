@@ -35,18 +35,18 @@ Acceptance:
 
 ## Session 2 — catalogue and merchant surface
 
-- [ ] Model merchants, products, variants, inventory, compatibility, and catalogue versions in PostgreSQL.
-- [ ] Seed one fictional shoe merchant with 30–50 products and useful variants/add-ons.
-- [ ] Implement typed catalogue search and product lookup with hard filters for budget, size, type, stock, and optional colour.
-- [ ] Publish a standards-inspired discovery document at `/.well-known/ucp` and documented catalogue endpoints; label the implementation as a subset, not UCP-conformant.
-- [ ] Add Schema.org `Product`/`Offer` JSON-LD to product pages.
-- [ ] Generate an OpenAPI document and validate responses against schemas.
+- [x] Model merchants, products, variants, inventory, compatibility, and catalogue versions in PostgreSQL.
+- [x] Seed one fictional shoe merchant with 30–50 products and useful variants/add-ons.
+- [x] Implement typed catalogue search and product lookup with hard filters for budget, size, type, stock, and optional colour.
+- [x] Publish a standards-inspired discovery document at `/.well-known/ucp` and documented catalogue endpoints; label the implementation as a subset, not UCP-conformant.
+- [x] Add Schema.org `Product`/`Offer` JSON-LD to product pages.
+- [x] Generate an OpenAPI document and validate responses against schemas.
 
 Acceptance:
 
-- [ ] An HTTP client can discover capabilities, search shoes under ₹4,000, and retrieve exact variants without UI scraping.
-- [ ] Price, stock, size, colour, return policy, and compatible add-ons are machine-readable.
-- [ ] Contract and integration tests cover invalid products, out-of-stock variants, pagination, and injection-like descriptions.
+- [x] An HTTP client can discover capabilities, search shoes under ₹4,000, and retrieve exact variants without UI scraping.
+- [x] Price, stock, size, colour, return policy, and compatible add-ons are machine-readable.
+- [x] Contract and integration tests cover invalid products, out-of-stock variants, pagination, and injection-like descriptions.
 
 ## Session 3 — grounded shopping conversation
 

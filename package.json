@@ -2,6 +2,7 @@
   "name": "shoppilot",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "description": "Safe agentic commerce for the Razorpay Buildathon",
   "packageManager": "pnpm@10.15.1",
   "engines": {
@@ -12,6 +13,8 @@
     "dev:api": "corepack pnpm --filter @shoppilot/api dev",
     "dev:web": "corepack pnpm --filter @shoppilot/web dev",
     "dev:worker": "corepack pnpm --filter @shoppilot/worker dev",
+    "db:migrate": "corepack pnpm --filter @shoppilot/db db:migrate",
+    "db:seed": "corepack pnpm --filter @shoppilot/db db:seed",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
@@ -19,14 +22,17 @@
     "repo:check": "node scripts/check-repository.mjs",
     "test": "vitest run --config vitest.config.ts",
     "test:integration": "vitest run --config vitest.integration.config.ts",
-    "typecheck": "corepack pnpm --recursive --if-present typecheck"
+    "typecheck": "tsc -p tsconfig.json --noEmit && corepack pnpm --recursive --if-present typecheck"
   },
   "devDependencies": {
     "@eslint/js": "9.34.0",
     "@shoppilot/db": "workspace:*",
+    "@shoppilot/domain": "workspace:*",
     "@types/node": "24.3.0",
+    "@types/pg": "8.15.5",
     "eslint": "9.34.0",
     "globals": "16.3.0",
+    "pg": "8.16.3",
     "prettier": "3.6.2",
     "typescript": "5.9.2",
     "typescript-eslint": "8.41.0",
