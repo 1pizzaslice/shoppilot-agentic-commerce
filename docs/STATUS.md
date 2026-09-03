@@ -4,9 +4,9 @@ Last updated: 2026-09-04
 
 ## Current position
 
-- Active session: Session 2 — catalogue and merchant surface (complete; awaiting review/merge)
+- Active session: Session 2 — catalogue and merchant surface (complete and merged)
 - Overall state: catalogue acceptance criteria pass; Session 3 has not started
-- Current branch: `session/02-catalogue-merchant-surface`
+- Current branch: `main`
 
 ## Completed
 
@@ -44,4 +44,4 @@ Passed on 2026-09-04:
 
 ## Exact next action
 
-Review the complete Session 2 diff against `main`. After the user chooses to merge it, create `session/03-grounded-shopping-conversation` from the updated local `main` and begin the first unchecked Session 3 task in `docs/ROADMAP.md` using the agent boundaries in `docs/ARCHITECTURE.md`.
+Create `session/03-grounded-shopping-conversation` from the updated local `main`, update this status to Session 3, and begin the first unchecked Session 3 task in `docs/ROADMAP.md` using the agent boundaries in `docs/ARCHITECTURE.md`.
