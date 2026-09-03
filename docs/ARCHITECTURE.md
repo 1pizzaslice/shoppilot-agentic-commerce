@@ -220,4 +220,4 @@ The MVP avoids accounts and minimizes personal data. Use fictional delivery data
 4. **Razorpay Standard Checkout, test only.** The agent prepares; the user controls credentials and payment confirmation.
 5. **PostgreSQL is truth; Redis is coordination.** Payment correctness never depends on cache durability.
 6. **Fake adapters are first-class.** CI and reviewers can run the full product without external accounts.
-
+7. **Catalogue queries return eligible variants, not model-authored facts.** Search applies parameterized PostgreSQL filters before grouping products, uses stable product-ID cursors, and validates database rows and HTTP responses with shared Zod contracts.

@@ -11,11 +11,12 @@ export default function Home() {
         Grounded recommendations, visible consent, and test-mode checkout.
       </p>
       <p className="status">
-        Repository foundation is running. The catalogue arrives in Session 2.
+        The machine-readable StepUp Shoes catalogue is ready for discovery.
       </p>
       <a href={`${environment.NEXT_PUBLIC_API_BASE_URL}/health`}>
         Check API readiness
       </a>
+      <a href="/products/aero-pace">View a database-backed product</a>
     </main>
   );
 }
