@@ -18,20 +18,20 @@ Acceptance:
 
 ## Session 1 — repository foundation
 
-- [ ] Initialize pnpm workspaces for `apps/web`, `apps/api`, `apps/worker`, `packages/domain`, `packages/db`, and `packages/testkit`.
-- [ ] Configure strict TypeScript, formatting, linting, Vitest, and shared scripts.
-- [ ] Add Docker Compose for PostgreSQL and Redis with health checks and named volumes.
-- [ ] Add typed environment validation and `.env.example`; test mode must be the only supported Razorpay mode.
-- [ ] Add API, web, worker, database, and Redis health checks.
-- [ ] Add `.gitignore`, secret scanning, dependency caching, and GitHub Actions quality gates.
-- [ ] Add minimal local setup instructions and verify a clean clone workflow.
+- [x] Initialize pnpm workspaces for `apps/web`, `apps/api`, `apps/worker`, `packages/domain`, `packages/db`, and `packages/testkit`.
+- [x] Configure strict TypeScript, formatting, linting, Vitest, and shared scripts.
+- [x] Add Docker Compose for PostgreSQL and Redis with health checks and named volumes.
+- [x] Add typed environment validation and `.env.example`; test mode must be the only supported Razorpay mode.
+- [x] Add API, web, worker, database, and Redis health checks.
+- [x] Add `.gitignore`, secret scanning, dependency caching, and GitHub Actions quality gates.
+- [x] Add minimal local setup instructions and verify a clean clone workflow.
 
 Acceptance:
 
-- [ ] `docker compose up -d` makes PostgreSQL and Redis healthy.
-- [ ] `pnpm install`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm build` pass.
-- [ ] Web and API health endpoints respond; worker reports readiness.
-- [ ] The tracked file list contains no secret, generated output, or machine-specific file.
+- [x] `docker compose up -d` makes PostgreSQL and Redis healthy.
+- [x] `pnpm install`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm build` pass.
+- [x] Web and API health endpoints respond; worker reports readiness.
+- [x] The tracked file list contains no secret, generated output, or machine-specific file.
 
 ## Session 2 — catalogue and merchant surface
 
