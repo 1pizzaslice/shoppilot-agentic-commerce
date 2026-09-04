@@ -54,6 +54,7 @@ export const products = pgTable(
     slug: text("slug").notNull(),
     name: text("name").notNull(),
     description: text("description").notNull(),
+    imageUrl: text("image_url").notNull(),
     productType: text("product_type").notNull(),
     returnPolicyDays: integer("return_policy_days").notNull(),
     active: boolean("active").default(true).notNull(),

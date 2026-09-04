@@ -21,9 +21,16 @@ export function PaymentSuccess({
   useEffect(() => {
     if (payment?.state === "paid") return;
     let active = true;
+    let terminal = false;
     const refresh = async () => {
       try {
         const response = await fetch(`/v1/checkouts/${checkoutAttemptId}`);
+        if (response.status === 404) {
+          terminal = true;
+          throw new Error(
+            "This payment link is no longer available. Start a new purchase to continue.",
+          );
+        }
         if (!response.ok) throw new Error("Receipt could not be loaded.");
         const next = paymentOrderSchema.parse(await response.json());
         if (active) setPayment(next);
@@ -35,7 +42,9 @@ export function PaymentSuccess({
       }
     };
     void refresh();
-    const timer = window.setInterval(() => void refresh(), 2_000);
+    const timer = window.setInterval(() => {
+      if (!terminal) void refresh();
+    }, 2_000);
     return () => {
       active = false;
       window.clearInterval(timer);

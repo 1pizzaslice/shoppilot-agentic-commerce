@@ -66,7 +66,7 @@ describe("PostgreSQL shopping conversation", () => {
       method: "POST",
       url: `/v1/conversations/${first.conversationId}/messages`,
       headers: { "x-request-id": "conversation-request-2" },
-      payload: { message: "UK 8, Cloud Grey" },
+      payload: { message: "UK 8, grey colour" },
     });
     const second = shoppingResponseSchema.parse(secondResponse.json());
     expect(second.kind).toBe("recommendations");

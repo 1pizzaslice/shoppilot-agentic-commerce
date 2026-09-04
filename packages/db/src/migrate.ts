@@ -9,6 +9,7 @@ const migrationUrls = [
   new URL("../migrations/0003_commerce.sql", import.meta.url),
   new URL("../migrations/0004_payments.sql", import.meta.url),
   new URL("../migrations/0005_operational_hardening.sql", import.meta.url),
+  new URL("../migrations/0006_product_imagery.sql", import.meta.url),
 ];
 
 export const migrateCatalogue = async (pool: Pool): Promise<void> => {

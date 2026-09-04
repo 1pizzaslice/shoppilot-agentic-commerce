@@ -109,10 +109,7 @@ const matchesConstraints = (
   recommendation.variant.sizeUk === constraints.sizeUk &&
   recommendation.variant.inStock &&
   (constraints.maxPricePaise === undefined ||
-    recommendation.variant.pricePaise <= constraints.maxPricePaise) &&
-  (constraints.colour === undefined ||
-    recommendation.variant.colour.toLowerCase() ===
-      constraints.colour.toLowerCase());
+    recommendation.variant.pricePaise <= constraints.maxPricePaise);
 
 const groundedChecksFor = (
   recommendation: ShoppingRecommendation,
@@ -303,6 +300,7 @@ const evaluateBaselineShopping = async (
                 productId: product.id,
                 slug: product.slug,
                 name: product.name,
+                imageUrl: product.imageUrl,
                 productType:
                   product.productType === "accessory"
                     ? "casual"

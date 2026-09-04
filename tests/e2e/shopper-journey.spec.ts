@@ -15,6 +15,8 @@ const recommendation = (index: number) => ({
   productId: `shoe-0${String(index)}`,
   slug: index === 1 ? "aero-pace" : `shoe-${String(index)}`,
   name: index === 1 ? "Aero Pace" : `Grounded Runner ${String(index)}`,
+  imageUrl:
+    "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=82",
   productType: "running",
   variant: {
     ...variant,
@@ -159,6 +161,8 @@ const mockApi = async (page: Page) => {
         name: "Aero Pace",
         description:
           "A supportive fictional running shoe with a durable rubber outsole.",
+        imageUrl:
+          "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=82",
         productType: "running",
         returnPolicyDays: 14,
         variants: [variant],
@@ -247,7 +251,7 @@ const reachPayment = async (
     .check();
   await page.getByRole("button", { name: "Approve exact total" }).click();
   await page
-    .getByRole("button", { name: "Create one test payment order" })
+    .getByRole("button", { name: "Continue to secure payment" })
     .click();
 };
 
@@ -284,6 +288,74 @@ test.describe("deterministic browser states", () => {
     ).toBeVisible();
     expect(orderRequests).toBe(1);
   });
+});
+
+test("refines an empty search without restarting the journey", async ({
+  page,
+}) => {
+  let continuedConversation = false;
+  await page.route("**/v1/**", async (route) => {
+    const pathname = new URL(route.request().url()).pathname;
+    let result: unknown;
+    if (pathname === "/v1/conversations") {
+      result = {
+        conversationId: "conversation-refine",
+        kind: "no_results",
+        state: "ready",
+        intent: {
+          merchantId: "stepup-shoes",
+          productType: "running",
+          maxPricePaise: 250_000,
+          currency: "INR",
+          sizeUk: 8,
+          colour: "Purple",
+        },
+        message:
+          "I couldn’t find an in-stock product that satisfies all of those constraints.",
+        recommendations: [],
+        notice: "No valid catalogue products matched all hard constraints.",
+      };
+    } else if (pathname === "/v1/conversations/conversation-refine/messages") {
+      continuedConversation = true;
+      result = {
+        conversationId: "conversation-refine",
+        kind: "recommendations",
+        state: "recommendations_shown",
+        intent: {
+          merchantId: "stepup-shoes",
+          productType: "running",
+          maxPricePaise: 400_000,
+          currency: "INR",
+          sizeUk: 8,
+        },
+        message: "Here are the closest in-stock matches.",
+        recommendations: [recommendation(1), recommendation(2)],
+        notice: "Two alternatives match the updated request.",
+      };
+    } else {
+      return route.fulfill({ status: 404, body: "{}" });
+    }
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(result),
+    });
+  });
+
+  await page.goto("/");
+  await page
+    .getByLabel("What are you looking for?")
+    .fill("Running shoes under ₹2,500, UK 8, purple");
+  await page.getByRole("button", { name: "Find my pair" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Nothing exact—yet." }),
+  ).toBeVisible();
+  await page
+    .getByLabel("Update this search")
+    .fill("Increase the budget to ₹4,000 and show any colour");
+  await page.getByRole("button", { name: "Search again" }).click();
+  await expect(page.getByText("Two alternatives match")).toBeVisible();
+  expect(continuedConversation).toBe(true);
 });
 
 test("routes a captured Razorpay callback to the verified receipt", async ({
@@ -370,6 +442,23 @@ test("routes a captured Razorpay callback to the verified receipt", async ({
     page.getByRole("heading", { name: "Payment successful." }),
   ).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText("order_test_demo")).toBeVisible();
+});
+
+test("stops polling when a receipt link has expired", async ({ page }) => {
+  let requests = 0;
+  await page.route("**/v1/checkouts/missing-attempt", async (route) => {
+    requests += 1;
+    await route.fulfill({
+      status: 404,
+      contentType: "application/json",
+      body: JSON.stringify({ message: "Payment not found." }),
+    });
+  });
+
+  await page.goto("/checkout/missing-attempt/success");
+  await expect(page.getByText("payment link is no longer")).toBeVisible();
+  await page.waitForTimeout(2_500);
+  expect(requests).toBe(1);
 });
 
 test("release rehearsal completes the live failure-recovery story", async ({

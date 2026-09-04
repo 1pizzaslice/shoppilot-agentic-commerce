@@ -39,6 +39,12 @@ export default async function ProductPage({ params }: ProductPageProps) {
     <main>
       <p className="eyebrow">StepUp Shoes · {product.productType}</p>
       <h1>{product.name}</h1>
+      <img
+        src={product.imageUrl}
+        alt={`${product.name} product view`}
+        width="720"
+        height="540"
+      />
       <p>{product.description}</p>
       <p>{product.returnPolicyDays}-day return window</p>
       <h2>Available variants</h2>

@@ -159,9 +159,9 @@ export function ShopperJourney() {
     await perform(async () => {
       const next = await postJson(
         shoppingResponseSchema,
-        response?.kind === "question"
-          ? `/v1/conversations/${response.conversationId}/messages`
-          : "/v1/conversations",
+        response === null
+          ? "/v1/conversations"
+          : `/v1/conversations/${response.conversationId}/messages`,
         { message: prompt },
       );
       setResponse(next);
@@ -503,16 +503,43 @@ export function ShopperJourney() {
           ) : null}
 
           {!cancelled && response?.kind === "no_results" ? (
-            <section className="state-card centered-state">
+            <section className="state-card no-results-state">
               <span className="state-icon" aria-hidden="true">
                 0
               </span>
               <h1 ref={focusRef} tabIndex={-1}>
-                No valid matches yet
+                Nothing exact—yet.
               </h1>
-              <p>{response.notice}</p>
-              <button className="primary-button" type="button" onClick={reset}>
-                Revise the search
+              <p>
+                {response.message} Keep the details that matter and adjust just
+                one below—we’ll search the same live catalogue again.
+              </p>
+              <form
+                className="answer-form refinement-form"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void startConversation();
+                }}
+              >
+                <label htmlFor="no-result-refinement">Update this search</label>
+                <div>
+                  <input
+                    id="no-result-refinement"
+                    value={prompt}
+                    onChange={(event) => setPrompt(event.target.value)}
+                    placeholder="Try another colour or a higher budget"
+                    autoFocus
+                  />
+                  <button
+                    className="primary-button"
+                    disabled={busy || prompt.trim() === ""}
+                  >
+                    Search again
+                  </button>
+                </div>
+              </form>
+              <button className="text-button" type="button" onClick={reset}>
+                Start over instead
               </button>
             </section>
           ) : null}
@@ -523,7 +550,9 @@ export function ShopperJourney() {
                 <div>
                   <p className="step-label">Grounded recommendations</p>
                   <h1 ref={focusRef} tabIndex={-1}>
-                    Three strong matches. No endless scroll.
+                    {response.recommendations.length === 3
+                      ? "Three strong matches."
+                      : `${String(response.recommendations.length)} strong ${response.recommendations.length === 1 ? "match" : "matches"}.`}
                   </h1>
                 </div>
                 <p>
@@ -534,15 +563,16 @@ export function ShopperJourney() {
               <div className="recommendation-grid">
                 {response.recommendations.map((item, index) => (
                   <article className="product-card" key={item.productId}>
-                    <div
-                      className={`shoe-art shoe-${String(index + 1)}`}
-                      aria-hidden="true"
-                    >
-                      <span />
+                    <div className="product-image-wrap">
+                      <img
+                        src={item.imageUrl}
+                        alt={`${item.name} product photo`}
+                      />
                     </div>
                     <div className="rank">0{String(index + 1)}</div>
                     <p className="product-type">
-                      {item.productType} · UK {item.variant.sizeUk}
+                      {item.productType} · {item.variant.colour} · UK{" "}
+                      {item.variant.sizeUk}
                     </p>
                     <h2>{item.name}</h2>
                     <strong className="price">
@@ -565,9 +595,31 @@ export function ShopperJourney() {
                   </article>
                 ))}
               </div>
-              <button className="text-button" type="button" onClick={reset}>
-                Change my request
-              </button>
+              <form
+                className="answer-form refinement-form compact-refinement"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void startConversation();
+                }}
+              >
+                <label htmlFor="recommendation-refinement">
+                  Want something different?
+                </label>
+                <div>
+                  <input
+                    id="recommendation-refinement"
+                    value={prompt}
+                    onChange={(event) => setPrompt(event.target.value)}
+                    placeholder="e.g. make it black, budget ₹4,500"
+                  />
+                  <button
+                    className="secondary-button"
+                    disabled={busy || prompt.trim() === ""}
+                  >
+                    Update matches
+                  </button>
+                </div>
+              </form>
             </section>
           ) : null}
 
@@ -587,8 +639,11 @@ export function ShopperJourney() {
                 ← Back to matches
               </button>
               <div className="detail-grid">
-                <div className="shoe-art detail-art" aria-hidden="true">
-                  <span />
+                <div className="detail-image-wrap">
+                  <img
+                    src={product.imageUrl}
+                    alt={`${product.name} product view`}
+                  />
                 </div>
                 <div>
                   <p className="step-label">Your selected match</p>
@@ -742,7 +797,7 @@ export function ShopperJourney() {
                 />
                 <span>
                   I approve this exact cart and total. I understand the next
-                  step creates one test-mode payment order.
+                  step creates one secure payment order.
                 </span>
               </label>
               <button
@@ -778,7 +833,7 @@ export function ShopperJourney() {
                 onClick={() => void beginPayment()}
                 disabled={busy}
               >
-                Create one test payment order
+                Continue to secure payment
               </button>
             </section>
           ) : null}
@@ -952,7 +1007,7 @@ export function ShopperJourney() {
               <span>5</span>
               <div>
                 <strong>Pay</strong>
-                <small>Test mode</small>
+                <small>Razorpay checkout</small>
               </div>
             </li>
           </ol>

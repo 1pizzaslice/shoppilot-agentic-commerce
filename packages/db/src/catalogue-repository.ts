@@ -43,6 +43,7 @@ const productRowSchema = z.object({
   slug: z.string(),
   name: z.string(),
   description: z.string(),
+  imageUrl: z.url(),
   productType: z.string(),
   returnPolicyDays: z.number().int(),
   catalogueVersion: z.number().int(),
@@ -97,9 +98,8 @@ const filtersFor = (input: CatalogueSearch): SQL[] => {
     filters.push(eq(productVariants.sizeUk, input.sizeUk));
   }
   if (input.colour !== undefined) {
-    filters.push(
-      sql`lower(${productVariants.colour}) = lower(${input.colour})`,
-    );
+    const colour = input.colour.toLowerCase().replaceAll("gray", "grey");
+    filters.push(ilike(productVariants.colour, `%${colour}%`));
   }
   if (input.inStockOnly) {
     filters.push(gt(inventory.quantity, 0));
@@ -125,6 +125,7 @@ const productSelection = {
   slug: products.slug,
   name: products.name,
   description: products.description,
+  imageUrl: products.imageUrl,
   productType: products.productType,
   returnPolicyDays: products.returnPolicyDays,
   catalogueVersion: catalogueVersions.version,
@@ -195,6 +196,7 @@ export const createPostgresCatalogueReader = (pool: Pool): CatalogueReader => {
         slug: row.slug,
         name: row.name,
         description: row.description,
+        imageUrl: row.imageUrl,
         productType: catalogueSearchSchema.shape.productType
           .unwrap()
           .parse(row.productType),
@@ -316,6 +318,7 @@ export const createPostgresCatalogueReader = (pool: Pool): CatalogueReader => {
       slug: product.slug,
       name: product.name,
       description: product.description,
+      imageUrl: product.imageUrl,
       productType: product.productType,
       returnPolicyDays: product.returnPolicyDays,
       variants: parsedRows.map(toVariant),
