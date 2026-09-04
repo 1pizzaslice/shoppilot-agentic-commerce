@@ -59,6 +59,8 @@ apps/worker     Durable background and evaluation jobs
 packages/domain Shared schemas, money types and state machines
 packages/db     PostgreSQL schema and repositories
 packages/testkit Fixtures, fake adapters and evaluation cases
+packages/evals  Offline adversarial evaluation runner and scoring
+eval/           Versioned cases and published evaluation artifacts
 docs/           Product, architecture, delivery and submission truth
 ```
 
@@ -207,6 +209,12 @@ formatting, lint, strict types, offline unit tests, PostgreSQL/Redis
 integration, and production builds. Stop local infrastructure with
 `docker compose down`; named volumes preserve data unless explicitly removed.
 
+Run `pnpm eval` for the offline adversarial evaluation. It validates 50
+versioned JSONL cases, compares ShopPilot with the fixed-keyword baseline,
+enforces the release thresholds, and rewrites
+[`eval/results/latest.json`](eval/results/latest.json) and
+[`eval/SUMMARY.md`](eval/SUMMARY.md). No model key or payment account is used.
+
 Copying `.env.example` is safe because it contains only local development values
 and blank credential slots. Never commit `.env`, real model keys, or Razorpay
 credentials. Razorpay key IDs are rejected unless they use the `rzp_test_`
@@ -216,8 +224,7 @@ Compose.
 
 ## Current state
 
-The guarded test-payment flow and merchant growth evidence are implemented
-through Session 6, except for Session 5's credential-dependent manual Razorpay
-transaction when credentials are absent. See
+The guarded test-payment flow, merchant growth evidence, and adversarial
+evaluation harness are implemented through Session 7. See
 [current project state](docs/STATUS.md) for verified commands and the exact next
 action.
