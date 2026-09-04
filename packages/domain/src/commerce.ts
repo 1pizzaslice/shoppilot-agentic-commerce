@@ -150,7 +150,13 @@ export const checkoutAttemptSchema = z
 export const auditEventSchema = z
   .object({
     id: z.string().min(1),
-    entityType: z.enum(["cart", "addon_offer", "approval", "checkout"]),
+    entityType: z.enum([
+      "cart",
+      "addon_offer",
+      "approval",
+      "checkout",
+      "webhook",
+    ]),
     entityId: z.string().min(1),
     eventType: z.string().min(1).max(80),
     outcome: z.enum(["completed", "allowed", "rejected", "invalidated"]),
@@ -277,13 +283,13 @@ export const transitionCartState = (
 const checkoutTransitions: Record<CheckoutState, readonly CheckoutState[]> = {
   not_created: ["authorized"],
   authorized: ["creating", "expired", "cancelled"],
-  creating: ["created", "failed"],
-  created: ["payment_pending", "failed", "expired", "cancelled"],
+  creating: ["created", "failed", "expired"],
+  created: ["payment_pending", "paid", "failed", "expired", "cancelled"],
   payment_pending: ["paid", "failed", "expired", "cancelled"],
   paid: [],
-  failed: [],
-  expired: [],
-  cancelled: [],
+  failed: ["paid"],
+  expired: ["paid"],
+  cancelled: ["paid"],
 };
 
 export const transitionCheckoutState = (

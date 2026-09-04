@@ -4,46 +4,45 @@ Last updated: 2026-09-04
 
 ## Current position
 
-- Active session: Session 4 — cart, upsell, policy gate, and approval (complete; awaiting review/merge)
-- Overall state: all Session 4 tasks and acceptance criteria pass; Session 5 has not started
-- Current branch: `session/04-cart-policy-approval`
+- Active session: Session 5 — Razorpay test-mode checkout (implementation complete; manual credentialed smoke test blocked)
+- Overall state: all Session 5 code, automated tasks, and credential-free acceptance checks pass; Session 6 has not started
+- Current branch: `session/05-razorpay-test-checkout`
 
 ## Completed
 
-- Created the Session 4 branch from local `main` after confirming it matched `origin/main` at `76e9b1a`.
-- Added strict cart, line, add-on outcome, snapshot, approval, policy decision, checkout attempt, audit event, and HTTP boundary contracts plus explicit cart and checkout state machines.
-- Added PostgreSQL carts with monotonically increasing versions and row-lock-backed optimistic concurrency; concurrent mutations and approvals serialize, and stale writers receive conflicts.
-- Added a deterministic compatibility selector that returns at most one active, in-stock add-on. Direct accessory insertion is rejected; accepted, declined, and skipped outcomes are stored, and only explicit acceptance adds a line.
-- Added canonical checkout snapshots that freeze SKU, variant, quantity, unit price, discount, tax, delivery, currency, and totals. SHA-256 hashes bind the contents, and a database trigger rejects snapshot updates.
-- Added expiring, single-use approvals bound to user, cart version, snapshot hash, total, and currency. Any later cart mutation invalidates unused approval records.
-- Added a transactional checkout policy gate for cart state, approval existence/freshness/use, mutation, budget, quantity, current stock, current price, and duplicate execution.
-- Added one unique internal checkout authorization per approval and snapshot hash. No payment provider or external order can be invoked in Session 4; Session 5 must consume this allowed boundary.
-- Added append-only, database-protected and safely redacted audit events for cart mutations, add-on outcomes, snapshots, approvals, invalidations, policy decisions, and checkout authorization.
-- Published cart, review, approval, checkout-authorization, and audit endpoints in OpenAPI and documented the safety boundary in `README.md` and `docs/ARCHITECTURE.md`.
+- Added strict shared payment contracts, an explicit checkout/payment state machine, and fake/Razorpay test providers behind one typed port.
+- Added server-side Razorpay Orders API mapping with an 8-second request timeout, strict response validation, test-key enforcement, and no browser exposure of the key or webhook secrets.
+- Added PostgreSQL payment orders and a webhook inbox. A row lock and primary key consume one allowed Session 4 checkout authorization before the provider call, so concurrent requests and retries cannot create a second provider order.
+- Added Standard Checkout launch at `/checkout/:checkoutAttemptId`; retries reopen the same recorded provider order, callbacks are verified server-side, and modal dismissal records cancellation.
+- Added raw-body webhook signature verification, event-ID deduplication, unknown-event handling, and out-of-order reconciliation. Verified capture can correct failed, expired, or cancelled local evidence; no later event can regress `paid`.
+- Added pending, paid, failed, expired, and cancelled API states. An uncertain provider call stays single-shot in `creating` and expires with explicit `provider_timeout` evidence rather than being retried silently.
+- Added append-only, redacted audit events for provider order creation, callback verification/rejection, timeout, cancellation, and every webhook outcome.
+- Published payment endpoints in OpenAPI and documented fake-provider setup, Razorpay test-mode setup, browser launch, signatures, retry behavior, and the durable payment architecture decision.
 
 ## Verification
 
 Passed on 2026-09-04:
 
 - `DATABASE_URL=postgresql://shoppilot:shoppilot_dev@localhost:5432/shoppilot corepack pnpm db:migrate`
-- `corepack pnpm repo:check` — 85 candidate files clean
+- `DATABASE_URL=postgresql://shoppilot:shoppilot_dev@localhost:5432/shoppilot corepack pnpm db:seed`
+- `corepack pnpm repo:check` — 94 candidate files clean
 - `corepack pnpm format:check`
 - `corepack pnpm lint`
 - `corepack pnpm typecheck` — root sources and all six packages pass strict TypeScript
-- `corepack pnpm test` — 31 tests in 12 files pass without network access
-- `DATABASE_URL=postgresql://shoppilot:shoppilot_dev@localhost:5432/shoppilot REDIS_URL=redis://localhost:6380 corepack pnpm test:integration` — 17 PostgreSQL/Redis tests in four files pass
-- `corepack pnpm build` — shared packages, API, worker, and the production Next.js application pass
+- `corepack pnpm test` — 35 tests in 13 files pass without network access
+- `DATABASE_URL=postgresql://shoppilot:shoppilot_dev@localhost:5432/shoppilot REDIS_URL=redis://localhost:6380 corepack pnpm test:integration` — 25 PostgreSQL/Redis tests in five files pass
+- `corepack pnpm build` — shared packages, API, worker, and production Next.js application pass
 - `git diff --check`
 
-Integration coverage includes explicit/declined/skipped add-ons, direct accessory rejection, stale and concurrent cart writes, concurrent approval submissions, database-immutable snapshots, approval invalidation, over-budget carts, expired approvals, price and stock changes, concurrent checkout authorization, duplicate execution, audit redaction, and append-only enforcement.
+Payment coverage includes an HTTP-boundary fake-provider purchase, one-order concurrency, same-order retry, callback and raw webhook signature verification, success, decline, cancellation, provider timeout, duplicate webhook, out-of-order webhook, terminal-state reconciliation, and durable rejection audit evidence.
 
-`test:e2e` and `eval` scripts do not exist yet; their roadmap implementations begin in Sessions 8 and 7 respectively, so they are not applicable to Session 4.
+`test:e2e` and `eval` scripts do not exist yet; their roadmap implementations begin in Sessions 8 and 7 respectively, so they are not applicable to Session 5.
 
 ## Blockers
 
-- None for Session 4.
-- Session 5 live Razorpay testing will require `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, and `RAZORPAY_WEBHOOK_SECRET` supplied locally, never committed. The fake payment adapter and automated failure coverage do not require those credentials.
+- The three Razorpay variables are absent from the current process environment. A manual Razorpay test transaction and webhook delivery require `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, and `RAZORPAY_WEBHOOK_SECRET`, plus a test-mode webhook configured to reach the local/public callback. No credential value was read or logged.
+- No automated work is blocked; all fake-provider and adapter verification is complete.
 
 ## Exact next action
 
-Review and merge `session/04-cart-policy-approval` into `main`. Then create `session/05-razorpay-test-checkout` from the updated local `main` and begin the fake/Razorpay payment adapter task, requiring every provider order creation to consume the stored allowed checkout authorization.
+Supply the three Razorpay test credentials locally and configure a test webhook, then run one manual Standard Checkout transaction through `/checkout/:checkoutAttemptId`, confirm the verified terminal state and audit events, and record the result here. After that acceptance item passes, review and merge `session/05-razorpay-test-checkout`; Session 6 must start from the updated `main` on `session/06-merchant-growth-evidence`.

@@ -82,19 +82,19 @@ Acceptance:
 
 ## Session 5 — Razorpay test-mode checkout
 
-- [ ] Implement a Razorpay adapter and a fake payment adapter behind the same interface.
-- [ ] Create one server-side Razorpay Order from the approved immutable cart.
-- [ ] Open Razorpay Standard Checkout from the browser without exposing the key secret.
-- [ ] Verify checkout signatures server-side.
-- [ ] Verify webhook signatures from the raw request body; deduplicate by Razorpay event ID and tolerate out-of-order delivery.
-- [ ] Reconcile checkout callbacks with webhooks and expose clear pending, paid, failed, expired, and cancelled states.
-- [ ] Add retry/time-out behavior that never silently creates another order.
+- [x] Implement a Razorpay adapter and a fake payment adapter behind the same interface.
+- [x] Create one server-side Razorpay Order from the approved immutable cart.
+- [x] Open Razorpay Standard Checkout from the browser without exposing the key secret.
+- [x] Verify checkout signatures server-side.
+- [x] Verify webhook signatures from the raw request body; deduplicate by Razorpay event ID and tolerate out-of-order delivery.
+- [x] Reconcile checkout callbacks with webhooks and expose clear pending, paid, failed, expired, and cancelled states.
+- [x] Add retry/time-out behavior that never silently creates another order.
 
 Acceptance:
 
-- [ ] Fake-provider end-to-end tests cover success, decline, cancellation, time-out, duplicate webhook, and out-of-order webhook.
-- [ ] A manual Razorpay test transaction reaches a verified terminal state when credentials are available.
-- [ ] The deliberately demonstrated failure is a duplicated webhook or a price/stock change, handled without duplicate order or charge.
+- [x] Fake-provider end-to-end tests cover success, decline, cancellation, time-out, duplicate webhook, and out-of-order webhook.
+- [ ] A manual Razorpay test transaction reaches a verified terminal state when credentials are available. (Blocked: no Razorpay test credentials or configured webhook are available in this environment.)
+- [x] The deliberately demonstrated failure is a duplicated webhook or a price/stock change, handled without duplicate order or charge.
 
 ## Session 6 — merchant growth evidence
 

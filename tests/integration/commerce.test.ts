@@ -16,7 +16,10 @@ import {
   checkoutAuthorizationSchema,
   commerceErrorSchema,
 } from "@shoppilot/domain";
-import { createDeterministicIdGenerator } from "../../packages/testkit/src/index.js";
+import {
+  createDeterministicIdGenerator,
+  createUnavailablePaymentService,
+} from "../../packages/testkit/src/index.js";
 
 const databaseUrl =
   process.env.DATABASE_URL ??
@@ -37,6 +40,7 @@ const app = buildApi({
     continue: () => Promise.reject(new Error("not used")),
   },
   commerce,
+  payments: createUnavailablePaymentService(),
 });
 
 beforeAll(async () => {
