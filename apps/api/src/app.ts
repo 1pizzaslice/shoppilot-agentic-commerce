@@ -6,8 +6,12 @@ import {
   catalogueProductSchema,
   catalogueSearchResponseSchema,
   catalogueSearchSchema,
+  conversationIdParamsSchema,
+  conversationMessageInputSchema,
   makeHealthReport,
+  shoppingResponseSchema,
   type CatalogueReader,
+  type ShoppingConversationHandler,
 } from "@shoppilot/domain";
 import type { ReadinessDependencies } from "@shoppilot/db";
 
@@ -20,6 +24,7 @@ import {
 export interface ApiDependencies {
   readiness: Pick<ReadinessDependencies, "check">;
   catalogue: CatalogueReader;
+  conversation: ShoppingConversationHandler;
 }
 
 const productParamsSchema = z
@@ -29,6 +34,7 @@ const productParamsSchema = z
 export const buildApi = ({
   readiness,
   catalogue,
+  conversation,
 }: ApiDependencies): FastifyInstance => {
   const app = Fastify({ logger: false });
 
@@ -83,6 +89,51 @@ export const buildApi = ({
 
     return catalogueProductSchema.parse(product);
   });
+
+  app.post("/v1/conversations", async (request, reply) => {
+    const parsed = conversationMessageInputSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.code(400).send(
+        catalogueErrorSchema.parse({
+          error: "invalid_request",
+          message: "Conversation message is invalid.",
+        }),
+      );
+    }
+
+    const response = await conversation.start(parsed.data.message);
+    return reply.code(201).send(shoppingResponseSchema.parse(response));
+  });
+
+  app.post(
+    "/v1/conversations/:conversationId/messages",
+    async (request, reply) => {
+      const params = conversationIdParamsSchema.safeParse(request.params);
+      const body = conversationMessageInputSchema.safeParse(request.body);
+      if (!params.success || !body.success) {
+        return reply.code(400).send(
+          catalogueErrorSchema.parse({
+            error: "invalid_request",
+            message: "Conversation request is invalid.",
+          }),
+        );
+      }
+
+      const response = await conversation.continue(
+        params.data.conversationId,
+        body.data.message,
+      );
+      if (response === null) {
+        return reply.code(404).send(
+          catalogueErrorSchema.parse({
+            error: "not_found",
+            message: "Conversation not found.",
+          }),
+        );
+      }
+      return shoppingResponseSchema.parse(response);
+    },
+  );
 
   return app;
 };

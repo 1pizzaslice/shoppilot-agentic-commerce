@@ -1,22 +1,52 @@
+import { randomUUID } from "node:crypto";
+
 import {
   createCatalogueDependencies,
+  createConversationDependencies,
   createReadinessDependencies,
 } from "@shoppilot/db";
-import { parseApiEnvironment } from "@shoppilot/domain";
+import {
+  createShoppingConversationHandler,
+  parseApiEnvironment,
+} from "@shoppilot/domain";
+import { createFakeShoppingModel } from "@shoppilot/testkit";
 
 import { buildApi } from "./app.js";
+import { createOpenAIShoppingModel } from "./openai-model.js";
 
 const environment = parseApiEnvironment(process.env);
+const model = (() => {
+  if (environment.MODEL_PROVIDER === "fake") {
+    return createFakeShoppingModel();
+  }
+  if (environment.OPENAI_API_KEY === undefined) {
+    throw new Error("OPENAI_API_KEY is required for the OpenAI model provider");
+  }
+  return createOpenAIShoppingModel({
+    apiKey: environment.OPENAI_API_KEY,
+    model: environment.OPENAI_MODEL,
+  });
+})();
 const readiness = createReadinessDependencies({
   databaseUrl: environment.DATABASE_URL,
   redisUrl: environment.REDIS_URL,
 });
 const catalogue = createCatalogueDependencies(environment.DATABASE_URL);
-const app = buildApi({ readiness, catalogue });
+const conversationDependencies = createConversationDependencies(
+  environment.DATABASE_URL,
+);
+const conversation = createShoppingConversationHandler({
+  model,
+  catalogue,
+  store: conversationDependencies.store,
+  nextId: randomUUID,
+});
+const app = buildApi({ readiness, catalogue, conversation });
 
 const shutdown = async (): Promise<void> => {
   await app.close();
   await catalogue.close();
+  await conversationDependencies.close();
   await readiness.close();
 };
 
@@ -27,6 +57,7 @@ try {
   await app.listen({ host: environment.API_HOST, port: environment.API_PORT });
 } catch (error: unknown) {
   await catalogue.close();
+  await conversationDependencies.close();
   await readiness.close();
   throw error;
 }
