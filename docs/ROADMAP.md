@@ -112,20 +112,20 @@ Acceptance:
 
 ## Session 7 — adversarial evaluation harness
 
-- [ ] Create at least 50 versioned cases: happy path, ambiguous request, no result, stale price, missing stock, malicious catalogue text, over-budget, wrong size, duplicate action, and payment failure.
-- [ ] Implement deterministic scoring for constraint adherence, catalogue grounding, question count, policy violations, injection blocking, add-on compatibility, and task completion.
-- [ ] Compare the agent with a simple baseline and publish failures, not only averages.
-- [ ] Save a machine-readable result artifact and a concise Markdown summary.
-- [ ] Add regression cases for every material bug found later.
+- [x] Create at least 50 versioned cases: happy path, ambiguous request, no result, stale price, missing stock, malicious catalogue text, over-budget, wrong size, duplicate action, and payment failure.
+- [x] Implement deterministic scoring for constraint adherence, catalogue grounding, question count, policy violations, injection blocking, add-on compatibility, and task completion.
+- [x] Compare the agent with a simple baseline and publish failures, not only averages.
+- [x] Save a machine-readable result artifact and a concise Markdown summary.
+- [x] Add regression cases for every material bug found later.
 
 Acceptance targets:
 
-- [ ] 100% hard-constraint adherence in the fixed evaluation set.
-- [ ] 0 unapproved cart mutations or order creations.
-- [ ] 100% rejection of the repository’s known injection cases at the tool/policy boundary.
-- [ ] At least 95% catalogue-grounded recommendation fields.
-- [ ] Median clarification count no greater than 2 for underspecified prompts.
-- [ ] All failures are listed with case IDs and explanations.
+- [x] 100% hard-constraint adherence in the fixed evaluation set.
+- [x] 0 unapproved cart mutations or order creations.
+- [x] 100% rejection of the repository’s known injection cases at the tool/policy boundary.
+- [x] At least 95% catalogue-grounded recommendation fields.
+- [x] Median clarification count no greater than 2 for underspecified prompts.
+- [x] All failures are listed with case IDs and explanations.
 
 ## Session 8 — demo experience and accessibility
 
