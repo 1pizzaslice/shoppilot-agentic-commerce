@@ -19,6 +19,7 @@ import {
 import {
   createDeterministicIdGenerator,
   createUnavailablePaymentService,
+  createUnavailableGrowthReader,
 } from "../../packages/testkit/src/index.js";
 
 const databaseUrl =
@@ -41,6 +42,7 @@ const app = buildApi({
   },
   commerce,
   payments: createUnavailablePaymentService(),
+  growth: createUnavailableGrowthReader(),
 });
 
 beforeAll(async () => {

@@ -161,6 +161,14 @@ endpoint verifies the HMAC over the exact raw request bytes, deduplicates by
 Provider calls left in an uncertain `creating` state time out to `expired` and
 remain single-shot rather than risking a duplicate order.
 
+Open `http://localhost:3000/merchant` for the compact merchant evidence view.
+Its funnel, add-on outcomes, paid base/add-on values, average order value, and
+attach rate come from PostgreSQL carts, immutable snapshots, payment records,
+and append-only events. The fixed no-add-on comparison is explicitly labeled as
+a historical-cart simulation; it reports a descriptive difference and makes no
+conversion-lift, causal, or production-revenue claim. Metric definitions and the
+compatibility reason for every recent suggestion are visible in the view.
+
 The default `MODEL_PROVIDER=fake` mode is deterministic and needs no API key.
 Set `MODEL_PROVIDER=openai`, `OPENAI_API_KEY`, and optionally `OPENAI_MODEL` to
 use the server-side OpenAI Responses adapter. Responses are requested with
@@ -208,7 +216,8 @@ Compose.
 
 ## Current state
 
-The guarded test-payment flow is implemented through Session 5, except for the
-credential-dependent manual Razorpay transaction when credentials are absent.
-See [current project state](docs/STATUS.md) for verified commands and the exact
-next action.
+The guarded test-payment flow and merchant growth evidence are implemented
+through Session 6, except for Session 5's credential-dependent manual Razorpay
+transaction when credentials are absent. See
+[current project state](docs/STATUS.md) for verified commands and the exact next
+action.

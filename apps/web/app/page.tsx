@@ -17,6 +17,7 @@ export default function Home() {
         Check API readiness
       </a>
       <a href="/products/aero-pace">View a database-backed product</a>
+      <a href="/merchant">View merchant growth evidence</a>
     </main>
   );
 }
