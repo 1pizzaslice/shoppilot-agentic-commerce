@@ -104,6 +104,13 @@ export {
   type HealthReport,
 } from "./health.js";
 export {
+  growthSuggestionSchema,
+  merchantGrowthParamsSchema,
+  merchantGrowthSummarySchema,
+  type MerchantGrowthReader,
+  type MerchantGrowthSummary,
+} from "./growth.js";
+export {
   catalogueLookupToolInputSchema,
   catalogueSearchToolInputSchema,
   conversationEventSchema,

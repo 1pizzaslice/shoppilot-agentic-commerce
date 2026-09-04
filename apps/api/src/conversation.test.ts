@@ -11,6 +11,7 @@ import {
   createMemoryConversationStore,
   createUnavailableCommerceService,
   createUnavailablePaymentService,
+  createUnavailableGrowthReader,
 } from "@shoppilot/testkit";
 
 import { buildApi } from "./app.js";
@@ -68,6 +69,7 @@ const setup = () => {
     }),
     commerce: createUnavailableCommerceService(),
     payments: createUnavailablePaymentService(),
+    growth: createUnavailableGrowthReader(),
   });
   apps.push(app);
   return { app, store };

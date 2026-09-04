@@ -10,6 +10,7 @@ import {
   type ShoppingModel,
   type CommerceService,
   type PaymentService,
+  type MerchantGrowthReader,
 } from "@shoppilot/domain";
 
 export {
@@ -46,6 +47,11 @@ export const createUnavailablePaymentService = (): PaymentService => {
     processWebhook: unavailable,
   };
 };
+
+export const createUnavailableGrowthReader = (): MerchantGrowthReader => ({
+  getSummary: () =>
+    Promise.reject(new Error("Growth reader is not used by this test.")),
+});
 
 export interface DeterministicIdGenerator {
   next: () => string;
