@@ -150,11 +150,17 @@ describe("Anthropic shopping model adapter", () => {
       throw new Error("Expected a JSON string request body");
     }
     const payload = z
-      .object({ system: z.string() })
+      .object({
+        system: z.string(),
+        messages: z.array(z.object({ content: z.string() })),
+      })
       .passthrough()
       .parse(JSON.parse(request.body));
     expect(payload.system).toContain("Do not compare it with another product");
-    expect(payload.system).toContain("249900 paise must be written as ₹2,499");
+    const modelInput = payload.messages[0]?.content ?? "";
+    expect(modelInput).toContain('"maximumPrice":"₹4,000"');
+    expect(modelInput).toContain('"price":"₹2,299"');
+    expect(modelInput).not.toContain("pricePaise");
   });
 
   it("rejects truncated model output", async () => {
