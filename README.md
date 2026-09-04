@@ -98,6 +98,13 @@ pnpm dev:web
 pnpm dev:worker
 ```
 
+Open `http://localhost:3000` for the complete responsive shopper journey. The
+“Happy path” preset reaches a verified fake-provider receipt without external
+credentials. “Decline & recover” deliberately fails the first payment attempt,
+then retries the same server-created order to demonstrate duplicate-safe
+recovery. The safety trail identifies what the agent proposed, what
+deterministic policy allowed, and what the shopper approved.
+
 Readiness endpoints:
 
 - Web: `http://localhost:3000/api/health`
@@ -206,8 +213,9 @@ project does not claim UCP conformance. Product pages such as
 
 Run the quality suite with `pnpm quality`. It checks repository hygiene,
 formatting, lint, strict types, offline unit tests, PostgreSQL/Redis
-integration, and production builds. Stop local infrastructure with
-`docker compose down`; named volumes preserve data unless explicitly removed.
+integration, desktop/mobile Playwright journeys, the adversarial evaluation, and
+production builds. Stop local infrastructure with `docker compose down`; named
+volumes preserve data unless explicitly removed.
 
 Run `pnpm eval` for the offline adversarial evaluation. It validates 50
 versioned JSONL cases, compares ShopPilot with the fixed-keyword baseline,
@@ -224,7 +232,7 @@ Compose.
 
 ## Current state
 
-The guarded test-payment flow, merchant growth evidence, and adversarial
-evaluation harness are implemented through Session 7. See
-[current project state](docs/STATUS.md) for verified commands and the exact next
-action.
+The complete accessible demo journey, guarded test-payment flow, merchant growth
+evidence, and adversarial evaluation harness are implemented through Session 8.
+See [current project state](docs/STATUS.md) for verified commands and the exact
+next action.
