@@ -1,10 +1,11 @@
-import { Pool } from "pg";
+import type { Pool } from "pg";
 import { z } from "zod";
 
 import {
   merchantGrowthSummarySchema,
   type MerchantGrowthReader,
 } from "@shoppilot/domain";
+import { createRuntimePool } from "./runtime.js";
 
 const databaseInteger = z
   .union([z.number().int(), z.string().regex(/^\d+$/)])
@@ -246,7 +247,7 @@ export interface GrowthDependencies {
 export const createGrowthDependencies = (
   databaseUrl: string,
 ): GrowthDependencies => {
-  const pool = new Pool({ connectionString: databaseUrl });
+  const pool = createRuntimePool(databaseUrl);
   return {
     reader: createPostgresMerchantGrowthReader(pool),
     close: () => pool.end(),

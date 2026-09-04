@@ -7,6 +7,7 @@ import {
   createReadinessDependencies,
   createPaymentDependencies,
   createGrowthDependencies,
+  createRedisRateLimiter,
 } from "@shoppilot/db";
 import {
   createShoppingConversationHandler,
@@ -21,9 +22,12 @@ import {
 
 import { buildApi } from "./app.js";
 import { createOpenAIShoppingModel } from "./openai-model.js";
+import { createJsonLogger } from "./operations.js";
 import { createRazorpayPaymentProvider } from "./razorpay-payment.js";
 
 const environment = parseApiEnvironment(process.env);
+const logger = createJsonLogger();
+const rateLimiter = createRedisRateLimiter(environment.REDIS_URL);
 const model = (() => {
   if (environment.MODEL_PROVIDER === "fake") {
     return createFakeShoppingModel();
@@ -132,20 +136,46 @@ const app = buildApi({
   payments: paymentDependencies.service,
   growth: growthDependencies.reader,
   ...(demoPayments === undefined ? {} : { demoPayments }),
+  operations: { logger, rateLimiter },
 });
 
+let shuttingDown = false;
 const shutdown = async (): Promise<void> => {
-  await app.close();
-  await catalogue.close();
-  await conversationDependencies.close();
-  await commerceDependencies.close();
-  await paymentDependencies.close();
-  await growthDependencies.close();
-  await readiness.close();
+  if (shuttingDown) return;
+  shuttingDown = true;
+  logger.log("info", "shutdown_started");
+  const closeDependencies = async () => {
+    await app.close();
+    await Promise.all([
+      catalogue.close(),
+      conversationDependencies.close(),
+      commerceDependencies.close(),
+      paymentDependencies.close(),
+      growthDependencies.close(),
+      rateLimiter.close(),
+      readiness.close(),
+    ]);
+  };
+  await Promise.race([
+    closeDependencies(),
+    new Promise<never>((_resolve, reject) =>
+      setTimeout(
+        () => reject(new Error("Shutdown exceeded 10 seconds")),
+        10_000,
+      ),
+    ),
+  ]);
+  logger.log("info", "shutdown_completed");
 };
 
-process.once("SIGINT", () => void shutdown());
-process.once("SIGTERM", () => void shutdown());
+const handleSignal = (): void => {
+  void shutdown().catch(() => {
+    logger.log("error", "shutdown_failed");
+    process.exitCode = 1;
+  });
+};
+process.once("SIGINT", handleSignal);
+process.once("SIGTERM", handleSignal);
 
 try {
   await app.listen({ host: environment.API_HOST, port: environment.API_PORT });
@@ -155,6 +185,7 @@ try {
   await commerceDependencies.close();
   await paymentDependencies.close();
   await growthDependencies.close();
+  await rateLimiter.close();
   await readiness.close();
   throw error;
 }

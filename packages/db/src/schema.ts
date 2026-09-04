@@ -223,11 +223,16 @@ export const agentRuns = pgTable(
       .references(() => conversations.id, { onDelete: "cascade" }),
     state: text("state").notNull(),
     eventCount: integer("event_count").notNull(),
+    correlationId: text("correlation_id").default("legacy").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
   },
   (table) => [
+    index("agent_runs_correlation_idx").on(
+      table.correlationId,
+      table.createdAt,
+    ),
     check(
       "agent_runs_state_allowed",
       sql`${table.state} IN ('collecting', 'ready', 'recommendations_shown', 'product_selected', 'cancelled')`,
@@ -251,6 +256,7 @@ export const conversationEvents = pgTable(
     name: text("name").notNull(),
     outcome: text("outcome").notNull(),
     metadata: jsonb("metadata").notNull(),
+    correlationId: text("correlation_id").default("legacy").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -261,6 +267,10 @@ export const conversationEvents = pgTable(
       table.sequence,
     ),
     index("conversation_events_conversation_idx").on(table.conversationId),
+    index("conversation_events_correlation_idx").on(
+      table.correlationId,
+      table.createdAt,
+    ),
     check(
       "conversation_events_type_allowed",
       sql`${table.type} IN ('model_call', 'tool_call', 'policy_decision')`,
@@ -432,6 +442,9 @@ export const approvals = pgTable(
   (table) => [
     uniqueIndex("approvals_snapshot_idx").on(table.snapshotId),
     index("approvals_cart_idx").on(table.cartId, table.createdAt),
+    index("approvals_expiry_active_idx")
+      .on(table.expiresAt)
+      .where(sql`${table.usedAt} IS NULL AND ${table.invalidatedAt} IS NULL`),
     check("approvals_total_positive", sql`${table.totalPaise} > 0`),
     check("approvals_currency_inr", sql`${table.currency} = 'INR'`),
   ],
@@ -481,8 +494,8 @@ export const checkoutAttempts = pgTable(
     uniqueIndex("checkout_attempts_approval_idx").on(table.approvalId),
     uniqueIndex("checkout_attempts_idempotency_idx").on(table.idempotencyKey),
     check(
-      "checkout_attempts_state_authorized",
-      sql`${table.state} = 'authorized'`,
+      "checkout_attempts_state_allowed",
+      sql`${table.state} IN ('authorized', 'creating', 'created', 'payment_pending', 'paid', 'failed', 'expired', 'cancelled')`,
     ),
   ],
 );
@@ -496,6 +509,7 @@ export const auditEvents = pgTable(
     eventType: text("event_type").notNull(),
     outcome: text("outcome").notNull(),
     metadata: jsonb("metadata").notNull(),
+    correlationId: text("correlation_id").default("legacy").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -506,9 +520,17 @@ export const auditEvents = pgTable(
       table.entityId,
       table.createdAt,
     ),
+    index("audit_events_correlation_idx").on(
+      table.correlationId,
+      table.createdAt,
+    ),
+    index("audit_events_cart_metadata_idx").on(
+      sql`(${table.metadata}->>'cartId')`,
+      table.createdAt,
+    ),
     check(
       "audit_events_entity_type_allowed",
-      sql`${table.entityType} IN ('cart', 'addon_offer', 'approval', 'checkout')`,
+      sql`${table.entityType} IN ('cart', 'addon_offer', 'approval', 'checkout', 'webhook')`,
     ),
     check(
       "audit_events_outcome_allowed",

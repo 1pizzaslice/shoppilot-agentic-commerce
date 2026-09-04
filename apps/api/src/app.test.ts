@@ -42,6 +42,52 @@ const createApp = (statuses: readonly DependencyStatus[]) => {
 };
 
 describe("API health", () => {
+  it("returns a validated correlation ID and fails closed at a protected rate limit", async () => {
+    const records: Array<{ event: string; fields: Record<string, unknown> }> =
+      [];
+    const app = buildApi({
+      readiness: { check: () => Promise.resolve([]) },
+      catalogue: emptyCatalogue,
+      conversation: emptyConversation,
+      commerce: createUnavailableCommerceService(),
+      payments: createUnavailablePaymentService(),
+      growth: createUnavailableGrowthReader(),
+      operations: {
+        logger: {
+          log: (_level, event, fields = {}) =>
+            records.push({ event, fields: { ...fields } }),
+        },
+        rateLimiter: {
+          consume: () =>
+            Promise.resolve({
+              allowed: false,
+              remaining: 0,
+              retryAfterSeconds: 12,
+            }),
+          close: () => Promise.resolve(),
+        },
+        nextCorrelationId: () => "generated-request-id",
+      },
+    });
+    apps.push(app);
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/conversations",
+      headers: { "x-request-id": "reviewer-request-1" },
+      payload: { message: "running shoes size 8" },
+    });
+
+    expect(response.statusCode).toBe(429);
+    expect(response.headers["x-request-id"]).toBe("reviewer-request-1");
+    expect(response.headers["retry-after"]).toBe("12");
+    expect(
+      records.find(({ event }) => event === "request_rate_limited")?.fields[
+        "correlationId"
+      ],
+    ).toBe("reviewer-request-1");
+  });
+
   it("separates liveness from dependency readiness", async () => {
     const app = createApp([
       { name: "postgres", status: "down" },

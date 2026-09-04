@@ -164,6 +164,7 @@ export const auditEventSchema = z
       z.string(),
       z.union([z.string(), z.number(), z.boolean(), z.null()]),
     ),
+    correlationId: z.string().min(1).max(160),
     createdAt: z.string().datetime(),
   })
   .strict();
