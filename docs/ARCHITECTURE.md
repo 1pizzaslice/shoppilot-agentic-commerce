@@ -9,7 +9,7 @@ flowchart LR
   B[Shopper browser] --> W[Next.js web]
   W --> A[Fastify API]
   A --> C[Conversation orchestrator]
-  C --> M[Fake or OpenAI adapter]
+  C --> M[Fake or Claude adapter]
   A --> D[Deterministic commerce core]
   C --> P[(PostgreSQL)]
   D --> P
@@ -220,7 +220,7 @@ The discovery endpoint declares only implemented capabilities and a project-spec
 
 ## API and process reliability
 
-- API connections, request receipt, database connections/statements, OpenAI
+- API connections, request receipt, database connections/statements, Anthropic
   calls, and Razorpay calls have explicit time-outs. Provider-order ambiguity is
   expired without an automatic second call.
 - Every response carries a validated/generated `x-request-id`. That correlation

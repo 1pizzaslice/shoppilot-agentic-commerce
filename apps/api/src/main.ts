@@ -21,7 +21,7 @@ import {
 } from "@shoppilot/testkit";
 
 import { buildApi } from "./app.js";
-import { createOpenAIShoppingModel } from "./openai-model.js";
+import { createAnthropicShoppingModel } from "./anthropic-model.js";
 import { createJsonLogger } from "./operations.js";
 import { createRazorpayPaymentProvider } from "./razorpay-payment.js";
 
@@ -32,12 +32,14 @@ const model = (() => {
   if (environment.MODEL_PROVIDER === "fake") {
     return createFakeShoppingModel();
   }
-  if (environment.OPENAI_API_KEY === undefined) {
-    throw new Error("OPENAI_API_KEY is required for the OpenAI model provider");
+  if (environment.ANTHROPIC_API_KEY === undefined) {
+    throw new Error(
+      "ANTHROPIC_API_KEY is required for the Anthropic model provider",
+    );
   }
-  return createOpenAIShoppingModel({
-    apiKey: environment.OPENAI_API_KEY,
-    model: environment.OPENAI_MODEL,
+  return createAnthropicShoppingModel({
+    apiKey: environment.ANTHROPIC_API_KEY,
+    model: environment.ANTHROPIC_MODEL,
   });
 })();
 const readiness = createReadinessDependencies({

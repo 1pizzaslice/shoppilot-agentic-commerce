@@ -39,7 +39,7 @@ approved, and recorded.
 - TypeScript on Node.js 22+
 - Next.js for the shopper and demo experience
 - Fastify for the API and Razorpay webhook boundary
-- OpenAI Responses API behind a Zod-validated model adapter
+- Anthropic Messages API behind a Zod-validated Claude adapter
 - PostgreSQL with Drizzle ORM
 - Redis for readiness and bounded API rate limits
 - A typed Razorpay HTTP adapter and Standard Checkout, test mode only
@@ -123,7 +123,7 @@ real shopper or merchant data. Re-running migration and seed commands is safe.
 flowchart LR
   B[Shopper browser] --> W[Next.js web]
   W --> A[Fastify API]
-  A --> M[Fake or OpenAI model adapter]
+  A --> M[Fake or Claude model adapter]
   A --> P[(PostgreSQL truth)]
   A --> R[(Redis rate limits)]
   A --> F[Fake or Razorpay test adapter]
@@ -235,9 +235,10 @@ conversion-lift, causal, or production-revenue claim. Metric definitions and the
 compatibility reason for every recent suggestion are visible in the view.
 
 The default `MODEL_PROVIDER=fake` mode is deterministic and needs no API key.
-Set `MODEL_PROVIDER=openai`, `OPENAI_API_KEY`, and optionally `OPENAI_MODEL` to
-use the server-side OpenAI Responses adapter. Responses are requested with
-structured JSON output and `store: false`; no browser receives the key. For
+Set `MODEL_PROVIDER=anthropic`, `ANTHROPIC_API_KEY`, and optionally
+`ANTHROPIC_MODEL` to use the server-side Claude Messages adapter. The default
+model is `claude-haiku-4-5-20251001`. Responses use JSON-schema structured
+output and are validated again with Zod; no browser receives the key. For
 example, start the required-size flow with:
 
 ```bash

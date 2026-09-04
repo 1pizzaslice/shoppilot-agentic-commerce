@@ -78,21 +78,24 @@ Source: [Official Razorpay MCP server](https://github.com/razorpay/razorpay-mcp-
 
 ## Agent runtime
 
-The OpenAI Agents SDK for TypeScript supports typed function tools, sessions, guardrails, human-in-the-loop interruption, and tracing. Tool guardrails apply around every custom function call, while input/output guardrails only apply at their respective workflow boundaries.
+Anthropic's Messages API supports stateless model calls, and structured outputs
+constrain Claude's response to a supplied JSON Schema. ShopPilot uses that
+narrow HTTP boundary directly instead of adopting a broad agent SDK: Claude
+extracts typed intent and writes grounded explanations, while application code
+owns catalogue tools and every commerce decision.
 
 Design consequence:
 
 - Use a single agent with a small read/propose-only tool surface.
 - Put deterministic validation inside each tool and again at the commerce boundary.
 - Store application state in PostgreSQL rather than treating model conversation history as truth.
-- Disable sensitive trace payloads and ensure test runs never call paid APIs.
+- Keep prompts out of logs and ensure test runs never call paid APIs.
 
 Sources:
 
-- [OpenAI Agents SDK for TypeScript](https://openai.github.io/openai-agents-js/)
-- [Agents SDK guardrails](https://openai.github.io/openai-agents-js/guides/guardrails/)
-- [Agents SDK sessions](https://openai.github.io/openai-agents-js/guides/sessions/)
-- [Agents SDK tracing](https://openai.github.io/openai-agents-js/guides/tracing/)
+- [Anthropic Messages API](https://platform.claude.com/docs/en/api/http/messages/create)
+- [Anthropic structured outputs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs)
+- [Anthropic prompt-injection mitigations](https://platform.claude.com/docs/en/test-and-evaluate/strengthen-guardrails/mitigate-jailbreaks)
 
 ## Codex project harness
 
@@ -114,4 +117,3 @@ Source: [OpenAI Codex AGENTS.md guidance](https://learn.chatgpt.com/docs/agent-c
 - A locally reachable webhook can be exposed safely for test events, or a staging URL is available.
 - The final hosting platform supports Node, PostgreSQL, Redis, and raw webhook bodies.
 - Submission timing and form requirements remain unchanged; recheck the official page before release.
-
