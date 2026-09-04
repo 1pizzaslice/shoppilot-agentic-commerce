@@ -286,14 +286,27 @@ test.describe("deterministic browser states", () => {
   });
 });
 
-test("completes the live PostgreSQL and fake-provider path", async ({
+test("release rehearsal completes the live failure-recovery story", async ({
   page,
 }) => {
-  await reachPayment(page, "Happy path");
+  const startedAt = Date.now();
+  let orderRequests = 0;
+  page.on("request", (request) => {
+    if (new URL(request.url()).pathname === "/v1/payment-orders")
+      orderRequests += 1;
+  });
+
+  await reachPayment(page, "Decline & recover");
   await page.getByRole("button", { name: "Complete test payment" }).click();
+  await expect(
+    page.getByRole("heading", { name: "The demo card was declined." }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Retry same payment safely" }).click();
   await expect(
     page.getByRole("heading", { name: /Paid in test mode/ }),
   ).toBeVisible();
+  expect(orderRequests).toBe(1);
+
   await page.getByRole("button", { name: "See how this stayed safe" }).click();
   await expect(
     page.getByRole("dialog", { name: "Who decided what" }),
@@ -301,4 +314,19 @@ test("completes the live PostgreSQL and fake-provider path", async ({
   await expect(
     page.getByText("Policy verified approval, stock, price and budget."),
   ).toBeVisible();
+
+  await page.goto("/merchant");
+  await expect(
+    page.getByRole("heading", { name: "Growth without hidden cart changes." }),
+  ).toBeVisible();
+  await expect(page.getByText("Explicitly accepted, then paid")).toBeVisible();
+
+  const discovery = await page.request.get(
+    "http://127.0.0.1:3001/.well-known/ucp",
+  );
+  expect(discovery.ok()).toBe(true);
+  const discoveryBody: unknown = await discovery.json();
+  expect(discoveryBody).toMatchObject({ ucpConformance: false });
+
+  expect(Date.now() - startedAt).toBeLessThan(285_000);
 });
