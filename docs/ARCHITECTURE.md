@@ -221,8 +221,10 @@ The discovery endpoint declares only implemented capabilities and a project-spec
 ## API and process reliability
 
 - API connections, request receipt, database connections/statements, Anthropic
-  calls, and Razorpay calls have explicit time-outs. Provider-order ambiguity is
-  expired without an automatic second call.
+  calls, and Razorpay calls have explicit time-outs. The API request ceiling is
+  longer than its bounded Claude call so first-use structured-schema compilation
+  can complete or fail cleanly before the client connection closes.
+  Provider-order ambiguity is expired without an automatic second call.
 - Every response carries a validated/generated `x-request-id`. That correlation
   ID appears in structured API logs and is persisted on agent-run,
   conversation-event, and commerce audit evidence. The worker emits a process
