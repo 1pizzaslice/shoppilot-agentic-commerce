@@ -183,6 +183,10 @@ Acceptance:
   with seven-day activity, funnel and category charts, growth insights,
   best-seller/demand-gap states, and a complete 48-style performance table;
   surface live stock and return windows on shopper catalogue cards.
+- [x] Clarify the human-gated payment boundary in the journey: distinguish the
+  success and recovery demo stories, carry the selected story into Razorpay
+  guidance, expose the audit trail before payment, and let shoppers return from
+  clarification to edit their original request.
 
 Acceptance:
 

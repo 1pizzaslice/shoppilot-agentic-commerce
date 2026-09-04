@@ -73,7 +73,7 @@ Show frozen results for hard constraints, grounding, question count, injection c
 - [x] Use the frozen release tag and the repeatable migration/seed commands below.
 - [x] Preflight web, API, worker, PostgreSQL, Redis, model, and payment behavior through the quality and rehearsal commands.
 - [x] Keep fake-model fallback ready and disclose its use.
-- [x] Use the deterministic `Decline & recover` preset for the selected failure.
+- [x] Use the deterministic `Failure & recovery` preset for the selected failure.
 - [x] Use test payment data only and keep credentials out of the recording.
 - [ ] Record at 1080p with browser zoom and text large enough to read.
 - [ ] Disable notifications and unrelated tabs.
@@ -96,7 +96,7 @@ pnpm demo:rehearse
 
 `pnpm demo:rehearse` starts the web and API processes itself and uses the
 documented local PostgreSQL and Redis URLs. It opens fresh desktop and mobile
-browser contexts, runs the live `Decline & recover` journey, proves that the
+browser contexts, runs the live `Failure & recovery` journey, proves that the
 retry uses one provider order, opens the audit explanation and merchant view,
 checks capability discovery, and fails if the automated story exceeds 4:45.
 
@@ -143,7 +143,7 @@ pnpm demo:rehearse
 ShopPilot has no failing case in the frozen set. The baseline's seven disclosed
 failures are `v1-ambiguous-04` through `v1-ambiguous-08`, `v1-noresult-02`, and
 `v1-noresult-06`. The visible recovery
-evidence is the `Decline & recover` preset: the first signed fake-provider event
+evidence is the `Failure & recovery` preset: the first signed fake-provider event
 sets the payment to failed, retrying settles the same provider order as paid,
 and the audit drawer explains the allowed policy decision. Payment integration
 tests separately replay duplicate and out-of-order signed webhook events and

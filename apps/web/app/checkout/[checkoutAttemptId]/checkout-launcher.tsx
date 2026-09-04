@@ -70,11 +70,17 @@ const requestJson = async <T,>(
 
 export function CheckoutLauncher({
   checkoutAttemptId,
+  story,
 }: {
   checkoutAttemptId: string;
+  story: "happy" | "recovery";
 }) {
   const [payment, setPayment] = useState<PaymentOrder | null>(null);
-  const [message, setMessage] = useState("Ready to open secure test checkout.");
+  const [message, setMessage] = useState(
+    story === "recovery"
+      ? "Recovery demo selected. Choose Failure once on Razorpay’s mock bank screen to inspect the safe failure path."
+      : "Success demo selected. Complete Razorpay’s simulated authentication to confirm the approved order.",
+  );
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -218,6 +224,10 @@ export function CheckoutLauncher({
             : "Finish securely with Razorpay."}
         </h2>
         <p className="payment-message">{message}</p>
+      </div>
+      <div className="checkout-responsibility">
+        <span>Agent prepared one bounded order</span>
+        <span>You authenticate the simulated payment</span>
       </div>
       {!confirming ? (
         <button

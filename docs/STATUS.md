@@ -86,6 +86,13 @@ Last updated: 2026-09-05
 - Improved shopper catalogue cards with live stock and return-window signals,
   while preserving the three-choice limit, canonical product photography, and
   database-authoritative product facts.
+- Clarified the agentic payment boundary in-product. Demo choices now explain
+  that they share a catalogue request and differ at the payment outcome, the
+  recovery story reaches the Razorpay page as explicit guidance, and the
+  pre-payment handoff separates what ShopPilot prepared from what the shopper
+  must approve and authenticate. The complete safety trail is linked beside
+  that handoff, and clarification screens can return to the populated original
+  request instead of trapping the shopper.
 
 ## Verification
 
@@ -168,6 +175,12 @@ Passed through 2026-09-05:
   cleanup passed without the earlier Autoprefixer warning. The in-app browser
   had no connected instance, so the automated desktop/mobile coverage remains
   the visual interaction evidence for this pass.
+- Payment-boundary UX follow-up on 2026-09-05: the complete `pnpm quality`
+  pipeline passed repository hygiene (121 files), formatting, lint, strict type
+  checks, 44 unit/contract tests, 29 PostgreSQL/Redis integration tests, all
+  production builds, the 50/50 evaluation (baseline 43/50), and all 16
+  desktop/mobile Playwright journeys, including the new clarification-back
+  regression and both success/recovery stories.
 
 ## Blockers
 

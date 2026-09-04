@@ -192,9 +192,25 @@ h1 {
 }
 
 .payment-button,
+.checkout-responsibility,
 .confirmation-progress,
 .payment-footnote {
   grid-column: 2;
+}
+
+.checkout-responsibility {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.checkout-responsibility span {
+  padding: 0.38rem 0.62rem;
+  border-radius: 999px;
+  background: #edf4ee;
+  color: #315d41;
+  font-size: 0.72rem;
+  font-weight: 750;
 }
 
 .payment-button {
@@ -290,6 +306,7 @@ h1 {
   }
 
   .payment-button,
+  .checkout-responsibility,
   .confirmation-progress,
   .payment-footnote {
     grid-column: 1;
@@ -443,19 +460,50 @@ a {
 .preset-row button {
   display: flex;
   gap: 0.65rem;
-  align-items: center;
-  padding: 0.6rem 0.9rem;
+  align-items: flex-start;
+  min-width: min(100%, 19rem);
+  padding: 0.8rem 0.95rem;
   border: 1px solid #d2d0c7;
-  border-radius: 999px;
+  border-radius: 1rem;
   background: #fff;
   color: #263a30;
   cursor: pointer;
+  text-align: left;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.preset-row button:hover {
+  transform: translateY(-1px);
+}
+
+.preset-row button.selected {
+  border-color: #3f7651;
+  box-shadow: 0 0 0 2px rgb(63 118 81 / 0.12);
 }
 
 .preset-row span {
   color: #d65b2e;
   font-size: 0.7rem;
   font-weight: 800;
+}
+
+.preset-row button div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.preset-row button strong {
+  font-size: 0.88rem;
+}
+
+.preset-row button small {
+  max-width: 14rem;
+  color: #68736d;
+  font-size: 0.72rem;
+  line-height: 1.35;
 }
 
 .prompt-form,
@@ -979,6 +1027,42 @@ a {
   display: block;
   margin: 1rem auto 0;
 }
+.money-boundary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+  width: min(100%, 46rem);
+  margin: 0 auto 1.4rem;
+  text-align: left;
+}
+.money-boundary > div {
+  padding: 1rem;
+  border: 1px solid #d9ded8;
+  border-radius: 0.9rem;
+  background: #f5f6f2;
+}
+.money-boundary span {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: #c94f25;
+  font-size: 0.65rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.money-boundary strong {
+  display: block;
+  margin-bottom: 0.45rem;
+}
+.money-boundary p {
+  margin: 0;
+  color: #606c65;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+.approval-audit-link {
+  margin-top: 0.85rem !important;
+}
 .no-results-state {
   max-width: 52rem;
   padding: clamp(1.5rem, 5vw, 3.5rem);
@@ -1381,6 +1465,9 @@ a {
   .checkout-panel {
     padding: 1.2rem;
     border-radius: 1rem;
+  }
+  .money-boundary {
+    grid-template-columns: 1fr;
   }
   .addon-card {
     grid-template-columns: 3.5rem 1fr;
