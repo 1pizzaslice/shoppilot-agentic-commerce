@@ -64,6 +64,13 @@ Razorpay webhook
 - Fixed clock and deterministic ID generator
 - Product factory, database helpers, webhook fixtures, and evaluation cases
 
+### `packages/evals`
+
+- Strict schema for versioned JSONL evaluation cases
+- Frozen in-memory catalogue and deterministic evaluation model
+- ShopPilot and fixed-keyword baseline runners using the same catalogue filters
+- Threshold enforcement plus machine-readable and Markdown result publishing
+
 ## Why PostgreSQL and Redis
 
 PostgreSQL is the source of truth for products, inventory, conversation state, carts, approvals, external orders, webhook inbox entries, audit events, and evaluation results. Transactions and uniqueness constraints protect payment boundaries.
@@ -230,3 +237,4 @@ The MVP avoids accounts and minimizes personal data. Use fictional delivery data
 9. **Checkout authorization is separate from payment execution.** A cart uses a monotonically increasing content version and PostgreSQL row locks for optimistic concurrency. The compatibility relation and live inventory deterministically produce at most one add-on offer; accepted, declined, and skipped outcomes are durable, and only explicit acceptance inserts the add-on line. Review stores a database-immutable canonical snapshot and SHA-256 hash. Approval binds that hash, user, total, currency, cart version, and expiry. The checkout policy transaction revalidates budget, quantities, stock, price, mutation state, freshness, and prior execution before producing one unique `authorized` checkout attempt. Session 5 payment adapters may consume that attempt; they cannot bypass it.
 10. **Payment execution is single-shot and evidence-reconciled.** Fake and Razorpay test providers implement the same typed port. A PostgreSQL row lock and primary key claim the authorized attempt before the external call; retries return stored state, including an uncertain `creating` state, instead of creating another provider order. Standard Checkout receives public configuration only. Callback and exact-raw-body webhook signatures are verified server-side, webhook event IDs are unique, and the explicit payment state machine treats verified capture as authoritative while ignoring older evidence after `paid`. Every provider action and webhook outcome appends redacted audit evidence.
 11. **Growth evidence is observational and reproducible.** The merchant reader calculates funnel counts from append-only events and order/add-on values from paid immutable snapshots using SQL. Attach rate is paid orders with an explicitly accepted add-on divided by paid orders. The fixed comparison replays authorized historical carts and subtracts accepted add-on lines for its no-add-on scenario; both the API and UI label it non-causal and avoid unsupported conversion or revenue claims.
+12. **Evaluation is frozen, offline, and failure-visible.** Versioned JSONL cases use a fixed catalogue fixture and strict Zod validation. The ShopPilot run exercises production conversation orchestration, catalogue filtering, tool schemas, and payment transitions with a deterministic evaluation model; the baseline uses fixed keyword extraction with the same deterministic commerce boundaries. The command publishes every case result and named failure, enforces release thresholds, and requires no model or payment account. New material boundary bugs must add a stable regression case to the current or next dataset version.
