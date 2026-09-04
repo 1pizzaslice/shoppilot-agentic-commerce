@@ -72,7 +72,7 @@ describe("conversation state machine", () => {
 });
 
 describe("deterministic candidate boundary", () => {
-  it("rejects invalid products and returns at most three in stable price order", () => {
+  it("rejects invalid products and returns a stable price spectrum", () => {
     const intent = shoppingIntentSchema.parse({
       productType: "running",
       sizeUk: 8,
@@ -104,7 +104,7 @@ describe("deterministic candidate boundary", () => {
       intent,
     );
 
-    expect(ranked.map(({ id }) => id)).toEqual(["first", "second", "third"]);
+    expect(ranked.map(({ id }) => id)).toEqual(["first", "third", "fourth"]);
   });
 
   it("validates strict read-only tool input before touching the catalogue", async () => {

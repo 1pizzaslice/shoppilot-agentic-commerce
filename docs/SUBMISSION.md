@@ -140,8 +140,9 @@ pnpm demo:rehearse
 | Duplicate safety | 100% | 100% |
 | Median clarifications | 1 | 1 |
 
-ShopPilot has no failing case in the frozen set. The baseline's five disclosed
-failures are `v1-ambiguous-04` through `v1-ambiguous-08`. The visible recovery
+ShopPilot has no failing case in the frozen set. The baseline's seven disclosed
+failures are `v1-ambiguous-04` through `v1-ambiguous-08`, `v1-noresult-02`, and
+`v1-noresult-06`. The visible recovery
 evidence is the `Decline & recover` preset: the first signed fake-provider event
 sets the payment to failed, retrying settles the same provider order as paid,
 and the audit drawer explains the allowed policy decision. Payment integration

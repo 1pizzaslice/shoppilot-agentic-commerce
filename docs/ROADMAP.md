@@ -175,6 +175,10 @@ Acceptance:
 - [x] Polish catalogue realism with public product photography, 48 shoe styles,
   in-journey search refinement, and safe alternatives when an optional colour
   has no exact match.
+- [x] Correct catalogue merchandising integrity: use one photographed colour
+  per style, return value/mid/top price coverage for broad requests, start clean
+  replacement searches, show accessory photography, and expose live catalogue
+  health on the merchant surface.
 
 Acceptance:
 

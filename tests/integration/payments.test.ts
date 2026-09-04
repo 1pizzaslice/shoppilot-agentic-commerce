@@ -50,7 +50,7 @@ const authorize = async () => {
     currency: "INR",
   });
   const withLine = await commerce.addPrimaryLine(cart.id, {
-    variantId: "shoe-01-2-8",
+    variantId: "shoe-01-1-8",
     quantity: 1,
     expectedVersion: cart.version,
   });
@@ -193,7 +193,7 @@ describe("fake-provider payment lifecycle", () => {
     const attempt = await authorize();
     const launch = await payments.createOrder(attempt.id);
     expect(launch.checkout).toMatchObject({
-      amountPaise: 234_900,
+      amountPaise: 249_900,
       currency: "INR",
     });
     expect(provider.createdOrders).toHaveLength(1);

@@ -53,6 +53,7 @@ const offerRowSchema = z.object({
   product_id: z.string(),
   variant_id: z.string(),
   name: z.string(),
+  image_url: z.url(),
   reason: z.string(),
   price_paise: z.number().int(),
   currency: z.string(),
@@ -256,10 +257,12 @@ const readCart = async (
     [cartId],
   );
   const offerResult = await client.query<Record<string, unknown>>(
-    `SELECT id, source_product_id, product_id, variant_id, name, reason,
-            price_paise, currency, outcome
-     FROM addon_offers WHERE cart_id = $1
-     ORDER BY created_at DESC, id DESC LIMIT 1`,
+    `SELECT ao.id, ao.source_product_id, ao.product_id, ao.variant_id,
+            ao.name, p.image_url, ao.reason, ao.price_paise, ao.currency,
+            ao.outcome
+     FROM addon_offers ao JOIN products p ON p.id = ao.product_id
+     WHERE ao.cart_id = $1
+     ORDER BY ao.created_at DESC, ao.id DESC LIMIT 1`,
     [cartId],
   );
   const rawOffer = offerResult.rows[0];
@@ -274,6 +277,7 @@ const readCart = async (
             productId: parsed.product_id,
             variantId: parsed.variant_id,
             name: parsed.name,
+            imageUrl: parsed.image_url,
             reason: parsed.reason,
             pricePaise: parsed.price_paise,
             currency: parsed.currency,
@@ -348,7 +352,7 @@ const selectAddon = async (
   sourceProductId: string,
 ): Promise<z.infer<typeof offerRowSchema> | null> => {
   const result = await client.query(
-    `SELECT p.id AS product_id, p.name, pr.reason, pv.id AS variant_id,
+    `SELECT p.id AS product_id, p.name, p.image_url, pr.reason, pv.id AS variant_id,
             pv.price_paise, pv.currency, $1::text AS source_product_id,
             ''::text AS id, NULL::text AS outcome
      FROM product_relations pr
@@ -572,9 +576,11 @@ export const createPostgresCommerceService = (
           throw new CommerceConflictError("Cart can no longer be changed.");
         }
         const result = await client.query<Record<string, unknown>>(
-          `SELECT id, source_product_id, product_id, variant_id, name, reason,
-                  price_paise, currency, outcome
-           FROM addon_offers WHERE id = $1 AND cart_id = $2 FOR UPDATE`,
+          `SELECT ao.id, ao.source_product_id, ao.product_id, ao.variant_id,
+                  ao.name, p.image_url, ao.reason, ao.price_paise, ao.currency,
+                  ao.outcome
+           FROM addon_offers ao JOIN products p ON p.id = ao.product_id
+           WHERE ao.id = $1 AND ao.cart_id = $2 FOR UPDATE OF ao`,
           [input.offerId, cartId],
         );
         const rawOffer = result.rows[0];

@@ -306,8 +306,8 @@ const chooseVariant = (
 export const rankCandidates = (
   products: readonly CatalogueProductSummary[],
   intent: ShoppingIntent,
-): CatalogueProductSummary[] =>
-  products
+): CatalogueProductSummary[] => {
+  const eligible = products
     .filter((product) => {
       if (product.productType === "accessory") return false;
       if (
@@ -339,8 +339,21 @@ export const rankCandidates = (
           (rightVariant?.pricePaise ?? Number.MAX_SAFE_INTEGER) ||
         left.id.localeCompare(right.id)
       );
-    })
-    .slice(0, 3);
+    });
+
+  if (eligible.length <= 3) return eligible;
+
+  // A broad budget should produce a useful price spectrum, not the same three
+  // cheapest rows on every request. Hard constraints are already enforced;
+  // these stable quantiles expose value, mid-range, and upper-range choices.
+  return [
+    eligible[0],
+    eligible[Math.round((eligible.length - 1) / 2)],
+    eligible[eligible.length - 1],
+  ].filter(
+    (product): product is CatalogueProductSummary => product !== undefined,
+  );
+};
 
 const matchedConstraintsFor = (intent: ShoppingIntent): string[] => {
   const constraints = [
@@ -544,9 +557,11 @@ export const createShoppingConversationHandler = ({
     );
     const notice = relaxedColour
       ? `No exact ${intent.colour ?? "colour"} matches were available. These alternatives still match your use, UK size, budget and live stock.`
-      : recommendations.length < 3
-        ? `Only ${String(recommendations.length)} valid ${recommendations.length === 1 ? "product" : "products"} matched all constraints.`
-        : null;
+      : intent.colour !== undefined
+        ? `Exact ${intent.colour} options found in your UK size, within budget and currently in stock.`
+        : recommendations.length < 3
+          ? `Only ${String(recommendations.length)} valid ${recommendations.length === 1 ? "product" : "products"} matched all constraints.`
+          : null;
     const response = shoppingResponseSchema.parse({
       kind: "recommendations",
       conversationId: conversation.id,

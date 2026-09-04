@@ -1,6 +1,6 @@
 # Project status
 
-Last updated: 2026-09-04
+Last updated: 2026-09-05
 
 ## Current position
 
@@ -63,10 +63,24 @@ Last updated: 2026-09-04
 - Reworded the approved-cart handoff as secure payment, disabled the Next.js
   development badge, improved product cards/detail imagery, and stopped
   expired receipt links from polling after a confirmed not-found response.
+- Corrected recommendation variety after tracing the repeated-three result to
+  price-only ranking. Hard-valid candidates now expose stable value, mid-range,
+  and top-range price points, while replacement searches start a fresh
+  conversation so omitted preferences cannot leak from the prior request.
+  Claude's explanation contract now forbids unsupported cross-product
+  comparisons and limits prose to the supplied price, stock, size, colour,
+  product type, return window, and shopper constraints.
+- Made catalogue presentation internally consistent: 48 footwear styles each
+  have one photographed colour and UK 5–12 inventory, every accessory offer
+  carries a canonical product photo, active filters and exact-versus-alternative
+  headings are visible, and no-result/refinement actions remain in journey.
+- Expanded the merchant surface with PostgreSQL-derived catalogue health,
+  category coverage, ₹2,499–₹6,999 range, stock states, and representative live
+  product cards alongside the existing growth and consent evidence.
 
 ## Verification
 
-Passed on 2026-09-04:
+Passed through 2026-09-05:
 
 - `DATABASE_URL=postgresql://shoppilot:shoppilot_dev@localhost:5432/shoppilot REDIS_URL=redis://localhost:6380 corepack pnpm quality`
   — repository hygiene (118 files), formatting, lint, strict type checks, 41
@@ -122,6 +136,14 @@ Passed on 2026-09-04:
   localhost PostgreSQL/Redis (`EPERM`); the permitted localhost run exposed one
   newly out-of-stock test fixture, which was corrected and then passed both in
   isolation and in the final complete suite.
+- Catalogue integrity follow-up on 2026-09-05: the final uninterrupted
+  `pnpm quality` pipeline passed repository hygiene (121 files), formatting,
+  lint, strict type checks, 44 unit/contract tests, 29 PostgreSQL/Redis
+  integration tests, all production builds, the 50/50 evaluation (baseline
+  43/50), and all 14 desktop/mobile Playwright journeys. The first browser run
+  exposed stale test labels and an over-specific socks assertion; after updating
+  them to the shipped accessible names and any compatible add-on image, the full
+  browser suite and then the complete pipeline passed.
 
 ## Blockers
 

@@ -154,16 +154,26 @@ export function ShopperJourney() {
     }
   };
 
-  const startConversation = async () => {
+  const startConversation = async (
+    mode: "fresh" | "continue" = response === null ? "fresh" : "continue",
+  ) => {
     if (prompt.trim() === "") return;
     await perform(async () => {
       const next = await postJson(
         shoppingResponseSchema,
-        response === null
+        mode === "fresh" || response === null
           ? "/v1/conversations"
           : `/v1/conversations/${response.conversationId}/messages`,
         { message: prompt },
       );
+      if (mode === "fresh") {
+        setSelected(null);
+        setProduct(null);
+        setCart(null);
+        setSnapshot(null);
+        setApproval(null);
+        setPayment(null);
+      }
       setResponse(next);
       setPrompt("");
     });
@@ -352,6 +362,9 @@ export function ShopperJourney() {
 
   const showRecommendations =
     !cancelled && response?.kind === "recommendations" && selected === null;
+  const showingColourAlternatives =
+    response?.kind === "recommendations" &&
+    response.notice?.startsWith("No exact ") === true;
   const showAddon =
     !cancelled && cart?.state === "draft" && cart.addonOffer?.outcome === null;
   const canReview =
@@ -416,7 +429,7 @@ export function ShopperJourney() {
                 className="prompt-form"
                 onSubmit={(event) => {
                   event.preventDefault();
-                  void startConversation();
+                  void startConversation("continue");
                 }}
               >
                 <label htmlFor="shopping-prompt">
@@ -534,13 +547,23 @@ export function ShopperJourney() {
                     className="primary-button"
                     disabled={busy || prompt.trim() === ""}
                   >
-                    Search again
+                    Update current search
                   </button>
                 </div>
               </form>
-              <button className="text-button" type="button" onClick={reset}>
-                Start over instead
-              </button>
+              <div className="inline-actions">
+                <button
+                  className="text-button"
+                  type="button"
+                  disabled={busy || prompt.trim() === ""}
+                  onClick={() => void startConversation("fresh")}
+                >
+                  Use this text as a brand-new search
+                </button>
+                <button className="text-button" type="button" onClick={reset}>
+                  Clear everything
+                </button>
+              </div>
             </section>
           ) : null}
 
@@ -550,15 +573,34 @@ export function ShopperJourney() {
                 <div>
                   <p className="step-label">Grounded recommendations</p>
                   <h1 ref={focusRef} tabIndex={-1}>
-                    {response.recommendations.length === 3
-                      ? "Three strong matches."
-                      : `${String(response.recommendations.length)} strong ${response.recommendations.length === 1 ? "match" : "matches"}.`}
+                    {showingColourAlternatives
+                      ? "No exact colour match. Here are close alternatives."
+                      : response.intent.colour !== undefined
+                        ? `Exact ${response.intent.colour} matches.`
+                        : response.recommendations.length === 3
+                          ? "Three options across your budget."
+                          : `${String(response.recommendations.length)} strong ${response.recommendations.length === 1 ? "match" : "matches"}.`}
                   </h1>
                 </div>
                 <p>
                   {response.notice ??
                     "Every option matches your required size, use and budget."}
                 </p>
+              </div>
+              <div
+                className="active-filters"
+                aria-label="Active search filters"
+              >
+                <span>{response.intent.productType}</span>
+                <span>UK {response.intent.sizeUk}</span>
+                {response.intent.maxPricePaise === undefined ? null : (
+                  <span>Up to {money(response.intent.maxPricePaise)}</span>
+                )}
+                {response.intent.colour === undefined ? (
+                  <span>Any colour</span>
+                ) : (
+                  <span>{response.intent.colour}</span>
+                )}
               </div>
               <div className="recommendation-grid">
                 {response.recommendations.map((item, index) => (
@@ -569,8 +611,10 @@ export function ShopperJourney() {
                         alt={`${item.name} product photo`}
                       />
                     </div>
-                    <div className="rank">0{String(index + 1)}</div>
-                    <p className="product-type">
+                    <div className="rank">
+                      {(["Value", "Mid-range", "Top range"] as const)[index]}
+                    </div>
+                    <p className="product-type product-meta">
                       {item.productType} · {item.variant.colour} · UK{" "}
                       {item.variant.sizeUk}
                     </p>
@@ -599,7 +643,7 @@ export function ShopperJourney() {
                 className="answer-form refinement-form compact-refinement"
                 onSubmit={(event) => {
                   event.preventDefault();
-                  void startConversation();
+                  void startConversation("fresh");
                 }}
               >
                 <label htmlFor="recommendation-refinement">
@@ -616,10 +660,18 @@ export function ShopperJourney() {
                     className="secondary-button"
                     disabled={busy || prompt.trim() === ""}
                   >
-                    Update matches
+                    Search as new request
                   </button>
                 </div>
               </form>
+              <button
+                className="text-button refine-current-button"
+                type="button"
+                disabled={busy || prompt.trim() === ""}
+                onClick={() => void startConversation("continue")}
+              >
+                Or keep the active filters and change one detail
+              </button>
             </section>
           ) : null}
 
@@ -694,8 +746,11 @@ export function ShopperJourney() {
                 Useful together. Entirely your call.
               </h1>
               <div className="addon-card">
-                <div className="addon-art" aria-hidden="true">
-                  +
+                <div className="addon-image-wrap">
+                  <img
+                    src={cart.addonOffer.imageUrl}
+                    alt={`${cart.addonOffer.name} product photo`}
+                  />
                 </div>
                 <div>
                   <span>Compatible with your pair</span>
