@@ -116,6 +116,10 @@ describe("merchant growth evidence", () => {
     expect(empty.orderValues.grossOrderValuePaise).toBe(0);
     expect(empty.orderValues.attachRateBasisPoints).toBe(0);
     expect(empty.recentSuggestions).toEqual([]);
+    expect(empty.activity.series).toHaveLength(7);
+    expect(empty.productPerformance).toHaveLength(48);
+    expect(empty.categoryPerformance).toHaveLength(5);
+    expect(empty.insights).toHaveLength(4);
 
     await completePaidCart("accepted");
     await completePaidCart("declined");
@@ -171,6 +175,39 @@ describe("merchant growth evidence", () => {
     });
     expect(summary.catalogue.categories).toHaveLength(5);
     expect(summary.catalogue.featuredProducts).toHaveLength(5);
+    expect(summary.productPerformance[0]).toMatchObject({
+      productId: "shoe-01",
+      cartAdds: 2,
+      paidOrders: 2,
+      unitsSold: 2,
+      grossValuePaise: 499_800,
+      conversionBasisPoints: 10_000,
+    });
+    expect(
+      summary.activity.series.reduce(
+        (total, point) => total + point.paidOrders,
+        0,
+      ),
+    ).toBe(2);
+    expect(
+      summary.activity.series.reduce(
+        (total, point) => total + point.grossValuePaise,
+        0,
+      ),
+    ).toBe(569_700);
+    expect(summary.categoryPerformance).toContainEqual({
+      productType: "running",
+      cartAdds: 2,
+      paidOrders: 2,
+      unitsSold: 2,
+      grossValuePaise: 499_800,
+    });
+    expect(summary.insights.map(({ kind }) => kind)).toEqual([
+      "win",
+      "opportunity",
+      "risk",
+      "opportunity",
+    ]);
     expect(summary.definitions.map(({ key }) => key)).toContain(
       "Fixed simulation",
     );

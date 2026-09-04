@@ -49,6 +49,56 @@ export default async function MerchantPage() {
     summary.simulation.compatibilityPolicyValuePaise,
     1,
   );
+  const activityUsesRevenue = summary.activity.series.some(
+    (point) => point.grossValuePaise > 0,
+  );
+  const maxActivity = Math.max(
+    ...summary.activity.series.map((point) =>
+      activityUsesRevenue ? point.grossValuePaise : point.cartsCreated,
+    ),
+    1,
+  );
+  const maxFunnel = Math.max(...funnel.map(([, value]) => value), 1);
+  const bestSellers = summary.productPerformance
+    .filter((product) => product.unitsSold > 0)
+    .slice(0, 5);
+  const needsAttention = [...summary.productPerformance]
+    .filter(
+      (product) =>
+        product.unitsSold === 0 &&
+        (product.cartAdds > 0 || product.stockQuantity <= 24),
+    )
+    .sort(
+      (left, right) =>
+        right.cartAdds - left.cartAdds ||
+        left.stockQuantity - right.stockQuantity ||
+        left.name.localeCompare(right.name),
+    )
+    .slice(0, 5);
+  const categoryUsesRevenue = summary.categoryPerformance.some(
+    (category) => category.grossValuePaise > 0,
+  );
+  const categoryUsesInterest = summary.categoryPerformance.some(
+    (category) => category.cartAdds > 0,
+  );
+  const categoryValue = (productType: string): number => {
+    const performance = summary.categoryPerformance.find(
+      (category) => category.productType === productType,
+    );
+    if (categoryUsesRevenue) return performance?.grossValuePaise ?? 0;
+    if (categoryUsesInterest) return performance?.cartAdds ?? 0;
+    return (
+      summary.catalogue.categories.find(
+        (category) => category.productType === productType,
+      )?.count ?? 0
+    );
+  };
+  const maxCategory = Math.max(
+    ...summary.categoryPerformance.map((category) =>
+      categoryValue(category.productType),
+    ),
+    1,
+  );
 
   return (
     <main className="merchant-shell">
@@ -148,6 +198,29 @@ export default async function MerchantPage() {
         </article>
       </section>
 
+      <section className="insight-section" aria-labelledby="growth-insights">
+        <div className="section-title-row">
+          <div>
+            <p className="eyebrow">Growth factors</p>
+            <h2 id="growth-insights">What deserves attention now</h2>
+          </div>
+          <span>Derived from observed commerce events</span>
+        </div>
+        <div className="insight-grid">
+          {summary.insights.map((insight) => (
+            <article
+              className={`insight-card ${insight.kind}`}
+              key={insight.title}
+            >
+              <span>{insight.kind}</span>
+              <h3>{insight.title}</h3>
+              <p>{insight.detail}</p>
+              <small>{insight.action}</small>
+            </article>
+          ))}
+        </div>
+      </section>
+
       <div className="merchant-columns">
         <section className="merchant-panel">
           <div className="panel-heading">
@@ -159,44 +232,257 @@ export default async function MerchantPage() {
               {formatMoney(summary.orderValues.averageOrderValuePaise)} average
             </span>
           </div>
-          <ol className="funnel-list">
+          <ol className="funnel-chart" aria-label="Observed purchase funnel">
             {funnel.map(([label, value], index) => (
               <li key={label}>
-                <span>{String(index + 1).padStart(2, "0")}</span>
-                <b>{label}</b>
+                <div>
+                  <span>{String(index + 1).padStart(2, "0")}</span>
+                  <b>{label}</b>
+                </div>
+                <i>
+                  <span style={{ width: `${(value / maxFunnel) * 100}%` }} />
+                </i>
                 <strong>{value}</strong>
               </li>
             ))}
           </ol>
         </section>
 
-        <section className="merchant-panel">
-          <p className="eyebrow">Add-on outcomes</p>
-          <h2>Consent stays visible</h2>
-          <div className="outcome-grid">
+        <section className="merchant-panel activity-panel">
+          <div className="panel-heading">
             <div>
-              <strong>{summary.addonOutcomes.offered}</strong>
-              <span>Offered</span>
+              <p className="eyebrow">7-day activity</p>
+              <h2>
+                {activityUsesRevenue ? "Verified order value" : "Cart demand"}
+              </h2>
             </div>
-            <div>
-              <strong>{summary.addonOutcomes.accepted}</strong>
-              <span>Accepted</span>
-            </div>
-            <div>
-              <strong>{summary.addonOutcomes.declined}</strong>
-              <span>Declined</span>
-            </div>
-            <div>
-              <strong>{summary.addonOutcomes.skipped}</strong>
-              <span>Skipped</span>
-            </div>
+            <span>
+              {activityUsesRevenue ? "Paid snapshots" : "No estimated revenue"}
+            </span>
           </div>
-          <p className="panel-note">
-            Declining or skipping never mutates the cart and never blocks
-            checkout.
-          </p>
+          <div
+            className="activity-chart"
+            role="img"
+            aria-label={`Daily ${activityUsesRevenue ? "verified revenue" : "cart creation"} for the last seven days`}
+          >
+            {summary.activity.series.map((point) => {
+              const value = activityUsesRevenue
+                ? point.grossValuePaise
+                : point.cartsCreated;
+              return (
+                <div className="activity-column" key={point.date}>
+                  <span>
+                    {activityUsesRevenue ? formatMoney(value) : String(value)}
+                  </span>
+                  <i>
+                    <b
+                      style={{
+                        height: `${Math.max(value === 0 ? 2 : 12, (value / maxActivity) * 100)}%`,
+                      }}
+                    />
+                  </i>
+                  <small>
+                    {new Date(`${point.date}T00:00:00Z`).toLocaleDateString(
+                      "en-IN",
+                      { weekday: "short" },
+                    )}
+                  </small>
+                </div>
+              );
+            })}
+          </div>
         </section>
       </div>
+
+      <section className="merchant-panel performance-panel">
+        <div className="section-title-row">
+          <div>
+            <p className="eyebrow">Product performance</p>
+            <h2>Best sellers and demand gaps</h2>
+          </div>
+          <span>Paid units outrank cart interest</span>
+        </div>
+        <div className="performance-columns">
+          <div>
+            <h3>Best sellers</h3>
+            {bestSellers.length === 0 ? (
+              <p className="empty-evidence">
+                No verified paid product sales yet. Rankings will appear after
+                test-mode purchases complete.
+              </p>
+            ) : (
+              <ol className="ranked-products">
+                {bestSellers.map((product, index) => (
+                  <li key={product.productId}>
+                    <span>{String(index + 1).padStart(2, "0")}</span>
+                    <img src={product.imageUrl} alt="" />
+                    <div>
+                      <strong>{product.name}</strong>
+                      <small>
+                        {product.productType} · {product.colour}
+                      </small>
+                    </div>
+                    <b>{product.unitsSold} sold</b>
+                    <em>{formatMoney(product.grossValuePaise)}</em>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
+          <div>
+            <h3>Needs attention</h3>
+            {needsAttention.length === 0 ? (
+              <p className="empty-evidence">
+                No unsold product currently has observed cart interest or a
+                low-stock flag. More journeys will make demand gaps visible.
+              </p>
+            ) : (
+              <ol className="ranked-products watch-products">
+                {needsAttention.map((product) => (
+                  <li key={product.productId}>
+                    <img src={product.imageUrl} alt="" />
+                    <div>
+                      <strong>{product.name}</strong>
+                      <small>
+                        {product.productType} · {product.colour}
+                      </small>
+                    </div>
+                    <b>
+                      {product.cartAdds} cart{" "}
+                      {product.cartAdds === 1 ? "add" : "adds"}
+                    </b>
+                    <em>{product.stockQuantity} in stock</em>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section className="merchant-panel category-panel">
+        <div className="panel-heading">
+          <div>
+            <p className="eyebrow">Category mix</p>
+            <h2>
+              {categoryUsesRevenue
+                ? "Verified value by use"
+                : categoryUsesInterest
+                  ? "Cart interest by use"
+                  : "Catalogue coverage by use"}
+            </h2>
+          </div>
+          <span>
+            {categoryUsesRevenue
+              ? "Revenue"
+              : categoryUsesInterest
+                ? "Cart adds"
+                : "Live styles"}
+          </span>
+        </div>
+        <div className="category-chart">
+          {summary.categoryPerformance.map((category) => {
+            const value = categoryValue(category.productType);
+            return (
+              <div key={category.productType}>
+                <span>{category.productType}</span>
+                <i>
+                  <b style={{ width: `${(value / maxCategory) * 100}%` }} />
+                </i>
+                <strong>
+                  {categoryUsesRevenue ? formatMoney(value) : value}
+                </strong>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="merchant-panel catalogue-table-panel">
+        <div className="section-title-row">
+          <div>
+            <p className="eyebrow">Catalogue intelligence</p>
+            <h2>Every live footwear style</h2>
+          </div>
+          <span>
+            {summary.productPerformance.length} products · real inventory
+          </span>
+        </div>
+        <div className="table-scroll">
+          <table className="performance-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Type</th>
+                <th>Colour</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th>Cart adds</th>
+                <th>Paid units</th>
+                <th>Conversion</th>
+              </tr>
+            </thead>
+            <tbody>
+              {summary.productPerformance.map((product) => (
+                <tr key={product.productId}>
+                  <td>
+                    <img src={product.imageUrl} alt="" />
+                    <strong>{product.name}</strong>
+                  </td>
+                  <td>
+                    <span className="table-chip">{product.productType}</span>
+                  </td>
+                  <td>{product.colour}</td>
+                  <td>{formatMoney(product.pricePaise)}</td>
+                  <td>
+                    <span
+                      className={
+                        product.stockQuantity <= 24 ? "stock-risk" : "stock-ok"
+                      }
+                    >
+                      {product.stockQuantity}
+                    </span>
+                  </td>
+                  <td>{product.cartAdds}</td>
+                  <td>{product.unitsSold}</td>
+                  <td>
+                    {product.cartAdds === 0
+                      ? "—"
+                      : `${(product.conversionBasisPoints / 100).toFixed(1)}%`}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="merchant-panel addon-panel">
+        <p className="eyebrow">Add-on outcomes</p>
+        <h2>Consent stays visible</h2>
+        <div className="outcome-grid">
+          <div>
+            <strong>{summary.addonOutcomes.offered}</strong>
+            <span>Offered</span>
+          </div>
+          <div>
+            <strong>{summary.addonOutcomes.accepted}</strong>
+            <span>Accepted</span>
+          </div>
+          <div>
+            <strong>{summary.addonOutcomes.declined}</strong>
+            <span>Declined</span>
+          </div>
+          <div>
+            <strong>{summary.addonOutcomes.skipped}</strong>
+            <span>Skipped</span>
+          </div>
+        </div>
+        <p className="panel-note">
+          Declining or skipping never mutates the cart and never blocks
+          checkout.
+        </p>
+      </section>
 
       <section className="merchant-panel simulation-panel">
         <div className="panel-heading">
