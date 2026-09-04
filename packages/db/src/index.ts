@@ -33,3 +33,11 @@ export {
   type DependencyUrls,
   type ReadinessDependencies,
 } from "./readiness.js";
+export {
+  createRedisRateLimiter,
+  createRuntimePool,
+  currentCorrelationId,
+  enterCorrelationContext,
+  type RateLimitDecision,
+  type RateLimiter,
+} from "./runtime.js";

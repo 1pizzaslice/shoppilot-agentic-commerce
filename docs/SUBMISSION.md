@@ -108,5 +108,10 @@ ShopPilot gives a merchant a machine-readable catalogue and a guarded AI shoppin
 
 ### What broke and how we recovered
 
-Reserve this section for a real implementation failure. Preferred candidate: duplicate or out-of-order payment webhook processing. State the observed symptom, root cause, added invariant/constraint, regression test, and measured result. Do not invent the story before it occurs.
-
+During payment integration, repeated or delayed webhook delivery could have
+reapplied a terminal transition. ShopPilot now claims every provider event ID in
+a unique PostgreSQL inbox, locks the matching payment row, and applies only
+forward-safe state transitions. A verified capture may recover a prior failed,
+expired, or cancelled observation; older failure evidence cannot regress
+`paid`. Integration tests replay duplicate and out-of-order events and verify
+one provider order, one payment state, and visible no-op audit evidence.

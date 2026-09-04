@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 
-import { Pool, type PoolClient } from "pg";
+import type { Pool, PoolClient } from "pg";
 import { z } from "zod";
 
 import {
@@ -28,6 +28,7 @@ import {
   type PolicyDecision,
   type PolicyReason,
 } from "@shoppilot/domain";
+import { createRuntimePool, currentCorrelationId } from "./runtime.js";
 
 const cartRowSchema = z.object({
   id: z.string(),
@@ -125,6 +126,7 @@ const auditRowSchema = z.object({
   event_type: z.string(),
   outcome: z.string(),
   metadata: z.unknown(),
+  correlation_id: z.string(),
   created_at: z.date(),
 });
 
@@ -221,8 +223,8 @@ const appendAudit = async (
 ): Promise<void> => {
   await client.query(
     `INSERT INTO audit_events
-       (id, entity_type, entity_id, event_type, outcome, metadata)
-     VALUES ($1, $2, $3, $4, $5, $6::jsonb)`,
+       (id, entity_type, entity_id, event_type, outcome, metadata, correlation_id)
+     VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7)`,
     [
       nextId(),
       event.entityType,
@@ -230,6 +232,7 @@ const appendAudit = async (
       event.eventType,
       event.outcome,
       JSON.stringify(redactAuditMetadata(event.metadata)),
+      currentCorrelationId(),
     ],
   );
 };
@@ -1064,7 +1067,7 @@ export const createPostgresCommerceService = (
 
     getAuditTimeline: async (cartId): Promise<readonly AuditEvent[]> => {
       const result = await pool.query(
-        `SELECT id, entity_type, entity_id, event_type, outcome, metadata, created_at
+        `SELECT id, entity_type, entity_id, event_type, outcome, metadata, correlation_id, created_at
          FROM audit_events
          WHERE entity_id = $1
             OR metadata->>'cartId' = $1
@@ -1098,6 +1101,7 @@ export const createPostgresCommerceService = (
           eventType: row.event_type,
           outcome: row.outcome,
           metadata: row.metadata,
+          correlationId: row.correlation_id,
           createdAt: iso(row.created_at),
         });
       });
@@ -1113,11 +1117,7 @@ export interface CommerceDependencies {
 export const createCommerceDependencies = (
   databaseUrl: string,
 ): CommerceDependencies => {
-  const pool = new Pool({
-    connectionString: databaseUrl,
-    connectionTimeoutMillis: 2_000,
-    max: 10,
-  });
+  const pool = createRuntimePool(databaseUrl);
   return {
     service: createPostgresCommerceService(pool),
     close: async () => pool.end(),

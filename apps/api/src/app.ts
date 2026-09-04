@@ -50,12 +50,21 @@ import {
   type MerchantGrowthReader,
 } from "@shoppilot/domain";
 import type { ReadinessDependencies } from "@shoppilot/db";
+import { enterCorrelationContext, type RateLimiter } from "@shoppilot/db";
 
 import {
   discoveryDocument,
   discoverySchema,
   openApiDocument,
 } from "./catalogue-contract.js";
+import {
+  correlationIdFor,
+  rateBucketFor,
+  ratePolicyFor,
+  silentLogger,
+  type OperationalLogger,
+  type RequestOperationalState,
+} from "./operations.js";
 
 export interface ApiDependencies {
   readiness: Pick<ReadinessDependencies, "check">;
@@ -66,6 +75,12 @@ export interface ApiDependencies {
   growth: MerchantGrowthReader;
   demoPayments?: {
     settle: (input: DemoPaymentInput) => Promise<PaymentOrder>;
+  };
+  operations?: {
+    logger?: OperationalLogger;
+    rateLimiter?: RateLimiter;
+    nextCorrelationId?: () => string;
+    now?: () => number;
   };
 }
 
@@ -81,10 +96,94 @@ export const buildApi = ({
   payments,
   growth,
   demoPayments,
+  operations,
 }: ApiDependencies): FastifyInstance => {
-  const app = Fastify({ logger: false });
+  const app = Fastify({
+    bodyLimit: 64 * 1_024,
+    connectionTimeout: 5_000,
+    keepAliveTimeout: 5_000,
+    logger: false,
+    requestTimeout: 15_000,
+  });
+  const logger = operations?.logger ?? silentLogger;
+  const now = operations?.now ?? Date.now;
+  const requestState = new WeakMap<object, RequestOperationalState>();
 
-  app.setErrorHandler((error, _request, reply) => {
+  app.addHook("onRequest", async (request, reply) => {
+    const correlationId = correlationIdFor(
+      request,
+      operations?.nextCorrelationId,
+    );
+    enterCorrelationContext(correlationId);
+    requestState.set(request, { correlationId, startedAt: now() });
+    void reply.header("x-request-id", correlationId);
+
+    const route = request.routeOptions.url ?? request.url.replace(/\?.*$/u, "");
+    const policy = ratePolicyFor(request.method, route);
+    if (policy !== null && operations?.rateLimiter !== undefined) {
+      try {
+        const decision = await operations.rateLimiter.consume(
+          rateBucketFor(policy.name, request),
+          policy.limit,
+          policy.windowMs,
+        );
+        void reply.header("x-ratelimit-limit", policy.limit);
+        void reply.header("x-ratelimit-remaining", decision.remaining);
+        if (!decision.allowed) {
+          void reply.header("retry-after", decision.retryAfterSeconds);
+          logger.log("warn", "request_rate_limited", {
+            correlationId,
+            method: request.method,
+            route,
+            policy: policy.name,
+          });
+          return reply.code(429).send({
+            error: "rate_limited",
+            message: "Too many requests. Please retry later.",
+          });
+        }
+      } catch {
+        logger.log("error", "rate_limiter_unavailable", {
+          correlationId,
+          method: request.method,
+          route,
+          policy: policy.name,
+        });
+        return reply.code(503).send({
+          error: "temporarily_unavailable",
+          message: "Request protection is temporarily unavailable.",
+        });
+      }
+    }
+
+    logger.log("info", "request_started", {
+      correlationId,
+      method: request.method,
+      route,
+    });
+  });
+
+  app.addHook("onResponse", (request, reply, done) => {
+    const state = requestState.get(request);
+    logger.log("info", "request_completed", {
+      correlationId: state?.correlationId ?? "unknown",
+      durationMs:
+        state === undefined ? 0 : Math.max(now() - state.startedAt, 0),
+      method: request.method,
+      route: request.routeOptions.url ?? request.url.replace(/\?.*$/u, ""),
+      statusCode: reply.statusCode,
+    });
+    done();
+  });
+
+  app.setErrorHandler((error, request, reply) => {
+    logger.log("error", "request_failed", {
+      correlationId: requestState.get(request)?.correlationId ?? "unknown",
+      errorType:
+        error instanceof Error ? error.constructor.name : "UnknownError",
+      method: request.method,
+      route: request.routeOptions.url ?? request.url.replace(/\?.*$/u, ""),
+    });
     if (error instanceof CommerceNotFoundError) {
       return reply.code(404).send(
         commerceErrorSchema.parse({

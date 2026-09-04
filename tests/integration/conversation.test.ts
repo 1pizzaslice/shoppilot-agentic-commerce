@@ -56,6 +56,7 @@ describe("PostgreSQL shopping conversation", () => {
     const firstResponse = await app.inject({
       method: "POST",
       url: "/v1/conversations",
+      headers: { "x-request-id": "conversation-request-1" },
       payload: { message: "Running shoes under ₹4,000" },
     });
     const first = shoppingResponseSchema.parse(firstResponse.json());
@@ -64,6 +65,7 @@ describe("PostgreSQL shopping conversation", () => {
     const secondResponse = await app.inject({
       method: "POST",
       url: `/v1/conversations/${first.conversationId}/messages`,
+      headers: { "x-request-id": "conversation-request-2" },
       payload: { message: "UK 8, Cloud Grey" },
     });
     const second = shoppingResponseSchema.parse(secondResponse.json());
@@ -83,12 +85,15 @@ describe("PostgreSQL shopping conversation", () => {
       runs: string;
       events: string;
       toolEvents: string;
+      correlations: string[];
     }>(
       `SELECT
         (SELECT count(*) FROM conversation_messages WHERE conversation_id = $1) AS messages,
         (SELECT count(*) FROM agent_runs WHERE conversation_id = $1) AS runs,
         (SELECT count(*) FROM conversation_events WHERE conversation_id = $1) AS events,
-        (SELECT count(*) FROM conversation_events WHERE conversation_id = $1 AND type = 'tool_call') AS "toolEvents"`,
+        (SELECT count(*) FROM conversation_events WHERE conversation_id = $1 AND type = 'tool_call') AS "toolEvents",
+        (SELECT array_agg(DISTINCT correlation_id ORDER BY correlation_id)
+           FROM agent_runs WHERE conversation_id = $1) AS correlations`,
       [first.conversationId],
     );
     expect(counts.rows[0]).toEqual({
@@ -96,6 +101,7 @@ describe("PostgreSQL shopping conversation", () => {
       runs: "2",
       events: "6",
       toolEvents: "1",
+      correlations: ["conversation-request-1", "conversation-request-2"],
     });
   });
 

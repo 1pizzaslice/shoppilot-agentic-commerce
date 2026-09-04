@@ -8,6 +8,12 @@
   "engines": {
     "node": ">=22"
   },
+  "pnpm": {
+    "overrides": {
+      "postcss": "8.5.23",
+      "sharp": "0.35.0"
+    }
+  },
   "scripts": {
     "build": "corepack pnpm --recursive --if-present build",
     "dev:api": "corepack pnpm --filter @shoppilot/api dev",
@@ -21,6 +27,10 @@
     "lint": "eslint .",
     "quality": "corepack pnpm repo:check && corepack pnpm format:check && corepack pnpm lint && corepack pnpm typecheck && corepack pnpm test && corepack pnpm test:integration && corepack pnpm build && corepack pnpm eval && corepack pnpm test:e2e",
     "repo:check": "node scripts/check-repository.mjs",
+    "security:dependencies": "corepack pnpm audit --prod --audit-level high",
+    "security:licenses": "node scripts/check-licenses.mjs",
+    "security:check": "corepack pnpm security:dependencies && corepack pnpm security:licenses",
+    "container:check": "docker compose config --quiet && node scripts/check-compose.mjs",
     "test": "vitest run --config vitest.config.ts",
     "test:e2e": "playwright test",
     "test:integration": "vitest run --config vitest.integration.config.ts",
@@ -28,7 +38,7 @@
   },
   "devDependencies": {
     "@eslint/js": "9.34.0",
-    "@playwright/test": "1.55.0",
+    "@playwright/test": "1.62.1",
     "@shoppilot/db": "workspace:*",
     "@shoppilot/domain": "workspace:*",
     "@types/node": "24.3.0",

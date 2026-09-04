@@ -26,7 +26,7 @@ Run against disposable PostgreSQL and Redis instances:
 - Search/lookup contract and catalogue version consistency
 - Concurrent cart mutations and approvals
 - Single-use approval and idempotent order creation
-- Job delivery, retries, and dead-letter behavior
+- Redis rate-limit atomicity and dependency failure
 - Razorpay adapter request/response mapping with an HTTP stub
 - Checkout signature verification
 - Raw-body webhook signature verification
@@ -141,16 +141,17 @@ Record the date, environment, and outcome in `docs/STATUS.md`. Never capture cre
 
 ## CI order
 
-1. Repository hygiene and secret scan
+1. Repository hygiene, Git-history secret scan, production dependency audit,
+   license policy, and Compose hardening
 2. Formatting and linting
 3. Type checking
-4. Unit and contract tests
-5. Integration tests with services
+4. Unit and contract tests, including log redaction
+5. Integration tests with PostgreSQL/Redis, including correlation persistence
+   and rate-limit atomicity
 6. Production build
-7. Fake-provider end-to-end tests
-8. Deterministic evaluation and threshold check
+7. Deterministic evaluation and threshold check
+8. Fake-provider desktop/mobile end-to-end tests
 
 ## Test-writing rule
 
 Every bug in a money, approval, inventory, model-tool, or webhook boundary gets a regression test before its fix is considered complete. Snapshot tests are not sufficient evidence for decisions involving price, authorization, or state transitions.
-

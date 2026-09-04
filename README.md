@@ -41,9 +41,10 @@ approved, and recorded.
 - Fastify for the API and Razorpay webhook boundary
 - OpenAI Responses API behind a Zod-validated model adapter
 - PostgreSQL with Drizzle ORM
-- Redis and BullMQ only for durable agent/evaluation jobs
-- Razorpay Node SDK and Standard Checkout, test mode only
-- Vitest, Testcontainers, Playwright, and an offline evaluation runner
+- Redis for readiness and bounded API rate limits
+- A typed Razorpay HTTP adapter and Standard Checkout, test mode only
+- Vitest, PostgreSQL/Redis integration tests, Playwright, and an offline
+  evaluation runner
 - pnpm workspaces, Docker Compose, GitHub Actions
 
 The runtime model remains replaceable behind an internal interface.
@@ -55,7 +56,7 @@ cart totals, authorization, order creation, and payment state.
 ```text
 apps/web        Shopper UI and demo dashboard
 apps/api        HTTP API, agent orchestration, checkout and webhooks
-apps/worker     Durable background and evaluation jobs
+apps/worker     Dependency-readiness process; no background queue in this MVP
 packages/domain Shared schemas, money types and state machines
 packages/db     PostgreSQL schema and repositories
 packages/testkit Fixtures, fake adapters and evaluation cases
@@ -105,6 +106,32 @@ then retries the same server-created order to demonstrate duplicate-safe
 recovery. The safety trail identifies what the agent proposed, what
 deterministic policy allowed, and what the shopper approved.
 
+`pnpm db:seed` is repeatable and installs the fictional `stepup-shoes`
+catalogue: 36 shoes plus compatible accessories and inventory. It contains no
+real shopper or merchant data. Re-running migration and seed commands is safe.
+
+## Runtime architecture
+
+```mermaid
+flowchart LR
+  B[Shopper browser] --> W[Next.js web]
+  W --> A[Fastify API]
+  A --> M[Fake or OpenAI model adapter]
+  A --> P[(PostgreSQL truth)]
+  A --> R[(Redis rate limits)]
+  A --> F[Fake or Razorpay test adapter]
+  H[Razorpay webhook] --> A
+  A --> L[Redacted JSON logs]
+
+  M -. proposes .-> A
+  P -. validates catalogue, cart, approval .-> A
+  A -. one approved order .-> F
+```
+
+The model proposes. PostgreSQL-backed deterministic policy validates and
+authorizes. The shopper explicitly approves. Only then can the server create one
+provider order. See [the detailed trust boundaries](docs/ARCHITECTURE.md).
+
 Readiness endpoints:
 
 - Web: `http://localhost:3000/api/health`
@@ -138,6 +165,25 @@ Cart and approval endpoints:
 - Run the checkout policy gate: `POST /v1/checkouts`
 - Inspect redacted evidence: `GET /v1/carts/:cartId/audit`
 
+Payment and merchant endpoints:
+
+- Create one provider order: `POST /v1/payment-orders`
+- Read reconciled state: `GET /v1/checkouts/:checkoutAttemptId`
+- Verify Standard Checkout evidence: `POST /v1/payments/callback`
+- Record cancellation: `POST /v1/payments/cancel`
+- Receive raw signed evidence: `POST /v1/webhooks/razorpay`
+- Fake-provider demo settlement (fake mode only):
+  `POST /v1/demo/payments/settle`
+- Read stored growth evidence: `GET /v1/merchants/:merchantId/growth`
+
+The canonical request and response schemas are served from `GET /openapi.json`.
+API responses include `x-request-id`; a safe caller value is preserved,
+otherwise the server creates one. The same correlation ID is stored on agent-run
+and commerce audit evidence. Conversation starts, turns, approvals, checkouts,
+provider-order creation, and webhooks use separate Redis-backed fixed-window
+limits. If that protection is unavailable, protected requests fail closed with
+`503`.
+
 Every cart mutation supplies `expectedVersion`; stale writers receive `409`
 instead of silently overwriting a newer cart. Selecting a shoe creates at most
 one in-stock add-on offer from the catalogue compatibility relation. The add-on
@@ -148,11 +194,10 @@ Review freezes SKU, variant, quantity, unit price, discount, tax, delivery, and
 integer-paise totals in a database-immutable snapshot. Approval binds the
 shopper ID, snapshot hash, total, and a short expiry. `POST /v1/checkouts`
 revalidates approval freshness, cart version, budget, quantity, live price, and
-stock before creating one unique internal checkout authorization. Session 4 does
-not call a payment provider. `POST /v1/payment-orders` now consumes only this
-allowed authorization boundary and persists one fake or Razorpay test Order per
-checkout attempt. Repeating the request returns the recorded state and never
-silently calls the provider again.
+stock before creating one unique internal checkout authorization.
+`POST /v1/payment-orders` consumes only this allowed authorization boundary and
+persists one fake or Razorpay test Order per checkout attempt. Repeating the
+request returns the recorded state and never silently calls the provider again.
 
 `PAYMENT_PROVIDER=fake` is the credential-free default. To use Razorpay test
 mode, set `PAYMENT_PROVIDER=razorpay` together with all three server-only
@@ -217,6 +262,12 @@ integration, desktop/mobile Playwright journeys, the adversarial evaluation, and
 production builds. Stop local infrastructure with `docker compose down`; named
 volumes preserve data unless explicitly removed.
 
+Run `pnpm security:check` for the production dependency audit and reviewed
+license allow-list. Run `pnpm container:check` for resolved Compose validation
+and static checks against privileged mode, host networking, unpinned `latest`
+images, or missing health checks. GitHub Actions also runs Gitleaks across Git
+history.
+
 Run `pnpm eval` for the offline adversarial evaluation. It validates 50
 versioned JSONL cases, compares ShopPilot with the fixed-keyword baseline,
 enforces the release thresholds, and rewrites
@@ -230,9 +281,25 @@ prefix. If a default database port is already occupied, change `POSTGRES_PORT`
 or `REDIS_PORT` and the matching connection URL in `.env` before starting
 Compose.
 
+## Known limitations
+
+- This is a production-shaped single-merchant MVP, not a deployed or
+  production-certified payment system.
+- Razorpay acceptance still requires the reviewer's own test credentials and a
+  reachable webhook; CI uses the contract-equivalent fake adapter.
+- The worker currently proves dependency readiness only. The MVP has no queued
+  jobs, dead-letter queue, accounts, fulfilment, returns, or cross-merchant
+  search.
+- Redis rate limits are coordination safeguards, not commerce truth. A Redis
+  restart can reset counters; PostgreSQL approval, idempotency, and payment
+  constraints remain authoritative.
+- Demo records are retained intentionally for audit/evaluation. There is no
+  public deletion API; local development data can be discarded with
+  `docker compose down --volumes`, which irreversibly removes local volumes.
+
 ## Current state
 
-The complete accessible demo journey, guarded test-payment flow, merchant growth
-evidence, and adversarial evaluation harness are implemented through Session 8.
-See [current project state](docs/STATUS.md) for verified commands and the exact
-next action.
+The accessible demo journey, guarded test-payment flow, operational hardening,
+merchant evidence, and adversarial evaluation harness are implemented through
+Session 9. See [current project state](docs/STATUS.md) for exact verification
+evidence and the next action.
