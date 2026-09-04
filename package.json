@@ -21,6 +21,7 @@
     "dev:worker": "corepack pnpm --filter @shoppilot/worker dev",
     "db:migrate": "corepack pnpm --filter @shoppilot/db db:migrate",
     "db:seed": "corepack pnpm --filter @shoppilot/db db:seed",
+    "demo:rehearse": "DATABASE_URL=postgresql://shoppilot:shoppilot_dev@localhost:5432/shoppilot REDIS_URL=redis://localhost:6380 playwright test --grep \"release rehearsal\"",
     "eval": "corepack pnpm --filter @shoppilot/evals eval",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

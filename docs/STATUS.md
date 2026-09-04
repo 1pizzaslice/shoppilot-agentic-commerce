@@ -4,75 +4,68 @@ Last updated: 2026-09-04
 
 ## Current position
 
-- Active session: Session 10 — submission and video readiness (not started)
-- Overall state: Sessions 1–9 are complete and merged into `main`; Session 10 is
-  the next implementation session
-- Current branch: `main`
-- Session 9 merge: PR #11 at `fe97407`
-- Verified implementation commit: `ab02b31`
+- Active session: Session 10 — submission and video readiness
+- Overall state: release preparation is complete; final video capture, upload,
+  and form submission require the submitter's credentials and account actions
+- Current branch: `session/10-submission-video-readiness`
+- Release tag: `shoppilot-submission-v1` (exact tagged commit is recorded after
+  tag creation in the final handoff commit)
+- Session 9 merge: PR #11 at `fe97407`; follow-up status merge at `e44f057`
 
 ## Completed
 
-- Added content-minimal structured JSON API/worker logs, safe request-ID
-  validation/generation, response correlation headers, and correlation IDs on
-  durable agent-run, conversation-event, and commerce audit rows.
-- Added atomic Redis fixed-window limits for conversation starts/turns,
-  approvals, checkout/provider-order creation, and webhooks. Protected routes
-  fail closed if Redis is unavailable.
-- Bounded API connection/request receipt, PostgreSQL connection/statement/query,
-  OpenAI, Razorpay, payment-creation, and graceful-shutdown time. Added recursive
-  key/value log redaction tests without logging bodies, prompts, query strings,
-  addresses, signatures, or credentials.
-- Added migration `0005_operational_hardening.sql` with correlation evidence and
-  query indexes. Reviewed row locks, uniqueness constraints, immutable evidence,
-  webhook recovery, and cleanup boundaries.
-- Found and fixed an inverted payment lock order exposed by repeated concurrent
-  integration runs. Checkout-claim and provider-finalization paths now lock the
-  checkout row before the payment row; the concurrency suite passes repeatedly.
-- Added production dependency, dependency-license, Compose configuration, and
-  container-hardening checks to the repository and CI. Upgraded Next.js,
-  Fastify, Drizzle, React, Playwright, Sharp, and PostCSS to clear one critical,
-  multiple high, and one moderate advisory.
-- Reconciled the README and architecture/testing/submission docs with the actual
-  implementation. Added Mermaid trust-boundary diagrams, complete API/setup and
-  seed instructions, operational behavior, cleanup guidance, evaluation result,
-  and explicit limitations. Removed stale BullMQ, SDK, Testcontainers, future
-  session, and unimplemented-table claims.
+- Added `pnpm demo:rehearse`, a self-contained release rehearsal for the
+  documented local PostgreSQL/Redis ports. Fresh desktop and mobile contexts
+  exercise the live API and web app through declined-payment recovery, assert
+  one provider order, open the audit and merchant views, verify discovery, and
+  enforce a 4:45 ceiling.
+- Expanded the submission plan into executable reset/rehearsal instructions,
+  frozen metrics, failure evidence, and public-repository, architecture, pitch,
+  form-field, and URL checklists.
+- Rechecked the public Buildathon page and application form. The requirements
+  remain a public repository, architecture, and five-minute pitch; Track 1
+  still requires test-mode commerce, bounded/gated money actions, an audit
+  trail, and one graceful failure.
+- Verified the public repository, Buildathon page, application form, Schema.org
+  Product page, and UCP repository without credentials. The form asks for
+  identity/college details, Track 1, project title/objectives, repository URL,
+  five-minute video URL, and build challenges.
+- Froze the 50/50 ShopPilot evaluation (baseline 45/50) and documented the
+  visible one-order decline/recovery story plus duplicate/out-of-order webhook
+  integration evidence.
 
 ## Verification
 
 Passed on 2026-09-04:
 
-- Two independent `git clone --no-hardlinks` directories installed with
-  `corepack pnpm install --frozen-lockfile`; each then passed
-  `DATABASE_URL=postgresql://shoppilot:shoppilot_dev@localhost:5432/shoppilot REDIS_URL=redis://localhost:6380 corepack pnpm quality`.
-- In each clean run: repository hygiene passed for 118 candidate files;
-  formatting, lint, strict type checks, 41 unit/contract tests, 27
-  PostgreSQL/Redis integration tests, all workspace production builds, the 50/50
-  ShopPilot evaluation (baseline 45/50), and six desktop/mobile Playwright runs
-  passed.
-- `corepack pnpm audit --prod --registry=https://registry.yarnpkg.com` — no known
-  vulnerabilities. The primary npm advisory endpoint intermittently returned
-  socket time-outs/503; the npm-compatible mirror returned the full audit after
-  the patched lockfile was installed.
-- `corepack pnpm security:licenses` — installed dependency licenses are within
-  the reviewed allow-list: 0BSD, Apache-2.0, BSD-2-Clause, BSD-3-Clause,
-  CC-BY-4.0, ISC, LGPL-3.0-or-later, MIT, and Python-2.0.
-- `corepack pnpm container:check`, resolved `docker compose config`, and running
-  image review passed; PostgreSQL 17 Alpine and Redis 7.4 Alpine were healthy,
-  without privileged mode, host networking, `latest` tags, or missing health
-  checks.
-- Working-tree and full-Git-history secret-pattern scans found no live Razorpay,
-  OpenAI, GitHub, or private-key material. `git diff --check` passed.
-- Payment integration passed twice consecutively after the lock-order fix,
-  including concurrent provider-order creation, uncertain-call expiry,
-  duplicate/out-of-order webhook recovery, and single-order assertions.
+- `DATABASE_URL=postgresql://shoppilot:shoppilot_dev@localhost:5432/shoppilot REDIS_URL=redis://localhost:6380 corepack pnpm quality`
+  — repository hygiene (118 files), formatting, lint, strict type checks, 41
+  unit/contract tests, 27 PostgreSQL/Redis integration tests, all builds, 50/50
+  evaluation (baseline 45/50), and six desktop/mobile Playwright runs.
+- `corepack pnpm demo:rehearse` — two live desktop/mobile release rehearsals
+  passed in 20.1 seconds. The credential-free path explicitly uses fake model
+  and payment adapters.
+- `corepack pnpm security:check` — no known production dependency
+  vulnerabilities; reviewed license allow-list passed. The first sandboxed npm
+  request failed DNS resolution; the approved network retry passed.
+- `corepack pnpm container:check` — resolved Compose and hardening checks passed.
+- Public URL checks returned HTTP 200; fresh isolated Playwright contexts
+  verified shopper, merchant, and discovery surfaces. The in-app browser had no
+  connected instance, so it could not provide an additional interactive pass.
+- `git diff --check` and release-candidate secret-pattern scan passed.
 
 ## Blockers
 
-- None.
+- Final video capture and upload require the submitter's recording environment
+  and hosting account. A Razorpay Standard Checkout take additionally requires
+  the submitter's test keys and a reachable test webhook; the fully reproducible
+  fake-provider take is ready and must be disclosed as fake.
+- Personal form fields and the irreversible form submission require the
+  submitter. The uploaded video URL must then be replayed without sign-in.
 
 ## Exact next action
 
-Create `session/10-submission-video-readiness` from updated `main`, then begin
-release freeze and the five-minute demo rehearsal checklist.
+Record from `shoppilot-submission-v1` using `docs/SUBMISSION.md`, keep the final
+cut at five minutes or less, upload it with public/viewer access, verify the link
+signed out, fill the personal fields, and submit the form. Then check the two
+remaining Session 10 acceptance boxes and merge only with explicit approval.

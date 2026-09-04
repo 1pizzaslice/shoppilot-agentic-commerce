@@ -159,14 +159,14 @@ Acceptance:
 
 ## Session 10 — submission and video readiness
 
-- [ ] Freeze a tagged release and record exact commit/hash used for the video.
-- [ ] Run the five-minute demo script without manual repair or hidden setup.
-- [ ] Capture final evaluation numbers and the failure-recovery evidence.
-- [ ] Complete public repository, architecture, pitch, and form-field checklists.
-- [ ] Verify all URLs from a signed-out/private browser where applicable.
+- [x] Freeze a tagged release and record exact commit/hash used for the video.
+- [x] Run the five-minute demo script without manual repair or hidden setup.
+- [x] Capture final evaluation numbers and the failure-recovery evidence.
+- [x] Complete public repository, architecture, pitch, and form-field checklists.
+- [x] Verify all URLs from a signed-out/private browser where applicable.
 
 Acceptance:
 
 - [ ] The video is five minutes or less and shows working software, not a code tour.
-- [ ] The repository builds from its public instructions and contains no secret.
+- [x] The repository builds from its public instructions and contains no secret.
 - [ ] The submission explicitly shows growth, agentic checkout, bounded/gated money actions, auditability, and graceful failure recovery.

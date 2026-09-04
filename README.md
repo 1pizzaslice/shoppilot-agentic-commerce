@@ -106,6 +106,13 @@ then retries the same server-created order to demonstrate duplicate-safe
 recovery. The safety trail identifies what the agent proposed, what
 deterministic policy allowed, and what the shopper approved.
 
+After Compose is healthy and the database is migrated and seeded, run
+`pnpm demo:rehearse` for the release rehearsal. It drives the live API, web app,
+PostgreSQL, Redis, and fake payment adapter through the declined-payment
+recovery story on fresh desktop and mobile browser contexts. It also verifies
+one provider order, the audit explanation, merchant evidence, machine-readable
+discovery, and the 4:45 rehearsal ceiling.
+
 `pnpm db:seed` is repeatable and installs the fictional `stepup-shoes`
 catalogue: 36 shoes plus compatible accessories and inventory. It contains no
 real shopper or merchant data. Re-running migration and seed commands is safe.
@@ -300,6 +307,6 @@ Compose.
 ## Current state
 
 The accessible demo journey, guarded test-payment flow, operational hardening,
-merchant evidence, and adversarial evaluation harness are implemented through
-Session 9. See [current project state](docs/STATUS.md) for exact verification
-evidence and the next action.
+merchant evidence, adversarial evaluation harness, and submission rehearsal are
+implemented. See [current project state](docs/STATUS.md) for exact release and
+verification evidence.
