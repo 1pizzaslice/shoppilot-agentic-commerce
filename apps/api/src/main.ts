@@ -11,6 +11,8 @@ import {
 import {
   createShoppingConversationHandler,
   parseApiEnvironment,
+  PaymentConflictError,
+  PaymentNotFoundError,
 } from "@shoppilot/domain";
 import {
   createFakePaymentProvider,
@@ -45,10 +47,10 @@ const conversationDependencies = createConversationDependencies(
 const commerceDependencies = createCommerceDependencies(
   environment.DATABASE_URL,
 );
+const fakePaymentProvider =
+  environment.PAYMENT_PROVIDER === "fake" ? createFakePaymentProvider() : null;
 const paymentProvider = (() => {
-  if (environment.PAYMENT_PROVIDER === "fake") {
-    return createFakePaymentProvider();
-  }
+  if (fakePaymentProvider !== null) return fakePaymentProvider;
   if (
     environment.RAZORPAY_KEY_ID === undefined ||
     environment.RAZORPAY_KEY_SECRET === undefined ||
@@ -66,6 +68,55 @@ const paymentDependencies = createPaymentDependencies(
   environment.DATABASE_URL,
   paymentProvider,
 );
+const demoPayments =
+  fakePaymentProvider === null
+    ? undefined
+    : {
+        settle: async (input: {
+          checkoutAttemptId: string;
+          outcome: "paid" | "declined";
+        }) => {
+          const payment = await paymentDependencies.service.getPayment(
+            input.checkoutAttemptId,
+          );
+          if (payment === null)
+            throw new PaymentNotFoundError("Payment not found.");
+          if (payment.providerOrderId === null) {
+            throw new PaymentConflictError("Payment order is not ready.");
+          }
+          const event =
+            input.outcome === "paid" ? "payment.captured" : "payment.failed";
+          const rawBody = Buffer.from(
+            JSON.stringify({
+              event,
+              payload: {
+                payment: {
+                  entity: {
+                    id: `pay_fake_${input.checkoutAttemptId}`,
+                    order_id: payment.providerOrderId,
+                    status: input.outcome === "paid" ? "captured" : "failed",
+                    error_code:
+                      input.outcome === "declined"
+                        ? "demo_card_declined"
+                        : null,
+                  },
+                },
+              },
+            }),
+          );
+          const result = await paymentDependencies.service.processWebhook({
+            eventId: `evt_demo_${randomUUID()}`,
+            signature: fakePaymentProvider.webhookSignature(rawBody),
+            rawBody,
+          });
+          if (result.payment === null) {
+            throw new PaymentConflictError(
+              "Demo payment could not be settled.",
+            );
+          }
+          return result.payment;
+        },
+      };
 const growthDependencies = createGrowthDependencies(environment.DATABASE_URL);
 const conversation = createShoppingConversationHandler({
   model,
@@ -80,6 +131,7 @@ const app = buildApi({
   commerce: commerceDependencies.service,
   payments: paymentDependencies.service,
   growth: growthDependencies.reader,
+  ...(demoPayments === undefined ? {} : { demoPayments }),
 });
 
 const shutdown = async (): Promise<void> => {
