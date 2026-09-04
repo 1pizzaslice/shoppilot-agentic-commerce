@@ -20,6 +20,7 @@ import {
 import {
   createDeterministicIdGenerator,
   createFakePaymentProvider,
+  createUnavailableGrowthReader,
 } from "../../packages/testkit/src/index.js";
 
 const databaseUrl =
@@ -116,6 +117,7 @@ describe("fake-provider payment lifecycle", () => {
       },
       commerce,
       payments,
+      growth: createUnavailableGrowthReader(),
     });
     try {
       const attempt = await authorize();

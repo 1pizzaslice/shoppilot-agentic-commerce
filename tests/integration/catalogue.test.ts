@@ -18,6 +18,7 @@ import {
   createMemoryConversationStore,
   createUnavailableCommerceService,
   createUnavailablePaymentService,
+  createUnavailableGrowthReader,
 } from "../../packages/testkit/src/index.js";
 
 const databaseUrl =
@@ -37,6 +38,7 @@ const app = buildApi({
   }),
   commerce: createUnavailableCommerceService(),
   payments: createUnavailablePaymentService(),
+  growth: createUnavailableGrowthReader(),
 });
 
 beforeAll(async () => {

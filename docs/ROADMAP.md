@@ -98,17 +98,17 @@ Acceptance:
 
 ## Session 6 — merchant growth evidence
 
-- [ ] Add a compact merchant-facing demo view for funnel and add-on outcomes.
-- [ ] Calculate base cart value, accepted add-on value, attach rate, and observed order value using SQL-backed events.
-- [ ] Create a fixed simulation comparing “no add-on” with the compatibility-based suggestion policy.
-- [ ] Label simulated results clearly; make no unsupported causal or production-revenue claim.
-- [ ] Explain why each suggestion is compatible and useful.
+- [x] Add a compact merchant-facing demo view for funnel and add-on outcomes.
+- [x] Calculate base cart value, accepted add-on value, attach rate, and observed order value using SQL-backed events.
+- [x] Create a fixed simulation comparing “no add-on” with the compatibility-based suggestion policy.
+- [x] Label simulated results clearly; make no unsupported causal or production-revenue claim.
+- [x] Explain why each suggestion is compatible and useful.
 
 Acceptance:
 
-- [ ] The dashboard derives every number from stored events.
-- [ ] The demo can show both a useful accepted add-on and a declined suggestion with no checkout penalty.
-- [ ] Metric definitions are visible and reproducible.
+- [x] The dashboard derives every number from stored events.
+- [x] The demo can show both a useful accepted add-on and a declined suggestion with no checkout penalty.
+- [x] Metric definitions are visible and reproducible.
 
 ## Session 7 — adversarial evaluation harness
 

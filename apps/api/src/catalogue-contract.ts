@@ -26,6 +26,7 @@ import {
   createPaymentOrderInputSchema,
   paymentErrorSchema,
   paymentOrderSchema,
+  merchantGrowthSummarySchema,
 } from "@shoppilot/domain";
 
 export const discoverySchema = z
@@ -463,6 +464,23 @@ export const openApiDocument = {
         responses: {
           "200": { description: "Webhook accepted or already processed" },
           "401": { description: "Invalid webhook signature" },
+        },
+      },
+    },
+    "/v1/merchants/{merchantId}/growth": {
+      get: {
+        operationId: "getMerchantGrowthSummary",
+        description:
+          "SQL-backed funnel, add-on, paid-order, and clearly labeled fixed-simulation evidence.",
+        responses: {
+          "200": {
+            description: "Merchant growth evidence and metric definitions",
+            content: {
+              "application/json": {
+                schema: z.toJSONSchema(merchantGrowthSummarySchema),
+              },
+            },
+          },
         },
       },
     },

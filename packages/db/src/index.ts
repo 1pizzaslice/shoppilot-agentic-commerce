@@ -20,6 +20,11 @@ export {
   type PaymentDependencies,
   type PaymentRepositoryOptions,
 } from "./payment-repository.js";
+export {
+  createGrowthDependencies,
+  createPostgresMerchantGrowthReader,
+  type GrowthDependencies,
+} from "./growth-repository.js";
 export { migrateCatalogue } from "./migrate.js";
 export * as catalogueSchema from "./schema.js";
 export { seedCatalogue } from "./seed.js";
