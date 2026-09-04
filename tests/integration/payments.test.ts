@@ -159,6 +159,20 @@ describe("fake-provider payment lifecycle", () => {
         url: `/v1/checkouts/${attempt.id}`,
       });
       expect(paymentOrderSchema.parse(status.json()).state).toBe("paid");
+      const timeline = await app.inject({
+        method: "GET",
+        url: `/v1/carts/${attempt.cartId}/audit`,
+      });
+      expect(timeline.statusCode).toBe(200);
+      expect(JSON.stringify(timeline.json())).toContain(
+        "provider_order_created",
+      );
+      expect(JSON.stringify(timeline.json())).toContain(
+        "checkout_signature_verified",
+      );
+      expect(JSON.stringify(timeline.json())).toContain(
+        "payment_webhook_processed",
+      );
     } finally {
       await app.close();
     }
