@@ -5,6 +5,9 @@ import {
   catalogueProductSchema,
   catalogueSearchResponseSchema,
   catalogueSearchSchema,
+  conversationIdParamsSchema,
+  conversationMessageInputSchema,
+  shoppingResponseSchema,
 } from "@shoppilot/domain";
 
 export const discoverySchema = z
@@ -126,6 +129,63 @@ export const openApiDocument = {
             content: {
               "application/json": {
                 schema: z.toJSONSchema(catalogueErrorSchema),
+              },
+            },
+          },
+        },
+      },
+    },
+    "/v1/conversations": {
+      post: {
+        operationId: "startShoppingConversation",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: z.toJSONSchema(conversationMessageInputSchema),
+            },
+          },
+        },
+        responses: {
+          "201": {
+            description:
+              "Clarification, grounded recommendations, or no result",
+            content: {
+              "application/json": {
+                schema: z.toJSONSchema(shoppingResponseSchema),
+              },
+            },
+          },
+        },
+      },
+    },
+    "/v1/conversations/{conversationId}/messages": {
+      post: {
+        operationId: "continueShoppingConversation",
+        parameters: [
+          {
+            in: "path",
+            name: "conversationId",
+            required: true,
+            schema: z.toJSONSchema(
+              conversationIdParamsSchema.shape.conversationId,
+            ),
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: z.toJSONSchema(conversationMessageInputSchema),
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Next deterministic conversation outcome",
+            content: {
+              "application/json": {
+                schema: z.toJSONSchema(shoppingResponseSchema),
               },
             },
           },

@@ -39,7 +39,7 @@ approved, and recorded.
 - TypeScript on Node.js 22+
 - Next.js for the shopper and demo experience
 - Fastify for the API and Razorpay webhook boundary
-- OpenAI Agents SDK with Zod-validated tools and outputs
+- OpenAI Responses API behind a Zod-validated model adapter
 - PostgreSQL with Drizzle ORM
 - Redis and BullMQ only for durable agent/evaluation jobs
 - Razorpay Node SDK and Standard Checkout, test mode only
@@ -112,6 +112,30 @@ Catalogue endpoints:
 - Product or slug lookup:
   `GET http://localhost:3001/v1/catalog/products/:idOrSlug`
 
+Shopping conversation endpoints:
+
+- Start: `POST http://localhost:3001/v1/conversations`
+- Continue:
+  `POST http://localhost:3001/v1/conversations/:conversationId/messages`
+
+The default `MODEL_PROVIDER=fake` mode is deterministic and needs no API key.
+Set `MODEL_PROVIDER=openai`, `OPENAI_API_KEY`, and optionally `OPENAI_MODEL` to
+use the server-side OpenAI Responses adapter. Responses are requested with
+structured JSON output and `store: false`; no browser receives the key. For
+example, start the required-size flow with:
+
+```bash
+curl --request POST http://localhost:3001/v1/conversations \
+  --header 'content-type: application/json' \
+  --data '{"message":"Running shoes under ₹4,000"}'
+```
+
+Send `{"message":"UK size 8"}` to the returned conversation’s continuation
+endpoint. ShopPilot then returns no more than three in-stock database products,
+each with its exact variant, integer-paise price, fit explanation, trade-off,
+and matched constraints. Conversation intent, messages, agent runs, tool calls,
+and question-policy decisions are persisted in PostgreSQL.
+
 For example, this returns in-stock running-shoe variants in UK size 8 at or
 below ₹4,000. Money is always sent as integer paise:
 
@@ -141,6 +165,6 @@ Compose.
 
 ## Current state
 
-The catalogue and merchant surface are implemented on the Session 2 branch. See
+The grounded shopping conversation is implemented through Session 3. See
 [current project state](docs/STATUS.md) for verified commands and the exact next
 action.

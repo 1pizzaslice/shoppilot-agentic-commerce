@@ -53,6 +53,9 @@ importers:
       '@shoppilot/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      '@shoppilot/testkit':
+        specifier: workspace:*
+        version: link:../../packages/testkit
       fastify:
         specifier: 5.5.0
         version: 5.5.0
@@ -174,6 +177,10 @@ importers:
         version: 3.2.4(@types/node@24.3.0)(tsx@4.20.5)
 
   packages/testkit:
+    dependencies:
+      '@shoppilot/domain':
+        specifier: workspace:*
+        version: link:../domain
     devDependencies:
       typescript:
         specifier: 5.9.2

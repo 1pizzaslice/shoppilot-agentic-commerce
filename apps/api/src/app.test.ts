@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import type { CatalogueReader, DependencyStatus } from "@shoppilot/domain";
+import type {
+  CatalogueReader,
+  DependencyStatus,
+  ShoppingConversationHandler,
+} from "@shoppilot/domain";
 
 import { buildApi } from "./app.js";
 
@@ -8,6 +12,10 @@ const apps: ReturnType<typeof buildApi>[] = [];
 const emptyCatalogue: CatalogueReader = {
   search: () => Promise.resolve({ products: [], nextCursor: null }),
   getProduct: () => Promise.resolve(null),
+};
+const emptyConversation: ShoppingConversationHandler = {
+  start: () => Promise.reject(new Error("not used")),
+  continue: () => Promise.reject(new Error("not used")),
 };
 
 afterEach(async () => {
@@ -18,6 +26,7 @@ const createApp = (statuses: readonly DependencyStatus[]) => {
   const app = buildApi({
     readiness: { check: () => Promise.resolve(statuses) },
     catalogue: emptyCatalogue,
+    conversation: emptyConversation,
   });
   apps.push(app);
   return app;
