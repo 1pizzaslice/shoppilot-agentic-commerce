@@ -76,6 +76,7 @@ export {
   paymentOrderSchema,
   paymentWebhookHeadersSchema,
   providerOrderSchema,
+  providerPaymentSchema,
   razorpayWebhookSchema,
   PaymentConflictError,
   PaymentNotFoundError,
@@ -89,6 +90,7 @@ export {
   type PaymentProvider,
   type PaymentService,
   type ProviderOrder,
+  type ProviderPayment,
 } from "./payment.js";
 export {
   parseApiEnvironment,

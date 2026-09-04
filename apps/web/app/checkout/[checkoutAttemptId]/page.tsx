@@ -7,12 +7,18 @@ export default async function CheckoutPage({
 }) {
   const { checkoutAttemptId } = await params;
   return (
-    <main>
-      <p className="eyebrow">Test-mode payment</p>
-      <h1>Complete your approved purchase</h1>
-      <p>
-        Review the Razorpay test checkout and enter payment details yourself.
-      </p>
+    <main className="payment-shell">
+      <a className="payment-brand" href="/">
+        ShopPilot
+      </a>
+      <div className="payment-heading">
+        <p className="eyebrow">Approved cart · test-mode payment</p>
+        <h1>One last secure step.</h1>
+        <p>
+          Your exact cart is frozen and approved. Enter test payment details in
+          Razorpay’s checkout; ShopPilot receives only signed payment evidence.
+        </p>
+      </div>
       <CheckoutLauncher checkoutAttemptId={checkoutAttemptId} />
     </main>
   );

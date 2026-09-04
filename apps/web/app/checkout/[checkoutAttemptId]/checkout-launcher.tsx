@@ -78,19 +78,36 @@ export function CheckoutLauncher({
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (
-      payment === null ||
-      !["created", "payment_pending"].includes(payment.state)
+    void requestJson<PaymentOrder>(
+      paymentOrderSchema,
+      `/v1/checkouts/${checkoutAttemptId}`,
     )
-      return;
-    const timer = window.setInterval(() => {
+      .then((next) => {
+        if (next.state === "paid") {
+          window.location.replace(`/checkout/${checkoutAttemptId}/success`);
+          return;
+        }
+        setPayment(next);
+      })
+      .catch(() => undefined);
+  }, [checkoutAttemptId]);
+
+  useEffect(() => {
+    if (payment?.state !== "payment_pending") return;
+    const refresh = () => {
       void requestJson<PaymentOrder>(
         paymentOrderSchema,
         `/v1/checkouts/${checkoutAttemptId}`,
       )
-        .then(setPayment)
+        .then((next) => {
+          setPayment(next);
+          if (next.state === "paid") {
+            window.location.replace(`/checkout/${checkoutAttemptId}/success`);
+          }
+        })
         .catch(() => undefined);
-    }, 2_000);
+    };
+    const timer = window.setInterval(refresh, 2_000);
     return () => window.clearInterval(timer);
   }, [checkoutAttemptId, payment]);
 
@@ -138,12 +155,26 @@ export function CheckoutLauncher({
                 razorpaySignature: response.razorpay_signature,
               }),
             },
-          ).then((next) => {
-            setPayment(next);
-            setMessage(
-              "Payment evidence received. Waiting for verified confirmation.",
-            );
-          });
+          )
+            .then((next) => {
+              setPayment(next);
+              if (next.state === "paid") {
+                window.location.replace(
+                  `/checkout/${checkoutAttemptId}/success`,
+                );
+                return;
+              }
+              setMessage(
+                "Payment received. Confirming its captured status with Razorpay…",
+              );
+            })
+            .catch((error: unknown) => {
+              setMessage(
+                error instanceof Error
+                  ? error.message
+                  : "Payment confirmation could not be completed.",
+              );
+            });
         },
         modal: {
           ondismiss: () => {
@@ -155,7 +186,11 @@ export function CheckoutLauncher({
                 headers: { "content-type": "application/json" },
                 body: JSON.stringify({ checkoutAttemptId }),
               },
-            ).then(setPayment);
+            )
+              .then(setPayment)
+              .catch(() =>
+                setMessage("Checkout closed before payment was completed."),
+              );
           },
         },
       }).open();
@@ -166,15 +201,43 @@ export function CheckoutLauncher({
     }
   };
 
+  const confirming = payment?.state === "payment_pending";
+
   return (
-    <section className="card" aria-live="polite">
-      <p>{message}</p>
-      <button type="button" onClick={() => void openCheckout()} disabled={busy}>
-        {busy ? "Preparing checkout…" : "Pay securely in Razorpay test mode"}
-      </button>
-      {payment !== null ? (
-        <p>Payment status: {payment.state.replaceAll("_", " ")}</p>
-      ) : null}
+    <section className="payment-card" aria-live="polite">
+      <div className="payment-security-mark" aria-hidden="true">
+        {confirming ? "…" : "₹"}
+      </div>
+      <div>
+        <p className="payment-kicker">
+          {confirming ? "Verifying payment" : "Razorpay Standard Checkout"}
+        </p>
+        <h2>
+          {confirming
+            ? "Your payment was received."
+            : "Finish securely with Razorpay."}
+        </h2>
+        <p className="payment-message">{message}</p>
+      </div>
+      {!confirming ? (
+        <button
+          className="primary-button payment-button"
+          type="button"
+          onClick={() => void openCheckout()}
+          disabled={busy}
+        >
+          {busy ? "Preparing Razorpay…" : "Open Razorpay test checkout"}
+        </button>
+      ) : (
+        <div className="confirmation-progress" role="status">
+          <span aria-hidden="true" />
+          Checking captured status with Razorpay
+        </div>
+      )}
+      <p className="payment-footnote">
+        Test mode only · no real money moves · ShopPilot never sees payment
+        credentials
+      </p>
     </section>
   );
 }
