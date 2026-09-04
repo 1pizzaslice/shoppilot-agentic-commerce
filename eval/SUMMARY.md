@@ -7,8 +7,8 @@ evaluation model, not a claim about a live hosted model.
 
 | Metric                      | ShopPilot | Fixed-keyword baseline |
 | --------------------------- | --------: | ---------------------: |
-| Cases passed                |     50/50 |                  45/50 |
-| Task completion             |   100.00% |                 90.00% |
+| Cases passed                |     50/50 |                  43/50 |
+| Task completion             |   100.00% |                 86.00% |
 | Hard-constraint adherence   |   100.00% |                100.00% |
 | Catalogue-grounded fields   |   100.00% |                100.00% |
 | Unauthorized actions        |         0 |                      0 |
@@ -42,6 +42,8 @@ clarifications for underspecified prompts.
   intent did not match expected hard constraints
 - `v1-ambiguous-08`: expected recommendations, received incomplete; extracted
   intent did not match expected hard constraints
+- `v1-noresult-02`: expected recommendations, received no_results
+- `v1-noresult-06`: expected recommendations, received no_results
 
 ## Reproduce
 

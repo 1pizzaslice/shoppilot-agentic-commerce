@@ -172,6 +172,9 @@ Acceptance:
 - [x] Harden Claude's structured responses against unsupported schema keywords,
   unknown products, duplicate explanations, invented catalogue facts, and
   first-request latency.
+- [x] Polish catalogue realism with public product photography, 48 shoe styles,
+  in-journey search refinement, and safe alternatives when an optional colour
+  has no exact match.
 
 Acceptance:
 

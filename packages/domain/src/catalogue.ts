@@ -44,6 +44,7 @@ export const catalogueProductSummarySchema = z
     slug: z.string(),
     name: z.string(),
     description: z.string(),
+    imageUrl: z.url().startsWith("https://"),
     productType: productTypeSchema,
     returnPolicyDays: z.number().int().nonnegative(),
     lowestPricePaise: z.number().int().nonnegative(),

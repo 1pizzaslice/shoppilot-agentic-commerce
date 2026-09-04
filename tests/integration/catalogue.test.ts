@@ -52,12 +52,12 @@ afterAll(async () => {
 });
 
 describe("catalogue HTTP integration", () => {
-  it("seeds 36 fictional products", async () => {
+  it("seeds 52 catalogue products", async () => {
     const result = await pool.query<{ count: string }>(
       "SELECT count(*) AS count FROM products WHERE merchant_id = $1",
       ["stepup-shoes"],
     );
-    expect(result.rows[0]?.count).toBe("36");
+    expect(result.rows[0]?.count).toBe("52");
   });
 
   it("hard-filters shoes by budget, size, type, colour, and stock", async () => {
@@ -92,7 +92,7 @@ describe("catalogue HTTP integration", () => {
     });
     expect(response.statusCode).toBe(200);
     const product = catalogueProductSchema.parse(response.json());
-    expect(product.variants).toHaveLength(12);
+    expect(product.variants).toHaveLength(40);
     expect(product.variants.some((variant) => !variant.inStock)).toBe(true);
     expect(product.returnPolicyDays).toBe(14);
     expect(product.compatibleAddons).toHaveLength(1);

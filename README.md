@@ -114,8 +114,9 @@ one provider order, the audit explanation, merchant evidence, machine-readable
 discovery, and the 4:45 rehearsal ceiling.
 
 `pnpm db:seed` is repeatable and installs the fictional `stepup-shoes`
-catalogue: 36 shoes plus compatible accessories and inventory. It contains no
-real shopper or merchant data. Re-running migration and seed commands is safe.
+catalogue: 48 shoe styles, four compatible accessories, public product-image
+URLs, and inventory across five colours and UK sizes 5–12. It contains no real
+shopper or merchant data. Re-running migration and seed commands is safe.
 
 ## Runtime architecture
 

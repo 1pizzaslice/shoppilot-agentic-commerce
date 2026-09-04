@@ -130,8 +130,8 @@ pnpm demo:rehearse
 
 | Metric | ShopPilot | Fixed-keyword baseline |
 | --- | ---: | ---: |
-| Cases passed | 50/50 | 45/50 |
-| Task completion | 100% | 90% |
+| Cases passed | 50/50 | 43/50 |
+| Task completion | 100% | 86% |
 | Hard-constraint adherence | 100% | 100% |
 | Catalogue-grounded fields | 100% | 100% |
 | Unauthorized actions | 0 | 0 |
@@ -184,7 +184,7 @@ assert one provider order and a forward-safe terminal state.
 - [x] Show machine discovery, no more than three grounded choices, one optional add-on, exact approval, and test-mode payment.
 - [x] Show merchant evidence without a causal revenue claim.
 - [x] Show the readable audit trail and one-order declined-payment recovery.
-- [x] Show the frozen 50/50 evaluation and five baseline failures.
+- [x] Show the frozen 50/50 evaluation and seven baseline failures.
 - [ ] Record and trim the final video to five minutes or less.
 - [ ] Upload the video to a link viewable without sign-in and replay it once while signed out.
 

@@ -32,7 +32,7 @@ Last updated: 2026-09-04
   Product page, and UCP repository without credentials. The form asks for
   identity/college details, Track 1, project title/objectives, repository URL,
   five-minute video URL, and build challenges.
-- Froze the 50/50 ShopPilot evaluation (baseline 45/50) and documented the
+- Froze the 50/50 ShopPilot evaluation (baseline 43/50) and documented the
   visible one-order decline/recovery story plus duplicate/out-of-order webhook
   integration evidence.
 - Published the session branch and annotated `shoppilot-submission-v1` tag to
@@ -53,6 +53,16 @@ Last updated: 2026-09-04
   the original Zod validation after every response. Extended the API request
   ceiling beyond the bounded Claude call so first-use schema compilation cannot
   close the shopper connection prematurely.
+- Expanded the demo catalogue to 48 shoe styles plus four accessories, with
+  five colours, UK sizes 5–12, and validated public product photography stored
+  as canonical catalogue data.
+- Replaced the no-match dead end with an in-journey refinement form. Optional
+  colour matching accepts partial shade names; if a colour is unavailable, one
+  audited fallback search shows alternatives while preserving use, size,
+  budget, and stock. Recommendation screens can also be refined in place.
+- Reworded the approved-cart handoff as secure payment, disabled the Next.js
+  development badge, improved product cards/detail imagery, and stopped
+  expired receipt links from polling after a confirmed not-found response.
 
 ## Verification
 
@@ -95,6 +105,23 @@ Passed on 2026-09-04:
   queried PostgreSQL and returned three live in-stock products with
   Claude-written explanations. Unsupported schema constraints were removed
   before the request and the original Zod schemas were enforced afterward.
+- Live Claude catalogue smoke testing on 2026-09-04 returned three Cloud Grey,
+  UK-size-8 products under ₹5,000 with HTTPS images. A purple-colour request
+  disclosed that no exact shade existed and returned three alternatives while
+  retaining use, size, budget, and stock. The focused unit/integration tests and
+  all ten desktop/mobile Playwright journeys passed before the final suite.
+- The refreshed offline evaluation passes 50/50 ShopPilot cases versus 43/50
+  for the fixed-keyword baseline. Optional colour remains a preference: the
+  evaluator still enforces product type, UK size, budget, stock, and catalogue
+  grounding as hard constraints.
+- Final catalogue and journey polish on 2026-09-04: the complete `pnpm quality`
+  pipeline passed with repository hygiene (121 files), formatting, lint,
+  strict type checks, 44 unit/contract tests, 28 PostgreSQL/Redis integration
+  tests, all builds, the 50/50 evaluation (baseline 43/50), and all 12
+  desktop/mobile Playwright journeys. An initial sandboxed run could not open
+  localhost PostgreSQL/Redis (`EPERM`); the permitted localhost run exposed one
+  newly out-of-stock test fixture, which was corrected and then passed both in
+  isolation and in the final complete suite.
 
 ## Blockers
 

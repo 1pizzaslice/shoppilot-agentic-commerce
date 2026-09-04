@@ -195,7 +195,7 @@ describe("cart, add-on, approval, and checkout policy", () => {
       method: "POST",
       url: `/v1/carts/${cart.id}/lines`,
       payload: {
-        variantId: "shoe-02-2-8",
+        variantId: "shoe-02-2-7",
         quantity: 1,
         expectedVersion: cart.version - 1,
       },
@@ -211,7 +211,7 @@ describe("cart, add-on, approval, and checkout policy", () => {
         method: "POST",
         url: `/v1/carts/${cart.id}/lines`,
         payload: {
-          variantId: "shoe-02-2-8",
+          variantId: "shoe-02-2-7",
           quantity: 1,
           expectedVersion: cart.version,
         },
@@ -272,7 +272,7 @@ describe("cart, add-on, approval, and checkout policy", () => {
       method: "POST",
       url: `/v1/carts/${cart.id}/lines`,
       payload: {
-        variantId: "shoe-02-2-8",
+        variantId: "shoe-02-2-7",
         quantity: 1,
         expectedVersion: approval.cart.version,
       },

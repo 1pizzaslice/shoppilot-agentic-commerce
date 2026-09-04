@@ -52,6 +52,7 @@ export const shoppingRecommendationSchema = z
     productId: z.string(),
     slug: z.string(),
     name: z.string(),
+    imageUrl: z.url().startsWith("https://"),
     productType: productTypeSchema.exclude(["accessory"]),
     variant: catalogueVariantSchema,
     returnPolicyDays: z.number().int().nonnegative(),
@@ -292,7 +293,10 @@ const chooseVariant = (
         (intent.maxPricePaise === undefined ||
           variant.pricePaise <= intent.maxPricePaise) &&
         (intent.colour === undefined ||
-          variant.colour.toLowerCase() === intent.colour.toLowerCase()),
+          variant.colour
+            .toLowerCase()
+            .replaceAll("gray", "grey")
+            .includes(intent.colour.toLowerCase().replaceAll("gray", "grey"))),
     )
     .sort(
       (left, right) =>
@@ -319,7 +323,12 @@ export const rankCandidates = (
           (intent.maxPricePaise === undefined ||
             variant.pricePaise <= intent.maxPricePaise) &&
           (intent.colour === undefined ||
-            variant.colour.toLowerCase() === intent.colour.toLowerCase()),
+            variant.colour
+              .toLowerCase()
+              .replaceAll("gray", "grey")
+              .includes(
+                intent.colour.toLowerCase().replaceAll("gray", "grey"),
+              )),
       );
     })
     .sort((left, right) => {
@@ -423,9 +432,9 @@ export const createShoppingConversationHandler = ({
       productType: intent.productType,
       colour: intent.colour,
       inStockOnly: true,
-      limit: 10,
+      limit: 20,
     });
-    const searchResult = await tools.searchCatalog(searchInput);
+    let searchResult = await tools.searchCatalog(searchInput);
     events.push({
       type: "tool_call",
       name: "searchCatalog",
@@ -433,9 +442,37 @@ export const createShoppingConversationHandler = ({
       metadata: {
         permission: tools.permission,
         resultCount: searchResult.products.length,
+        relaxedColour: false,
       },
     });
-    const candidates = rankCandidates(searchResult.products, intent);
+    let recommendationIntent = intent;
+    let relaxedColour = false;
+    if (searchResult.products.length === 0 && intent.colour !== undefined) {
+      const relaxedSearchInput = catalogueSearchToolInputSchema.parse({
+        ...searchInput,
+        colour: undefined,
+      });
+      searchResult = await tools.searchCatalog(relaxedSearchInput);
+      recommendationIntent = shoppingIntentSchema.parse({
+        ...intent,
+        colour: undefined,
+      });
+      relaxedColour = searchResult.products.length > 0;
+      events.push({
+        type: "tool_call",
+        name: "searchCatalog",
+        outcome: "completed",
+        metadata: {
+          permission: tools.permission,
+          resultCount: searchResult.products.length,
+          relaxedColour: true,
+        },
+      });
+    }
+    const candidates = rankCandidates(
+      searchResult.products,
+      recommendationIntent,
+    );
 
     if (candidates.length === 0) {
       const messageText =
@@ -466,7 +503,10 @@ export const createShoppingConversationHandler = ({
     }
 
     const explanations = modelExplanationResponseSchema.parse({
-      explanations: await model.explainRecommendations(candidates, intent),
+      explanations: await model.explainRecommendations(
+        candidates,
+        recommendationIntent,
+      ),
     }).explanations;
     events.push({
       type: "model_call",
@@ -479,7 +519,7 @@ export const createShoppingConversationHandler = ({
     );
     const recommendations: ShoppingRecommendation[] = candidates.map(
       (product) => {
-        const variant = chooseVariant(product, intent);
+        const variant = chooseVariant(product, recommendationIntent);
         if (variant === undefined) {
           throw new Error("Ranked catalogue product has no eligible variant");
         }
@@ -488,21 +528,23 @@ export const createShoppingConversationHandler = ({
           productId: product.id,
           slug: product.slug,
           name: product.name,
+          imageUrl: product.imageUrl,
           productType: product.productType,
           variant,
           returnPolicyDays: product.returnPolicyDays,
           fit:
             explanation?.fit ??
-            `Available in the requested UK size ${String(intent.sizeUk)}.`,
+            `Available in the requested UK size ${String(recommendationIntent.sizeUk)}.`,
           tradeoff:
             explanation?.tradeoff ??
             "Compare the listed price and colour with the other valid options.",
-          matchedConstraints: matchedConstraintsFor(intent),
+          matchedConstraints: matchedConstraintsFor(recommendationIntent),
         });
       },
     );
-    const notice =
-      recommendations.length < 3
+    const notice = relaxedColour
+      ? `No exact ${intent.colour ?? "colour"} matches were available. These alternatives still match your use, UK size, budget and live stock.`
+      : recommendations.length < 3
         ? `Only ${String(recommendations.length)} valid ${recommendations.length === 1 ? "product" : "products"} matched all constraints.`
         : null;
     const response = shoppingResponseSchema.parse({
