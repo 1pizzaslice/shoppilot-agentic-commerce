@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { z } from "zod";
 
 import { createAnthropicShoppingModel } from "./anthropic-model.js";
 
@@ -75,31 +76,33 @@ describe("Anthropic shopping model adapter", () => {
   });
 
   it("keeps only known product explanations and bounds model wording", async () => {
+    const fetchImpl = vi.fn<typeof fetch>(() =>
+      Promise.resolve(
+        responseWith({
+          explanations: [
+            {
+              productId: "unknown-product",
+              fit: "Unknown",
+              tradeoff: "Unknown",
+            },
+            {
+              productId: "shoe-01",
+              fit: "x".repeat(220),
+              tradeoff: "It costs ₹2,299 and has 5 units in stock.",
+            },
+            {
+              productId: "shoe-01",
+              fit: "Duplicate",
+              tradeoff: "Duplicate",
+            },
+          ],
+        }),
+      ),
+    );
     const model = createAnthropicShoppingModel({
       apiKey: "test-key",
       model: "test-model",
-      fetchImpl: () =>
-        Promise.resolve(
-          responseWith({
-            explanations: [
-              {
-                productId: "unknown-product",
-                fit: "Unknown",
-                tradeoff: "Unknown",
-              },
-              {
-                productId: "shoe-01",
-                fit: "x".repeat(220),
-                tradeoff: "Only the supplied price and stock are compared.",
-              },
-              {
-                productId: "shoe-01",
-                fit: "Duplicate",
-                tradeoff: "Duplicate",
-              },
-            ],
-          }),
-        ),
+      fetchImpl,
     });
 
     const explanations = await model.explainRecommendations(
@@ -142,6 +145,15 @@ describe("Anthropic shopping model adapter", () => {
     expect(explanations[0]?.productId).toBe("shoe-01");
     expect(explanations[0]?.fit).toHaveLength(180);
     expect(explanations[0]?.fit.endsWith("…")).toBe(true);
+    const request = fetchImpl.mock.calls[0]?.[1];
+    if (typeof request?.body !== "string") {
+      throw new Error("Expected a JSON string request body");
+    }
+    const payload = z
+      .object({ system: z.string() })
+      .passthrough()
+      .parse(JSON.parse(request.body));
+    expect(payload.system).toContain("Do not compare it with another product");
   });
 
   it("rejects truncated model output", async () => {

@@ -51,6 +51,31 @@ const suggestionRowSchema = z.object({
   checkout_state: z.string().nullable(),
 });
 
+const catalogueRowSchema = z.object({
+  shoe_styles: databaseInteger,
+  accessories: databaseInteger,
+  live_variants: databaseInteger,
+  low_stock_variants: databaseInteger,
+  out_of_stock_variants: databaseInteger,
+  price_floor_paise: databaseInteger,
+  price_ceiling_paise: databaseInteger,
+});
+
+const categoryRowSchema = z.object({
+  product_type: z.string(),
+  count: databaseInteger,
+});
+
+const featuredProductRowSchema = z.object({
+  product_id: z.string(),
+  name: z.string(),
+  image_url: z.url(),
+  product_type: z.string(),
+  colour: z.string(),
+  price_paise: z.number().int().nonnegative(),
+  stock_quantity: databaseInteger,
+});
+
 const definitions = [
   {
     key: "Base cart value",
@@ -89,6 +114,9 @@ export const createPostgresMerchantGrowthReader = (
       valueResult,
       simulationResult,
       suggestionsResult,
+      catalogueResult,
+      categoriesResult,
+      featuredProductsResult,
     ] = await Promise.all([
       pool.query(
         `SELECT
@@ -175,15 +203,82 @@ export const createPostgresMerchantGrowthReader = (
            ORDER BY ao.created_at DESC, ao.id DESC LIMIT 10`,
         [merchantId],
       ),
+      pool.query(
+        `SELECT
+           count(DISTINCT p.id) FILTER (WHERE p.product_type <> 'accessory') AS shoe_styles,
+           count(DISTINCT p.id) FILTER (WHERE p.product_type = 'accessory') AS accessories,
+           count(*) FILTER (WHERE i.quantity > 0) AS live_variants,
+           count(*) FILTER (WHERE i.quantity BETWEEN 1 AND 3) AS low_stock_variants,
+           count(*) FILTER (WHERE i.quantity = 0) AS out_of_stock_variants,
+           coalesce(min(pv.price_paise) FILTER (WHERE p.product_type <> 'accessory'), 0) AS price_floor_paise,
+           coalesce(max(pv.price_paise) FILTER (WHERE p.product_type <> 'accessory'), 0) AS price_ceiling_paise
+         FROM products p
+         JOIN product_variants pv ON pv.product_id = p.id AND pv.active = true
+         JOIN inventory i ON i.variant_id = pv.id
+         WHERE p.merchant_id = $1 AND p.active = true`,
+        [merchantId],
+      ),
+      pool.query(
+        `SELECT p.product_type, count(DISTINCT p.id) AS count
+         FROM products p
+         WHERE p.merchant_id = $1 AND p.active = true
+           AND p.product_type <> 'accessory'
+         GROUP BY p.product_type ORDER BY p.product_type`,
+        [merchantId],
+      ),
+      pool.query(
+        `WITH product_stock AS (
+           SELECT p.id AS product_id, p.name, p.image_url, p.product_type,
+                  min(pv.colour) AS colour, min(pv.price_paise) AS price_paise,
+                  sum(i.quantity)::integer AS stock_quantity
+           FROM products p
+           JOIN product_variants pv ON pv.product_id = p.id AND pv.active = true
+           JOIN inventory i ON i.variant_id = pv.id
+           WHERE p.merchant_id = $1 AND p.active = true
+             AND p.product_type <> 'accessory'
+           GROUP BY p.id, p.name, p.image_url, p.product_type
+         ), featured AS (
+           SELECT DISTINCT ON (product_type) * FROM product_stock
+           ORDER BY product_type, stock_quantity DESC, product_id
+         )
+         SELECT * FROM featured ORDER BY product_type LIMIT 5`,
+        [merchantId],
+      ),
     ]);
 
     const funnel = funnelRowSchema.parse(funnelResult.rows[0]);
     const outcomes = outcomeRowSchema.parse(outcomeResult.rows[0]);
     const values = valueRowSchema.parse(valueResult.rows[0]);
     const simulation = simulationRowSchema.parse(simulationResult.rows[0]);
+    const catalogue = catalogueRowSchema.parse(catalogueResult.rows[0]);
     return merchantGrowthSummarySchema.parse({
       merchantId,
       currency: "INR",
+      catalogue: {
+        shoeStyles: catalogue.shoe_styles,
+        accessories: catalogue.accessories,
+        liveVariants: catalogue.live_variants,
+        lowStockVariants: catalogue.low_stock_variants,
+        outOfStockVariants: catalogue.out_of_stock_variants,
+        priceFloorPaise: catalogue.price_floor_paise,
+        priceCeilingPaise: catalogue.price_ceiling_paise,
+        categories: categoriesResult.rows.map((raw) => {
+          const row = categoryRowSchema.parse(raw);
+          return { productType: row.product_type, count: row.count };
+        }),
+        featuredProducts: featuredProductsResult.rows.map((raw) => {
+          const row = featuredProductRowSchema.parse(raw);
+          return {
+            productId: row.product_id,
+            name: row.name,
+            imageUrl: row.image_url,
+            productType: row.product_type,
+            colour: row.colour,
+            pricePaise: row.price_paise,
+            stockQuantity: row.stock_quantity,
+          };
+        }),
+      },
       funnel: {
         cartsCreated: funnel.carts_created,
         cartsReviewed: funnel.carts_reviewed,

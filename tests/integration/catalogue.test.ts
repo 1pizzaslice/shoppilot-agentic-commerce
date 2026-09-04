@@ -68,7 +68,7 @@ describe("catalogue HTTP integration", () => {
         maxPricePaise: 400_000,
         sizeUk: 8,
         productType: "running",
-        colour: "midnight blue",
+        colour: "grey",
       },
     });
     expect(response.statusCode).toBe(200);
@@ -79,7 +79,7 @@ describe("catalogue HTTP integration", () => {
       for (const variant of product.matchingVariants) {
         expect(variant.pricePaise).toBeLessThanOrEqual(400_000);
         expect(variant.sizeUk).toBe(8);
-        expect(variant.colour).toBe("Midnight Blue");
+        expect(variant.colour).toBe("Cloud Grey");
         expect(variant.stockQuantity).toBeGreaterThan(0);
       }
     }
@@ -92,7 +92,7 @@ describe("catalogue HTTP integration", () => {
     });
     expect(response.statusCode).toBe(200);
     const product = catalogueProductSchema.parse(response.json());
-    expect(product.variants).toHaveLength(40);
+    expect(product.variants).toHaveLength(8);
     expect(product.variants.some((variant) => !variant.inStock)).toBe(true);
     expect(product.returnPolicyDays).toBe(14);
     expect(product.compatibleAddons).toHaveLength(1);

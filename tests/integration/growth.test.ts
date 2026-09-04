@@ -60,7 +60,7 @@ const completePaidCart = async (outcome: "accepted" | "declined") => {
     currency: "INR",
   });
   const offered = await commerce.addPrimaryLine(cart.id, {
-    variantId: "shoe-01-2-8",
+    variantId: "shoe-01-1-8",
     quantity: 1,
     expectedVersion: cart.version,
   });
@@ -140,17 +140,17 @@ describe("merchant growth evidence", () => {
       skipped: 0,
     });
     expect(summary.orderValues).toEqual({
-      baseCartValuePaise: 469_800,
+      baseCartValuePaise: 499_800,
       acceptedAddonValuePaise: 69_900,
-      grossOrderValuePaise: 539_700,
-      averageOrderValuePaise: 269_850,
+      grossOrderValuePaise: 569_700,
+      averageOrderValuePaise: 284_850,
       attachRateBasisPoints: 5_000,
     });
     expect(summary.simulation).toEqual({
       label: "Fixed historical-cart simulation — not causal",
       scenarioCount: 2,
-      noAddonValuePaise: 469_800,
-      compatibilityPolicyValuePaise: 539_700,
+      noAddonValuePaise: 499_800,
+      compatibilityPolicyValuePaise: 569_700,
       incrementalAddonValuePaise: 69_900,
     });
     expect(
@@ -163,6 +163,14 @@ describe("merchant growth evidence", () => {
       { outcome: "accepted", checkoutState: "paid" },
     ]);
     expect(summary.recentSuggestions[0]?.reason).toContain("construction");
+    expect(summary.catalogue).toMatchObject({
+      shoeStyles: 48,
+      accessories: 4,
+      priceFloorPaise: 249_900,
+      priceCeilingPaise: 699_900,
+    });
+    expect(summary.catalogue.categories).toHaveLength(5);
+    expect(summary.catalogue.featuredProducts).toHaveLength(5);
     expect(summary.definitions.map(({ key }) => key)).toContain(
       "Fixed simulation",
     );

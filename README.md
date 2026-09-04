@@ -113,10 +113,16 @@ recovery story on fresh desktop and mobile browser contexts. It also verifies
 one provider order, the audit explanation, merchant evidence, machine-readable
 discovery, and the 4:45 rehearsal ceiling.
 
-`pnpm db:seed` is repeatable and installs the fictional `stepup-shoes`
-catalogue: 48 shoe styles, four compatible accessories, public product-image
-URLs, and inventory across five colours and UK sizes 5–12. It contains no real
-shopper or merchant data. Re-running migration and seed commands is safe.
+`pnpm db:seed` is repeatable and installs the `stepup-shoes` demonstration
+catalogue: 48 distinct shoe styles, four compatible accessories, colour-accurate
+public product photography, a ₹2,499–₹6,999 price range, and inventory across UK
+sizes 5–12. Each style has one photographed colour, so the UI never labels a red
+shoe as grey. It contains no real shopper or merchant data. Re-running migration
+and seed commands is safe.
+
+Catalogue photography is sourced from public Unsplash and Pexels photo pages.
+The insole image is © Ak12121234 under CC BY-SA 4.0, and the packaged bootlace
+image is by Simon Speed under CC0, both via Wikimedia Commons.
 
 ## Runtime architecture
 

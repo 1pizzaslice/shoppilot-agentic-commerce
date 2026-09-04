@@ -70,7 +70,7 @@ const createCartWithPrimary = async (budgetPaise?: number) => {
     method: "POST",
     url: `/v1/carts/${created.id}/lines`,
     payload: {
-      variantId: "shoe-01-2-8",
+      variantId: "shoe-01-1-8",
       quantity: 1,
       expectedVersion: created.version,
     },
@@ -115,6 +115,7 @@ describe("cart, add-on, approval, and checkout policy", () => {
       variantId: "addon-comfort-insoles-standard",
       outcome: null,
     });
+    expect(cart.addonOffer?.imageUrl).toMatch(/^https:\/\//);
     const offer = cart.addonOffer;
     expect(offer).not.toBeNull();
     if (offer === null) return;
@@ -137,7 +138,7 @@ describe("cart, add-on, approval, and checkout policy", () => {
 
     const review = await reviewAndApprove(accepted);
     expect(review.review.snapshot.lines).toHaveLength(2);
-    expect(review.review.snapshot.totalPaise).toBe(304_800);
+    expect(review.review.snapshot.totalPaise).toBe(319_800);
     expect(approvalSchema.parse(review.approval.approval).cartHash).toBe(
       review.review.snapshot.hash,
     );
@@ -195,7 +196,7 @@ describe("cart, add-on, approval, and checkout policy", () => {
       method: "POST",
       url: `/v1/carts/${cart.id}/lines`,
       payload: {
-        variantId: "shoe-02-2-7",
+        variantId: "shoe-02-1-7",
         quantity: 1,
         expectedVersion: cart.version - 1,
       },
@@ -211,7 +212,7 @@ describe("cart, add-on, approval, and checkout policy", () => {
         method: "POST",
         url: `/v1/carts/${cart.id}/lines`,
         payload: {
-          variantId: "shoe-02-2-7",
+          variantId: "shoe-02-1-7",
           quantity: 1,
           expectedVersion: cart.version,
         },
@@ -220,7 +221,7 @@ describe("cart, add-on, approval, and checkout policy", () => {
         method: "POST",
         url: `/v1/carts/${cart.id}/lines`,
         payload: {
-          variantId: "shoe-03-2-8",
+          variantId: "shoe-03-1-8",
           quantity: 1,
           expectedVersion: cart.version,
         },
@@ -272,7 +273,7 @@ describe("cart, add-on, approval, and checkout policy", () => {
       method: "POST",
       url: `/v1/carts/${cart.id}/lines`,
       payload: {
-        variantId: "shoe-02-2-7",
+        variantId: "shoe-02-1-7",
         quantity: 1,
         expectedVersion: approval.cart.version,
       },
@@ -351,7 +352,7 @@ describe("cart, add-on, approval, and checkout policy", () => {
     const priceCart = await createCartWithPrimary();
     const priceApproval = await reviewAndApprove(priceCart);
     await pool.query(
-      "UPDATE product_variants SET price_paise = price_paise + 100 WHERE id = 'shoe-01-2-8'",
+      "UPDATE product_variants SET price_paise = price_paise + 100 WHERE id = 'shoe-01-1-8'",
     );
     try {
       const priceResponse = await app.inject({
@@ -367,14 +368,14 @@ describe("cart, add-on, approval, and checkout policy", () => {
       ).toBe("price_changed");
     } finally {
       await pool.query(
-        "UPDATE product_variants SET price_paise = price_paise - 100 WHERE id = 'shoe-01-2-8'",
+        "UPDATE product_variants SET price_paise = price_paise - 100 WHERE id = 'shoe-01-1-8'",
       );
     }
 
     const stockCart = await createCartWithPrimary();
     const stockApproval = await reviewAndApprove(stockCart);
     const stock = await pool.query<{ quantity: number }>(
-      "UPDATE inventory SET quantity = 0 WHERE variant_id = 'shoe-01-2-8' RETURNING quantity",
+      "UPDATE inventory SET quantity = 0 WHERE variant_id = 'shoe-01-1-8' RETURNING quantity",
     );
     expect(stock.rows[0]?.quantity).toBe(0);
     try {
@@ -391,7 +392,7 @@ describe("cart, add-on, approval, and checkout policy", () => {
       ).toBe("stock_changed");
     } finally {
       await pool.query(
-        "UPDATE inventory SET quantity = 10 WHERE variant_id = 'shoe-01-2-8'",
+        "UPDATE inventory SET quantity = 10 WHERE variant_id = 'shoe-01-1-8'",
       );
     }
   });

@@ -654,6 +654,10 @@ a {
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
+.product-meta {
+  color: #52635a;
+  letter-spacing: 0.075em;
+}
 
 .conversation-panel,
 .checkout-panel,
@@ -683,6 +687,34 @@ a {
 .section-heading > p {
   color: #59675f;
   line-height: 1.6;
+}
+.active-filters,
+.category-chips,
+.inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+.active-filters {
+  margin: -0.75rem 0 1.4rem;
+}
+.active-filters span,
+.category-chips span {
+  padding: 0.45rem 0.7rem;
+  border: 1px solid #cad5cc;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.62);
+  color: #365344;
+  font-size: 0.75rem;
+  font-weight: 750;
+  text-transform: capitalize;
+}
+.inline-actions {
+  justify-content: space-between;
+  margin-top: 0.9rem;
+}
+.refine-current-button {
+  margin-top: 0.75rem;
 }
 .recommendation-grid {
   display: grid;
@@ -833,15 +865,18 @@ a {
   border-radius: 1rem;
   background: #f1eee7;
 }
-.addon-art {
-  display: grid;
+.addon-image-wrap {
   width: 5rem;
   height: 5rem;
-  place-items: center;
+  overflow: hidden;
   border-radius: 0.7rem;
   background: #d5e5d9;
-  color: #2f6744;
-  font-size: 2rem;
+}
+.addon-image-wrap img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .addon-card span {
   color: #c94f25;
@@ -1336,7 +1371,7 @@ a {
   .addon-card {
     grid-template-columns: 3.5rem 1fr;
   }
-  .addon-art {
+  .addon-image-wrap {
     width: 3.5rem;
     height: 3.5rem;
   }
@@ -1404,6 +1439,101 @@ a {
   color: #526059;
   font-size: 1.05rem;
   line-height: 1.6;
+}
+.merchant-shop-link {
+  display: inline-block;
+  margin-top: 1rem;
+  color: #174f31;
+  font-weight: 800;
+}
+
+.catalogue-overview {
+  padding: clamp(1.4rem, 3vw, 2.2rem);
+  border: 1px solid #224c33;
+  border-radius: 1.4rem;
+  background: #173d29;
+  color: #fff;
+  box-shadow: 0 1.5rem 4rem rgb(24 35 30 / 0.12);
+}
+.catalogue-overview .eyebrow {
+  color: #e99b65;
+}
+.catalogue-overview h2 {
+  margin: 0.2rem 0 0.5rem;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  letter-spacing: -0.045em;
+}
+.catalogue-overview p,
+.catalogue-overview small {
+  color: #c8d9cf;
+}
+.catalogue-overview-heading {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2rem;
+  align-items: end;
+}
+.inventory-health {
+  display: flex;
+  gap: 0.7rem;
+}
+.inventory-health span {
+  display: grid;
+  min-width: 7rem;
+  padding: 0.8rem;
+  border-radius: 0.8rem;
+  background: rgb(255 255 255 / 0.08);
+  color: #c8d9cf;
+  font-size: 0.72rem;
+}
+.inventory-health b {
+  color: #fff;
+  font-size: 1.4rem;
+}
+.category-chips {
+  margin: 1.4rem 0;
+}
+.catalogue-overview .category-chips span {
+  border-color: rgb(255 255 255 / 0.16);
+  background: rgb(255 255 255 / 0.08);
+  color: #fff;
+}
+.category-chips b {
+  margin-left: 0.35rem;
+  color: #e9ae82;
+}
+.merchant-product-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+.merchant-product-grid article {
+  overflow: hidden;
+  border-radius: 0.85rem;
+  background: #fff;
+  color: #173d29;
+}
+.merchant-product-grid img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+.merchant-product-grid article > div {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.8rem;
+}
+.merchant-product-grid span {
+  color: #b64c27;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.merchant-product-grid small {
+  color: #627068;
+  line-height: 1.35;
 }
 
 .metric-grid {
@@ -1613,9 +1743,18 @@ a {
 
 @media (max-width: 800px) {
   .merchant-header,
-  .merchant-columns {
+  .merchant-columns,
+  .catalogue-overview-heading {
     grid-template-columns: 1fr;
     gap: 1rem;
+  }
+
+  .merchant-product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .inventory-health {
+    flex-wrap: wrap;
   }
 
   .metric-grid {
@@ -1634,7 +1773,8 @@ a {
 
 @media (max-width: 520px) {
   .metric-grid,
-  .definitions-panel dl {
+  .definitions-panel dl,
+  .merchant-product-grid {
     grid-template-columns: 1fr;
   }
 

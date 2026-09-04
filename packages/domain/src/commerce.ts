@@ -41,6 +41,7 @@ export const addonOfferSchema = z
     productId: z.string().min(1),
     variantId: z.string().min(1),
     name: z.string().min(1),
+    imageUrl: z.url().startsWith("https://"),
     reason: z.string().min(1),
     pricePaise: z.number().int().nonnegative(),
     currency: currencySchema,

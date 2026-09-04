@@ -4,23 +4,37 @@ const now = "2026-09-04T10:00:00.000Z";
 const variant = {
   id: "shoe-01-1-8",
   sku: "STEP-01-1-8",
-  colour: "Midnight Blue",
+  colour: "Signal Red",
   sizeUk: 8,
   pricePaise: 229_900,
   currency: "INR",
   stockQuantity: 7,
   inStock: true,
 };
+const demoPhotos = [
+  {
+    colour: "Signal Red",
+    url: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=82",
+  },
+  {
+    colour: "Jet Black",
+    url: "https://images.unsplash.com/photo-1556306535-fc6684304af1?auto=format&fit=crop&w=1200&q=82",
+  },
+  {
+    colour: "Clean White",
+    url: "https://images.unsplash.com/photo-1521903062400-b80f2cb8cb9d?auto=format&fit=crop&w=1200&q=82",
+  },
+] as const;
 const recommendation = (index: number) => ({
   productId: `shoe-0${String(index)}`,
   slug: index === 1 ? "aero-pace" : `shoe-${String(index)}`,
   name: index === 1 ? "Aero Pace" : `Grounded Runner ${String(index)}`,
-  imageUrl:
-    "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=82",
+  imageUrl: demoPhotos[index - 1]?.url ?? demoPhotos[0].url,
   productType: "running",
   variant: {
     ...variant,
     id: `shoe-0${String(index)}-1-8`,
+    colour: demoPhotos[index - 1]?.colour ?? demoPhotos[0].colour,
     pricePaise: 229_900 + (index - 1) * 20_000,
   },
   returnPolicyDays: 14,
@@ -64,6 +78,8 @@ const cart = (
           productId: "addon-performance-socks",
           variantId: "addon-performance-socks-standard",
           name: "Performance Socks",
+          imageUrl:
+            "https://images.unsplash.com/flagged/photo-1557599365-977bd4eecc4d?auto=format&fit=crop&w=1200&q=82",
           reason: "Selected for this shoe's intended use and construction.",
           pricePaise: 39_900,
           currency: "INR",
@@ -244,6 +260,11 @@ const reachPayment = async (
   await page.getByRole("button", { name: "Show matches" }).click();
   await page.getByRole("button", { name: "View this pair" }).first().click();
   await page.getByRole("button", { name: "Add this exact pair" }).click();
+  await expect(page.locator(".addon-image-wrap img")).toBeVisible();
+  await expect(page.locator(".addon-image-wrap img")).toHaveAttribute(
+    "alt",
+    /product photo$/,
+  );
   await page.getByRole("button", { name: "No thanks" }).click();
   await page.getByRole("button", { name: "Freeze totals for review" }).click();
   await page
@@ -353,9 +374,71 @@ test("refines an empty search without restarting the journey", async ({
   await page
     .getByLabel("Update this search")
     .fill("Increase the budget to ₹4,000 and show any colour");
-  await page.getByRole("button", { name: "Search again" }).click();
+  await page.getByRole("button", { name: "Update current search" }).click();
   await expect(page.getByText("Two alternatives match")).toBeVisible();
   expect(continuedConversation).toBe(true);
+});
+
+test("starts a clean request when replacing recommendation filters", async ({
+  page,
+}) => {
+  let conversationRequests = 0;
+  let continuedConversation = false;
+  await page.route("**/v1/**", async (route) => {
+    const pathname = new URL(route.request().url()).pathname;
+    if (pathname.includes("/messages")) {
+      continuedConversation = true;
+      return route.fulfill({ status: 500, body: "{}" });
+    }
+    if (pathname !== "/v1/conversations")
+      return route.fulfill({ status: 404, body: "{}" });
+
+    conversationRequests += 1;
+    const exactColour = conversationRequests === 1;
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        conversationId: `conversation-${String(conversationRequests)}`,
+        kind: "recommendations",
+        state: "recommendations_shown",
+        intent: {
+          merchantId: "stepup-shoes",
+          productType: "running",
+          maxPricePaise: 800_000,
+          currency: "INR",
+          sizeUk: 8,
+          ...(exactColour ? { colour: "Cloud Grey" } : {}),
+        },
+        message: "I found three catalogue-grounded options.",
+        recommendations: [1, 2, 3].map(recommendation),
+        notice: exactColour
+          ? "Exact Cloud Grey options found in your UK size, within budget and currently in stock."
+          : null,
+      }),
+    });
+  });
+
+  await page.goto("/");
+  await page
+    .getByLabel("What are you looking for?")
+    .fill("Grey running shoes under ₹8,000 in UK 8");
+  await page.getByRole("button", { name: "Find my pair" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Exact Cloud Grey matches." }),
+  ).toBeVisible();
+
+  await page
+    .getByLabel("Want something different?")
+    .fill("Any shoe under ₹8,000 in UK 8");
+  await page.getByRole("button", { name: "Search as new request" }).click();
+
+  await expect(
+    page.getByRole("heading", { name: "Three options across your budget." }),
+  ).toBeVisible();
+  await expect(page.getByText("Any colour")).toBeVisible();
+  expect(conversationRequests).toBe(2);
+  expect(continuedConversation).toBe(false);
 });
 
 test("routes a captured Razorpay callback to the verified receipt", async ({
@@ -494,6 +577,7 @@ test("release rehearsal completes the live failure-recovery story", async ({
   await expect(
     page.getByRole("heading", { name: "Growth without hidden cart changes." }),
   ).toBeVisible();
+  await expect(page.getByText("48 distinct footwear styles")).toBeVisible();
   await expect(page.getByText("Explicitly accepted, then paid")).toBeVisible();
 
   const discovery = await page.request.get(

@@ -59,11 +59,65 @@ export default async function MerchantPage() {
             Growth without hidden cart changes.
           </h1>
         </div>
-        <p className="merchant-intro">
-          Every number below comes from stored carts, approvals, checkout
-          snapshots, payment states, or append-only events.
-        </p>
+        <div>
+          <p className="merchant-intro">
+            Live catalogue health and every commerce number below come from
+            PostgreSQL—not model text or placeholder analytics.
+          </p>
+          <a className="merchant-shop-link" href="/">
+            Open shopper experience →
+          </a>
+        </div>
       </header>
+
+      <section className="catalogue-overview" aria-label="Live catalogue">
+        <div className="catalogue-overview-heading">
+          <div>
+            <p className="eyebrow">Live catalogue</p>
+            <h2>{summary.catalogue.shoeStyles} distinct footwear styles</h2>
+            <p>
+              {summary.catalogue.accessories} consent-only add-ons · sizes 5–12
+              · {formatMoney(summary.catalogue.priceFloorPaise)}–
+              {formatMoney(summary.catalogue.priceCeilingPaise)}
+            </p>
+          </div>
+          <div className="inventory-health">
+            <span>
+              <b>{summary.catalogue.liveVariants}</b> live variants
+            </span>
+            <span>
+              <b>{summary.catalogue.lowStockVariants}</b> low stock
+            </span>
+            <span>
+              <b>{summary.catalogue.outOfStockVariants}</b> sold out
+            </span>
+          </div>
+        </div>
+        <div className="category-chips" aria-label="Catalogue categories">
+          {summary.catalogue.categories.map((category) => (
+            <span key={category.productType}>
+              {category.productType} <b>{category.count}</b>
+            </span>
+          ))}
+        </div>
+        <div className="merchant-product-grid">
+          {summary.catalogue.featuredProducts.map((product) => (
+            <article key={product.productId}>
+              <img src={product.imageUrl} alt={`${product.name} product`} />
+              <div>
+                <span>
+                  {product.productType} · {product.colour}
+                </span>
+                <strong>{product.name}</strong>
+                <small>
+                  {formatMoney(product.pricePaise)} · {product.stockQuantity} in
+                  stock across sizes
+                </small>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
 
       <section className="metric-grid" aria-label="Paid order value">
         <article className="metric-card accent-card">
