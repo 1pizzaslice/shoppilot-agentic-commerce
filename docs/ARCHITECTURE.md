@@ -4,20 +4,24 @@
 
 Use a modular TypeScript monorepo with three deployable processes and shared domain packages. This keeps money and catalogue rules testable without a model or browser while preserving a clean production shape.
 
-```text
-Shopper browser
-  -> Next.js web
-  -> Fastify API
-       -> conversation orchestrator -> model adapter
-       -> catalogue service          -> PostgreSQL
-       -> policy + approval service  -> PostgreSQL audit log
-       -> checkout service           -> Razorpay test API
-       -> job queue                   -> Redis -> worker
-Razorpay webhook
-  -> raw-body verification -> inbox/deduplication -> payment state machine
+```mermaid
+flowchart LR
+  B[Shopper browser] --> W[Next.js web]
+  W --> A[Fastify API]
+  A --> C[Conversation orchestrator]
+  C --> M[Fake or OpenAI adapter]
+  A --> D[Deterministic commerce core]
+  C --> P[(PostgreSQL)]
+  D --> P
+  A --> R[(Redis rate limits)]
+  D --> X[Fake or Razorpay test adapter]
+  H[Razorpay webhook] --> V[Raw HMAC verification]
+  V --> I[Inbox and deduplication]
+  I --> D
+  A --> L[Redacted JSON logs]
 ```
 
-## Planned modules
+## Runtime modules
 
 ### `apps/web`
 
@@ -38,10 +42,10 @@ Razorpay webhook
 
 ### `apps/worker`
 
-- Durable agent runs if request latency becomes unsuitable
-- Batch evaluation jobs and result aggregation
-- Outbox/event processing where needed
-- No independent commerce rules; calls shared domain services
+- Dependency-readiness process with structured startup evidence
+- Reserved deployment boundary for future jobs; no queue is implemented in the
+  narrow MVP
+- No independent commerce rules
 
 ### `packages/domain`
 
@@ -73,13 +77,19 @@ Razorpay webhook
 
 ## Why PostgreSQL and Redis
 
-PostgreSQL is the source of truth for products, inventory, conversation state, carts, approvals, external orders, webhook inbox entries, audit events, and evaluation results. Transactions and uniqueness constraints protect payment boundaries.
+PostgreSQL is the source of truth for products, inventory, conversation state,
+carts, approvals, external orders, webhook inbox entries, and audit events.
+Frozen evaluation cases and results are versioned repository artifacts.
+Transactions and uniqueness constraints protect payment boundaries.
 
-Redis is not a source of truth. It supports BullMQ job coordination, short-lived locks, and rate limits. Correctness must survive Redis eviction or restart because durable state remains in PostgreSQL.
+Redis is not a source of truth. In the MVP it supports fixed-window API rate
+limits and readiness checks. Correctness survives Redis eviction or restart
+because durable state remains in PostgreSQL; a restart may only reset a rate
+counter.
 
 ## Core data model
 
-Initial tables:
+Implemented tables:
 
 - `merchants`
 - `catalog_versions`
@@ -95,12 +105,10 @@ Initial tables:
 - `checkout_snapshots`
 - `approvals`
 - `policy_decisions`
-- `external_orders`
-- `payments`
-- `webhook_inbox`
+- `checkout_attempts`
+- `payment_orders`
+- `payment_webhook_events`
 - `audit_events`
-- `evaluation_runs`
-- `evaluation_case_results`
 
 Important constraints:
 
@@ -160,7 +168,7 @@ Deterministic responsibilities:
 
 ## Catalogue discovery design
 
-Planned public endpoints:
+Implemented public endpoints:
 
 ```text
 GET  /.well-known/ucp
@@ -212,13 +220,37 @@ The discovery endpoint declares only implemented capabilities and a project-spec
 
 ## API and process reliability
 
-- External calls have connection and total time-outs.
-- Retry only safe reads and explicitly idempotent operations, with bounded exponential backoff and jitter.
-- Use correlation IDs across HTTP, jobs, audit, and logs.
-- Use a transactional outbox/inbox only where an actual cross-process consistency need appears.
-- Rate-limit conversation starts, model runs, approval attempts, checkout creation, and webhooks separately.
+- API connections, request receipt, database connections/statements, OpenAI
+  calls, and Razorpay calls have explicit time-outs. Provider-order ambiguity is
+  expired without an automatic second call.
+- Every response carries a validated/generated `x-request-id`. That correlation
+  ID appears in structured API logs and is persisted on agent-run,
+  conversation-event, and commerce audit evidence. The worker emits a process
+  correlation ID; there are no job payloads in this MVP.
+- Redis atomically rate-limits conversation starts/turns, approvals, checkout
+  and provider-order requests, and webhooks in separate buckets. Protected
+  operations fail closed when the limiter is unavailable.
+- A transactional webhook inbox exists for the actual cross-process payment
+  consistency boundary; no speculative outbox was added.
 - Health checks distinguish liveness from dependency readiness.
-- Graceful shutdown stops new work and lets active database/job operations settle within a bound.
+- Graceful shutdown stops new work and lets active database operations settle
+  within a ten-second bound.
+
+## Database review
+
+The catalogue filters use indexes on merchant/type and size/colour/price;
+inventory and primary keys complete the joins. Cart and payment writes take row
+locks inside transactions, while unique approval, snapshot, idempotency,
+provider-order, payment-ID, and webhook-event keys resolve concurrent retries.
+Session 9 adds lookup indexes for correlation evidence, webhook reconciliation,
+and unused/uninvalidated approval expiry. Runtime pools bound connections,
+connection waits, statements, and client-side queries.
+
+Immutable snapshots and append-only audits intentionally have no application
+deletion path. Conversation rows cascade only within a conversation aggregate.
+For local disposable demo data, removing the Compose volumes is the documented
+cleanup boundary; there is deliberately no partial cleanup that could leave
+misleading payment or audit evidence.
 
 ## Privacy and retention
 
@@ -234,8 +266,16 @@ The MVP avoids accounts and minimizes personal data. Use fictional delivery data
 6. **Fake adapters are first-class.** CI and reviewers can run the full product without external accounts.
 7. **Catalogue queries return eligible variants, not model-authored facts.** Search applies parameterized PostgreSQL filters before grouping products, uses stable product-ID cursors, and validates database rows and HTTP responses with shared Zod contracts.
 8. **Conversation orchestration persists evidence but keeps authority deterministic.** PostgreSQL stores the typed intent and state on every turn plus append-only model-call, tool-call, and question-policy events. The model adapter can only return a strict intent patch and short explanations. A read-only catalogue tool, hard-filter recheck, stable price/ID scorer, exact variant selector, and three-result cap run in application code. The fake adapter is the default local and test provider, so the complete conversation path requires no network or API key.
-9. **Checkout authorization is separate from payment execution.** A cart uses a monotonically increasing content version and PostgreSQL row locks for optimistic concurrency. The compatibility relation and live inventory deterministically produce at most one add-on offer; accepted, declined, and skipped outcomes are durable, and only explicit acceptance inserts the add-on line. Review stores a database-immutable canonical snapshot and SHA-256 hash. Approval binds that hash, user, total, currency, cart version, and expiry. The checkout policy transaction revalidates budget, quantities, stock, price, mutation state, freshness, and prior execution before producing one unique `authorized` checkout attempt. Session 5 payment adapters may consume that attempt; they cannot bypass it.
+9. **Checkout authorization is separate from payment execution.** A cart uses a monotonically increasing content version and PostgreSQL row locks for optimistic concurrency. The compatibility relation and live inventory deterministically produce at most one add-on offer; accepted, declined, and skipped outcomes are durable, and only explicit acceptance inserts the add-on line. Review stores a database-immutable canonical snapshot and SHA-256 hash. Approval binds that hash, user, total, currency, cart version, and expiry. The checkout policy transaction revalidates budget, quantities, stock, price, mutation state, freshness, and prior execution before producing one unique `authorized` checkout attempt. Payment adapters may consume that attempt; they cannot bypass it.
 10. **Payment execution is single-shot and evidence-reconciled.** Fake and Razorpay test providers implement the same typed port. A PostgreSQL row lock and primary key claim the authorized attempt before the external call; retries return stored state, including an uncertain `creating` state, instead of creating another provider order. Standard Checkout receives public configuration only. Callback and exact-raw-body webhook signatures are verified server-side, webhook event IDs are unique, and the explicit payment state machine treats verified capture as authoritative while ignoring older evidence after `paid`. Every provider action and webhook outcome appends redacted audit evidence.
 11. **Growth evidence is observational and reproducible.** The merchant reader calculates funnel counts from append-only events and order/add-on values from paid immutable snapshots using SQL. Attach rate is paid orders with an explicitly accepted add-on divided by paid orders. The fixed comparison replays authorized historical carts and subtracts accepted add-on lines for its no-add-on scenario; both the API and UI label it non-causal and avoid unsupported conversion or revenue claims.
 12. **Evaluation is frozen, offline, and failure-visible.** Versioned JSONL cases use a fixed catalogue fixture and strict Zod validation. The ShopPilot run exercises production conversation orchestration, catalogue filtering, tool schemas, and payment transitions with a deterministic evaluation model; the baseline uses fixed keyword extraction with the same deterministic commerce boundaries. The command publishes every case result and named failure, enforces release thresholds, and requires no model or payment account. New material boundary bugs must add a stable regression case to the current or next dataset version.
 13. **The demo is one progressive, contract-driven journey.** The Next.js client uses the same shared Zod contracts as the API while moving through clarification, recommendation, exact-variant detail, explicit add-on choice, snapshot review, approval, checkout, and receipt. It calculates no commerce facts in the browser. A settlement endpoint is registered only when the fake payment provider is active; it produces signed fake webhook evidence so happy and declined-payment recovery presets exercise the real payment state machine without exposing a production shortcut. Playwright uses deterministic contract-shaped fixtures for fast failure-state coverage and also completes the happy path against the live Fastify, PostgreSQL, and fake-provider stack on desktop and mobile.
+14. **Operational evidence is correlated and content-minimal.** The API accepts
+    only a bounded safe request-ID syntax or generates a UUID, returns it to the
+    caller, and propagates it through asynchronous PostgreSQL writes. JSON logs
+    contain method, route template, status, duration, outcome, and identifiers,
+    not request bodies, query strings, prompts, signatures, or addresses.
+    Key-based and credential-shaped redaction is tested. Redis limits abuse at
+    selected boundaries, while PostgreSQL remains the only authority for money
+    safety.

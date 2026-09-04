@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import { and, eq, max } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
+import type { Pool } from "pg";
 import { z } from "zod";
 
 import {
@@ -21,6 +21,7 @@ import {
   conversations,
   shoppingIntents,
 } from "./schema.js";
+import { createRuntimePool, currentCorrelationId } from "./runtime.js";
 
 const storedConversationSchema = z.object({
   id: z.string(),
@@ -118,6 +119,7 @@ export const createPostgresConversationStore = (
           conversationId: turn.conversation.id,
           state: turn.conversation.state,
           eventCount: turn.events.length,
+          correlationId: currentCorrelationId(),
         });
         if (turn.events.length > 0) {
           await transaction.insert(conversationEvents).values(
@@ -130,6 +132,7 @@ export const createPostgresConversationStore = (
               name: event.name,
               outcome: event.outcome,
               metadata: event.metadata,
+              correlationId: currentCorrelationId(),
             })),
           );
         }
@@ -146,11 +149,7 @@ export interface ConversationDependencies {
 export const createConversationDependencies = (
   databaseUrl: string,
 ): ConversationDependencies => {
-  const pool = new Pool({
-    connectionString: databaseUrl,
-    connectionTimeoutMillis: 2_000,
-    max: 10,
-  });
+  const pool = createRuntimePool(databaseUrl);
   return {
     store: createPostgresConversationStore(pool),
     close: async () => pool.end(),

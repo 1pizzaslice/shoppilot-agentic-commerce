@@ -49,6 +49,12 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Repository hygiene
         run: pnpm repo:check
+      - name: Production dependency audit
+        run: pnpm security:dependencies
+      - name: Production license policy
+        run: pnpm security:licenses
+      - name: Compose hardening
+        run: pnpm container:check
       - name: Formatting
         run: pnpm format:check
       - name: Lint
