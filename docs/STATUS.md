@@ -4,12 +4,11 @@ Last updated: 2026-09-04
 
 ## Current position
 
-- Active session: Session 9 — hardening and public-repository review (complete;
-  awaiting review/merge)
-- Overall state: Sessions 1–8 are merged into `main`; every Session 9 task and
-  acceptance criterion is complete on its session branch
-- Current branch: `session/09-hardening-public-review`
-- Branch base: `main` at `80295ba`, the Session 8 merge
+- Active session: Session 10 — submission and video readiness (not started)
+- Overall state: Sessions 1–9 are complete and merged into `main`; Session 10 is
+  the next implementation session
+- Current branch: `main`
+- Session 9 merge: PR #11 at `fe97407`
 - Verified implementation commit: `ab02b31`
 
 ## Completed
@@ -75,5 +74,5 @@ Passed on 2026-09-04:
 
 ## Exact next action
 
-Review and merge Session 9. Then create `session/10-submission-video-readiness`
-from updated `main` and begin release freeze plus five-minute demo rehearsal.
+Create `session/10-submission-video-readiness` from updated `main`, then begin
+release freeze and the five-minute demo rehearsal checklist.
