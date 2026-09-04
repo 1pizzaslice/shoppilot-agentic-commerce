@@ -579,6 +579,15 @@ test("release rehearsal completes the live failure-recovery story", async ({
   ).toBeVisible();
   await expect(page.getByText("48 distinct footwear styles")).toBeVisible();
   await expect(page.getByText("Explicitly accepted, then paid")).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "What deserves attention now" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Best sellers and demand gaps" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Every live footwear style" }),
+  ).toBeVisible();
 
   const discovery = await page.request.get(
     "http://127.0.0.1:3001/.well-known/ucp",

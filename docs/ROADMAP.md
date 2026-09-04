@@ -179,6 +179,10 @@ Acceptance:
   per style, return value/mid/top price coverage for broad requests, start clean
   replacement searches, show accessory photography, and expose live catalogue
   health on the merchant surface.
+- [x] Turn the merchant surface into an evidence-backed operating dashboard
+  with seven-day activity, funnel and category charts, growth insights,
+  best-seller/demand-gap states, and a complete 48-style performance table;
+  surface live stock and return windows on shopper catalogue cards.
 
 Acceptance:
 

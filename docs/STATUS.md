@@ -77,6 +77,15 @@ Last updated: 2026-09-05
 - Expanded the merchant surface with PostgreSQL-derived catalogue health,
   category coverage, ₹2,499–₹6,999 range, stock states, and representative live
   product cards alongside the existing growth and consent evidence.
+- Rebuilt the merchant view as an operating dashboard backed entirely by
+  stored commerce evidence: seven-day activity and funnel charts, category
+  demand, deterministic growth-factor insights, best-seller and demand-gap
+  states, and a 48-style table with inventory, cart interest, paid units,
+  value, and conversion. Empty sales states remain explicit instead of ranking
+  arbitrary products.
+- Improved shopper catalogue cards with live stock and return-window signals,
+  while preserving the three-choice limit, canonical product photography, and
+  database-authoritative product facts.
 
 ## Verification
 
@@ -149,6 +158,16 @@ Passed through 2026-09-05:
   preformatted catalogue-derived rupee strings and may only copy them; its four
   focused adapter tests, API strict type check, API build, formatting, and diff
   checks passed after the last change.
+- Merchant intelligence and catalogue UX pass on 2026-09-05: the complete
+  `pnpm quality` pipeline passed repository hygiene (121 files), formatting,
+  lint, strict type checks, 44 unit/contract tests, 29 PostgreSQL/Redis
+  integration tests, all production builds, the 50/50 evaluation (baseline
+  43/50), and all 14 desktop/mobile Playwright journeys. The first sandboxed
+  integration attempt could not open localhost PostgreSQL/Redis (`EPERM`); the
+  permitted localhost run passed. A final web build after the CSS compatibility
+  cleanup passed without the earlier Autoprefixer warning. The in-app browser
+  had no connected instance, so the automated desktop/mobile coverage remains
+  the visual interaction evidence for this pass.
 
 ## Blockers
 

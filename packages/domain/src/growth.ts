@@ -34,6 +34,51 @@ const featuredCatalogueProductSchema = z
   })
   .strict();
 
+const activityPointSchema = z
+  .object({
+    date: z.iso.date(),
+    cartsCreated: countSchema,
+    paidOrders: countSchema,
+    grossValuePaise: moneySchema,
+  })
+  .strict();
+
+const productPerformanceSchema = z
+  .object({
+    productId: z.string().min(1),
+    name: z.string().min(1),
+    imageUrl: z.url().startsWith("https://"),
+    productType: z.string().min(1),
+    colour: z.string().min(1),
+    pricePaise: moneySchema,
+    stockQuantity: countSchema,
+    cartAdds: countSchema,
+    paidOrders: countSchema,
+    unitsSold: countSchema,
+    grossValuePaise: moneySchema,
+    conversionBasisPoints: z.number().int().min(0).max(10_000),
+  })
+  .strict();
+
+const categoryPerformanceSchema = z
+  .object({
+    productType: z.string().min(1),
+    cartAdds: countSchema,
+    paidOrders: countSchema,
+    unitsSold: countSchema,
+    grossValuePaise: moneySchema,
+  })
+  .strict();
+
+const growthInsightSchema = z
+  .object({
+    kind: z.enum(["win", "opportunity", "risk"]),
+    title: z.string().min(1),
+    detail: z.string().min(1),
+    action: z.string().min(1),
+  })
+  .strict();
+
 export const merchantGrowthSummarySchema = z
   .object({
     merchantId: z.string().min(1),
@@ -86,6 +131,15 @@ export const merchantGrowthSummarySchema = z
         incrementalAddonValuePaise: moneySchema,
       })
       .strict(),
+    activity: z
+      .object({
+        windowDays: z.literal(7),
+        series: z.array(activityPointSchema).length(7),
+      })
+      .strict(),
+    productPerformance: z.array(productPerformanceSchema).max(50),
+    categoryPerformance: z.array(categoryPerformanceSchema).max(10),
+    insights: z.array(growthInsightSchema).min(1).max(4),
     recentSuggestions: z.array(growthSuggestionSchema).max(10),
     definitions: z.array(
       z

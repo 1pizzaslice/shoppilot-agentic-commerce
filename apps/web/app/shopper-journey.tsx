@@ -622,6 +622,17 @@ export function ShopperJourney() {
                     <strong className="price">
                       {money(item.variant.pricePaise)}
                     </strong>
+                    <div
+                      className="product-assurances"
+                      aria-label="Product assurances"
+                    >
+                      <span>
+                        {item.variant.stockQuantity <= 3
+                          ? `Only ${String(item.variant.stockQuantity)} left`
+                          : `${String(item.variant.stockQuantity)} in stock`}
+                      </span>
+                      <span>{item.returnPolicyDays}-day returns</span>
+                    </div>
                     <p>{item.fit}</p>
                     <small>{item.tradeoff}</small>
                     <ul>
