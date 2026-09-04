@@ -8,6 +8,12 @@ export {
   createPostgresConversationStore,
   type ConversationDependencies,
 } from "./conversation-repository.js";
+export {
+  createCommerceDependencies,
+  createPostgresCommerceService,
+  type CommerceDependencies,
+  type CommerceRepositoryOptions,
+} from "./commerce-repository.js";
 export { migrateCatalogue } from "./migrate.js";
 export * as catalogueSchema from "./schema.js";
 export { seedCatalogue } from "./seed.js";

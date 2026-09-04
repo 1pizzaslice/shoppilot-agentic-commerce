@@ -5,6 +5,7 @@ import type {
   DependencyStatus,
   ShoppingConversationHandler,
 } from "@shoppilot/domain";
+import { createUnavailableCommerceService } from "@shoppilot/testkit";
 
 import { buildApi } from "./app.js";
 
@@ -27,6 +28,7 @@ const createApp = (statuses: readonly DependencyStatus[]) => {
     readiness: { check: () => Promise.resolve(statuses) },
     catalogue: emptyCatalogue,
     conversation: emptyConversation,
+    commerce: createUnavailableCommerceService(),
   });
   apps.push(app);
   return app;
@@ -82,6 +84,7 @@ describe("catalogue contract", () => {
     const document: unknown = openapi.json();
     expect(document).toMatchObject({ openapi: "3.1.0" });
     expect(JSON.stringify(document)).toContain("/v1/catalog/search");
+    expect(JSON.stringify(document)).toContain("/v1/checkouts");
   });
 
   it("rejects malformed search input before calling the catalogue", async () => {

@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import {
   createCatalogueDependencies,
+  createCommerceDependencies,
   createConversationDependencies,
   createReadinessDependencies,
 } from "@shoppilot/db";
@@ -35,18 +36,27 @@ const catalogue = createCatalogueDependencies(environment.DATABASE_URL);
 const conversationDependencies = createConversationDependencies(
   environment.DATABASE_URL,
 );
+const commerceDependencies = createCommerceDependencies(
+  environment.DATABASE_URL,
+);
 const conversation = createShoppingConversationHandler({
   model,
   catalogue,
   store: conversationDependencies.store,
   nextId: randomUUID,
 });
-const app = buildApi({ readiness, catalogue, conversation });
+const app = buildApi({
+  readiness,
+  catalogue,
+  conversation,
+  commerce: commerceDependencies.service,
+});
 
 const shutdown = async (): Promise<void> => {
   await app.close();
   await catalogue.close();
   await conversationDependencies.close();
+  await commerceDependencies.close();
   await readiness.close();
 };
 
@@ -58,6 +68,7 @@ try {
 } catch (error: unknown) {
   await catalogue.close();
   await conversationDependencies.close();
+  await commerceDependencies.close();
   await readiness.close();
   throw error;
 }

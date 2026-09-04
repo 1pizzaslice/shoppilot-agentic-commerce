@@ -1,13 +1,25 @@
 import { z } from "zod";
 
 import {
+  addCartLineInputSchema,
+  addonDecisionInputSchema,
+  approveCartInputSchema,
+  auditEventSchema,
   catalogueErrorSchema,
   catalogueProductSchema,
   catalogueSearchResponseSchema,
   catalogueSearchSchema,
+  cartSchema,
+  cartWithApprovalSchema,
+  cartWithSnapshotSchema,
+  checkoutAuthorizationSchema,
+  commerceErrorSchema,
+  createCartInputSchema,
+  createCheckoutInputSchema,
   conversationIdParamsSchema,
   conversationMessageInputSchema,
   shoppingResponseSchema,
+  versionedCartInputSchema,
 } from "@shoppilot/domain";
 
 export const discoverySchema = z
@@ -186,6 +198,172 @@ export const openApiDocument = {
             content: {
               "application/json": {
                 schema: z.toJSONSchema(shoppingResponseSchema),
+              },
+            },
+          },
+        },
+      },
+    },
+    "/v1/carts": {
+      post: {
+        operationId: "createCart",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: z.toJSONSchema(createCartInputSchema),
+            },
+          },
+        },
+        responses: {
+          "201": {
+            description: "Versioned draft cart",
+            content: {
+              "application/json": { schema: z.toJSONSchema(cartSchema) },
+            },
+          },
+        },
+      },
+    },
+    "/v1/carts/{cartId}/lines": {
+      post: {
+        operationId: "setPrimaryCartLine",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: z.toJSONSchema(addCartLineInputSchema),
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description:
+              "Updated cart with at most one deterministic add-on offer",
+            content: {
+              "application/json": { schema: z.toJSONSchema(cartSchema) },
+            },
+          },
+          "409": {
+            description: "Stale cart version or unavailable selection",
+            content: {
+              "application/json": {
+                schema: z.toJSONSchema(commerceErrorSchema),
+              },
+            },
+          },
+        },
+      },
+    },
+    "/v1/carts/{cartId}/addon-decision": {
+      post: {
+        operationId: "recordAddonDecision",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: z.toJSONSchema(addonDecisionInputSchema),
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Cart after an accepted, declined, or skipped add-on",
+            content: {
+              "application/json": { schema: z.toJSONSchema(cartSchema) },
+            },
+          },
+        },
+      },
+    },
+    "/v1/carts/{cartId}/review": {
+      post: {
+        operationId: "reviewCart",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: z.toJSONSchema(versionedCartInputSchema),
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Immutable price and quantity snapshot for approval",
+            content: {
+              "application/json": {
+                schema: z.toJSONSchema(cartWithSnapshotSchema),
+              },
+            },
+          },
+        },
+      },
+    },
+    "/v1/carts/{cartId}/approve": {
+      post: {
+        operationId: "approveCart",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: z.toJSONSchema(approveCartInputSchema),
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Expiring approval bound to user, hash, and total",
+            content: {
+              "application/json": {
+                schema: z.toJSONSchema(cartWithApprovalSchema),
+              },
+            },
+          },
+        },
+      },
+    },
+    "/v1/checkouts": {
+      post: {
+        operationId: "authorizeCheckout",
+        description:
+          "Runs the deterministic policy gate and creates an idempotent internal authorization. External payment order creation begins in Session 5.",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: z.toJSONSchema(createCheckoutInputSchema),
+            },
+          },
+        },
+        responses: {
+          "201": {
+            description: "Checkout authorized by an allowed policy decision",
+            content: {
+              "application/json": {
+                schema: z.toJSONSchema(checkoutAuthorizationSchema),
+              },
+            },
+          },
+          "409": {
+            description: "Checkout rejected by policy",
+            content: {
+              "application/json": {
+                schema: z.toJSONSchema(commerceErrorSchema),
+              },
+            },
+          },
+        },
+      },
+    },
+    "/v1/carts/{cartId}/audit": {
+      get: {
+        operationId: "getCartAuditTimeline",
+        responses: {
+          "200": {
+            description: "Append-only redacted cart and checkout evidence",
+            content: {
+              "application/json": {
+                schema: z.toJSONSchema(z.array(auditEventSchema)),
               },
             },
           },
