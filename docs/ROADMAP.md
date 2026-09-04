@@ -66,19 +66,19 @@ Acceptance:
 
 ## Session 4 — cart, upsell, policy gate, and approval
 
-- [ ] Implement cart and checkout state machines with optimistic concurrency.
-- [ ] Add a deterministic compatibility-based add-on selector; the model may explain but not select unavailable/incompatible products.
-- [ ] Show one optional add-on and measure accepted/declined/skipped outcomes.
-- [ ] Implement immutable cart snapshots and a final approval record bound to user, cart hash, total, and expiry.
-- [ ] Implement the policy gate for budget, stock, price, quantity, approval freshness, duplicate execution, and cart mutation.
-- [ ] Add an append-only audit timeline with safe redaction.
+- [x] Implement cart and checkout state machines with optimistic concurrency.
+- [x] Add a deterministic compatibility-based add-on selector; the model may explain but not select unavailable/incompatible products.
+- [x] Show one optional add-on and measure accepted/declined/skipped outcomes.
+- [x] Implement immutable cart snapshots and a final approval record bound to user, cart hash, total, and expiry.
+- [x] Implement the policy gate for budget, stock, price, quantity, approval freshness, duplicate execution, and cart mutation.
+- [x] Add an append-only audit timeline with safe redaction.
 
 Acceptance:
 
-- [ ] No add-on is added without explicit consent.
-- [ ] Any post-approval cart change invalidates approval.
-- [ ] The API cannot create an external order without a valid policy decision and approval.
-- [ ] Concurrent approvals cannot create duplicate checkout attempts.
+- [x] No add-on is added without explicit consent.
+- [x] Any post-approval cart change invalidates approval.
+- [x] The API cannot create an external order without a valid policy decision and approval.
+- [x] Concurrent approvals cannot create duplicate checkout attempts.
 
 ## Session 5 — Razorpay test-mode checkout
 
