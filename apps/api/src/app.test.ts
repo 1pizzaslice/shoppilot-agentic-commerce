@@ -114,6 +114,52 @@ describe("catalogue contract", () => {
 });
 
 describe("payment HTTP boundary", () => {
+  it("exposes deterministic settlement only when a fake demo controller is configured", async () => {
+    const hidden = await createApp([]).inject({
+      method: "POST",
+      url: "/v1/demo/payments/settle",
+      payload: { checkoutAttemptId: "attempt-1", outcome: "paid" },
+    });
+    expect(hidden.statusCode).toBe(404);
+
+    const app = buildApi({
+      readiness: { check: () => Promise.resolve([]) },
+      catalogue: emptyCatalogue,
+      conversation: emptyConversation,
+      commerce: createUnavailableCommerceService(),
+      payments: createUnavailablePaymentService(),
+      growth: createUnavailableGrowthReader(),
+      demoPayments: {
+        settle: (input) =>
+          Promise.resolve({
+            checkoutAttemptId: input.checkoutAttemptId,
+            state: input.outcome === "paid" ? "paid" : "failed",
+            provider: "fake",
+            providerOrderId: "order-fake-1",
+            providerPaymentId: input.outcome === "paid" ? "pay-fake-1" : null,
+            amountPaise: 229_900,
+            currency: "INR",
+            failureCode:
+              input.outcome === "declined" ? "demo_card_declined" : null,
+            createdAt: "2026-09-04T10:00:00.000Z",
+            updatedAt: "2026-09-04T10:00:01.000Z",
+          }),
+      },
+    });
+    apps.push(app);
+    const settled = await app.inject({
+      method: "POST",
+      url: "/v1/demo/payments/settle",
+      payload: { checkoutAttemptId: "attempt-1", outcome: "paid" },
+    });
+    expect(settled.statusCode).toBe(200);
+    expect(settled.json()).toMatchObject({
+      checkoutAttemptId: "attempt-1",
+      state: "paid",
+      provider: "fake",
+    });
+  });
+
   it("passes the exact raw webhook bytes to signature verification", async () => {
     const rawBody = Buffer.from(
       '{"event":"payment.captured","payload":{"payment":{"entity":{"id":"pay_1","order_id":"order_1","status":"captured"}}}}',

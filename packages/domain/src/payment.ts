@@ -75,6 +75,13 @@ export const cancelPaymentInputSchema = z
   .object({ checkoutAttemptId: z.string().min(1).max(160) })
   .strict();
 
+export const demoPaymentInputSchema = z
+  .object({
+    checkoutAttemptId: z.string().min(1).max(160),
+    outcome: z.enum(["paid", "declined"]),
+  })
+  .strict();
+
 export const paymentWebhookHeadersSchema = z
   .object({
     "x-razorpay-event-id": z.string().min(1).max(160),
@@ -134,6 +141,7 @@ export type CreateProviderOrderInput = z.infer<
 export type PaymentOrder = z.infer<typeof paymentOrderSchema>;
 export type CheckoutLaunch = z.infer<typeof checkoutLaunchSchema>;
 export type CheckoutCallbackInput = z.infer<typeof checkoutCallbackInputSchema>;
+export type DemoPaymentInput = z.infer<typeof demoPaymentInputSchema>;
 
 export interface PaymentProvider {
   readonly name: "fake" | "razorpay";

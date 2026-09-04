@@ -129,17 +129,17 @@ Acceptance targets:
 
 ## Session 8 — demo experience and accessibility
 
-- [ ] Build a polished responsive shopper journey: prompt, clarification, recommendations, product detail, cart, add-on, approval, payment, receipt.
-- [ ] Add a human-readable audit drawer showing what the agent proposed, what policy allowed, and what the user approved.
-- [ ] Build deterministic demo presets for happy path and failure recovery.
-- [ ] Add loading, empty, error, retry, cancellation, and stale-cart states.
-- [ ] Meet keyboard navigation, focus, contrast, form-label, and reduced-motion basics.
+- [x] Build a polished responsive shopper journey: prompt, clarification, recommendations, product detail, cart, add-on, approval, payment, receipt.
+- [x] Add a human-readable audit drawer showing what the agent proposed, what policy allowed, and what the user approved.
+- [x] Build deterministic demo presets for happy path and failure recovery.
+- [x] Add loading, empty, error, retry, cancellation, and stale-cart states.
+- [x] Meet keyboard navigation, focus, contrast, form-label, and reduced-motion basics.
 
 Acceptance:
 
-- [ ] Playwright covers the complete happy path and one recovered failure on desktop and mobile viewports.
-- [ ] No dead end requires database editing or page refresh.
-- [ ] A new viewer can understand the product and safety model without narration.
+- [x] Playwright covers the complete happy path and one recovered failure on desktop and mobile viewports.
+- [x] No dead end requires database editing or page refresh.
+- [x] A new viewer can understand the product and safety model without narration.
 
 ## Session 9 — hardening and public-repository review
 

@@ -4,50 +4,42 @@ Last updated: 2026-09-04
 
 ## Current position
 
-- Active session: Session 8 — demo experience and accessibility (ready to start)
-- Overall state: Sessions 1–7 are merged into `main`; Session 8 implementation has not started
+- Active session: Session 8 — demo experience and accessibility (complete; awaiting review/merge)
+- Overall state: Sessions 1–7 are merged into `main`; every Session 8 task and acceptance criterion is complete on its session branch
 - Current branch: `session/08-demo-experience-accessibility`
 - Branch base: synced `main` at `efa6324`, after Session 7 PR #9 was merged
 
 ## Completed
 
-- Added 50 strict, versioned JSONL cases using the exact category mix in `docs/TESTING.md`: 10 happy paths, 10 ambiguous requests, 8 no-result/stale-catalogue cases, 10 malicious cases, 7 commerce attacks, and 5 payment failures.
-- Added a frozen `eval-catalogue-v1` catalogue and a deterministic evaluation model so normal CI never needs a paid model call, network access, or a Razorpay account.
-- Exercised production conversation orchestration, deterministic ranking, catalogue-grounded recommendation fields, strict tool schemas, commerce gates, add-on compatibility, duplicate protection, and payment state transitions.
-- Added deterministic scoring for hard constraints, grounded fields, unauthorized actions, injection containment, add-on compatibility, duplicate safety, task completion, and clarification count.
-- Compared ShopPilot with the documented fixed-keyword baseline using the same catalogue and commerce boundaries.
-- Published every result to `eval/results/latest.json` and a concise summary to `eval/SUMMARY.md`; both ShopPilot and baseline failures are listed by stable case ID with explanations.
-- Added a root `eval` command that validates the dataset, regenerates both artifacts, and exits non-zero if a release threshold fails.
-- Documented the durable offline evaluation architecture and the rule that each later material boundary bug receives a versioned regression case.
-
-## Evaluation result
-
-- ShopPilot: 50/50 cases passed; 100% task completion, hard-constraint adherence, grounded-field accuracy, known-injection containment, add-on compatibility, and duplicate safety; 0 unauthorized actions; median and p95 clarification count both 1.
-- Fixed-keyword baseline: 45/50 cases passed and 90% task completion. Cases `v1-ambiguous-04` through `v1-ambiguous-08` failed because fixed keywords did not interpret jogging, gym, hiking, commute, or weekend synonyms.
-- All Session 7 release thresholds pass. The result is explicitly an offline deterministic evaluation of ShopPilot orchestration and boundaries, not a live-model quality claim.
+- Replaced the placeholder home page with a responsive, progressive shopper journey covering prompt, required-size clarification, three grounded recommendations, exact-variant detail, cart, one optional add-on, frozen review, explicit approval, test payment, and verified receipt.
+- Added deterministic happy-path and decline/recovery presets. Fake-provider settlement enters through signed webhook evidence and the existing payment state machine; the retry reuses the same server-created order. Razorpay-provider sessions continue to the existing Standard Checkout page.
+- Added human-readable safety evidence that distinguishes agent proposals, deterministic policy decisions, shopper consent, and system records from the append-only audit timeline.
+- Added intentional loading, no-results, error, stale-cart refresh, cancellation, retry, declined-payment recovery, and receipt states; no recovery requires a database edit or page refresh.
+- Added labeled controls, keyboard focus on state changes, Escape/close focus handling for the audit dialog, visible focus styles, high-contrast controls, responsive desktop/mobile layouts, and reduced-motion handling.
+- Added Playwright coverage for the complete live Fastify/PostgreSQL/fake-provider path plus deterministic happy and duplicate-safe recovered-decline states on desktop and mobile, then added the `test:e2e` repository/CI gate.
+- Documented the credential-free demo presets and durable fake-only settlement boundary in README and architecture decisions.
 
 ## Verification
 
 Passed on 2026-09-04:
 
-- `corepack pnpm install --no-frozen-lockfile` — lockfile updated for the new workspace; no packages downloaded
-- `DATABASE_URL=postgresql://shoppilot:shoppilot_dev@localhost:5432/shoppilot REDIS_URL=redis://localhost:6380 corepack pnpm quality` — the complete repository gate passed in one run
-- `corepack pnpm repo:check` — 109 candidate files clean
+- `DATABASE_URL=postgresql://shoppilot:shoppilot_dev@localhost:5432/shoppilot REDIS_URL=redis://localhost:6380 corepack pnpm quality` — complete repository gate passed in one run
+- `corepack pnpm repo:check` — 112 candidate files clean
 - `corepack pnpm format:check`
 - `corepack pnpm lint`
 - `corepack pnpm typecheck` — root sources and all seven workspace projects pass strict TypeScript
-- `corepack pnpm test` — 36 tests in 14 files pass without network access
-- `DATABASE_URL=postgresql://shoppilot:shoppilot_dev@localhost:5432/shoppilot REDIS_URL=redis://localhost:6380 corepack pnpm test:integration` — 26 PostgreSQL/Redis tests in six files pass
-- `corepack pnpm eval` — 50/50 ShopPilot cases and every threshold pass; baseline passes 45/50
-- `corepack pnpm build` — shared packages, evaluation runner, API, worker, and production Next.js application pass
+- `corepack pnpm test` — 37 tests in 14 files pass without network access
+- `corepack pnpm test:integration` — 26 PostgreSQL/Redis tests in six files pass
+- `corepack pnpm test:e2e` — live PostgreSQL/fake-provider happy path plus deterministic happy and recovered-decline paths pass on desktop and mobile (6 runs)
+- `corepack pnpm eval` — 50/50 ShopPilot cases and every release threshold pass; baseline passes 45/50
+- `corepack pnpm build` — all shared packages, evaluation runner, API, worker, and production Next.js application pass
 - `git diff --check`
-
-`test:e2e` does not exist yet; its roadmap implementation begins in Session 8, so it is not applicable to Session 7.
+- Diff secret-pattern review found no live key, API key, or private-key material
 
 ## Blockers
 
-- None for Session 8.
+- None.
 
 ## Exact next action
 
-Build the polished responsive shopper journey, starting with the prompt and compact clarification flow, then continue through recommendations, product detail, cart, add-on consent, approval, fake payment, receipt, and the human-readable audit drawer.
+Review and merge Session 8. Then create `session/09-hardening-public-review` from the updated local `main` and begin structured logging, request/job correlation IDs, rate limits, time-outs, and redaction tests.

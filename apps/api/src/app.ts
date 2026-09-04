@@ -34,6 +34,7 @@ import {
   checkoutCallbackInputSchema,
   checkoutLaunchSchema,
   createPaymentOrderInputSchema,
+  demoPaymentInputSchema,
   paymentErrorSchema,
   paymentOrderSchema,
   paymentWebhookHeadersSchema,
@@ -42,6 +43,8 @@ import {
   PaymentProviderError,
   PaymentSignatureError,
   type PaymentService,
+  type DemoPaymentInput,
+  type PaymentOrder,
   merchantGrowthParamsSchema,
   merchantGrowthSummarySchema,
   type MerchantGrowthReader,
@@ -61,6 +64,9 @@ export interface ApiDependencies {
   commerce: CommerceService;
   payments: PaymentService;
   growth: MerchantGrowthReader;
+  demoPayments?: {
+    settle: (input: DemoPaymentInput) => Promise<PaymentOrder>;
+  };
 }
 
 const productParamsSchema = z
@@ -74,6 +80,7 @@ export const buildApi = ({
   commerce,
   payments,
   growth,
+  demoPayments,
 }: ApiDependencies): FastifyInstance => {
   const app = Fastify({ logger: false });
 
@@ -415,6 +422,21 @@ export const buildApi = ({
       await payments.cancel(body.data.checkoutAttemptId),
     );
   });
+
+  if (demoPayments !== undefined) {
+    app.post("/v1/demo/payments/settle", async (request, reply) => {
+      const body = demoPaymentInputSchema.safeParse(request.body);
+      if (!body.success) {
+        return reply.code(400).send(
+          paymentErrorSchema.parse({
+            error: "invalid_request",
+            message: "Demo payment request is invalid.",
+          }),
+        );
+      }
+      return paymentOrderSchema.parse(await demoPayments.settle(body.data));
+    });
+  }
 
   void app.register((webhookApp, _options, done) => {
     webhookApp.addContentTypeParser(
