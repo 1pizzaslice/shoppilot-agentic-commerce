@@ -12,6 +12,7 @@
   "dependencies": {
     "@shoppilot/db": "workspace:*",
     "@shoppilot/domain": "workspace:*",
+    "@shoppilot/testkit": "workspace:*",
     "fastify": "5.5.0",
     "zod": "4.1.5"
   },

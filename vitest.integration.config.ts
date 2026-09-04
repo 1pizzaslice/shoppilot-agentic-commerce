@@ -10,6 +10,9 @@ export default defineConfig({
       "@shoppilot/domain": fileURLToPath(
         new URL("./packages/domain/src/index.ts", import.meta.url),
       ),
+      "@shoppilot/testkit": fileURLToPath(
+        new URL("./packages/testkit/src/index.ts", import.meta.url),
+      ),
     },
   },
   test: {

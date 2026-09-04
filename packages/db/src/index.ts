@@ -3,6 +3,11 @@ export {
   createPostgresCatalogueReader,
   type CatalogueDependencies,
 } from "./catalogue-repository.js";
+export {
+  createConversationDependencies,
+  createPostgresConversationStore,
+  type ConversationDependencies,
+} from "./conversation-repository.js";
 export { migrateCatalogue } from "./migrate.js";
 export * as catalogueSchema from "./schema.js";
 export { seedCatalogue } from "./seed.js";

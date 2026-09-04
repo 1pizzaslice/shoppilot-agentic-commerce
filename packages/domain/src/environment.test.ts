@@ -17,6 +17,7 @@ describe("environment parsing", () => {
 
     expect(environment.RAZORPAY_MODE).toBe("test");
     expect(environment.MODEL_PROVIDER).toBe("fake");
+    expect(environment.OPENAI_MODEL).toBe("gpt-5.4-mini");
     expect(environment.API_PORT).toBe(3001);
   });
 

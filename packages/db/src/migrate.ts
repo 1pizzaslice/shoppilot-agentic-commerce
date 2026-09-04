@@ -3,14 +3,16 @@ import { fileURLToPath } from "node:url";
 
 import { Pool } from "pg";
 
-const migrationUrl = new URL(
-  "../migrations/0001_catalogue.sql",
-  import.meta.url,
-);
+const migrationUrls = [
+  new URL("../migrations/0001_catalogue.sql", import.meta.url),
+  new URL("../migrations/0002_conversations.sql", import.meta.url),
+];
 
 export const migrateCatalogue = async (pool: Pool): Promise<void> => {
-  const migration = await readFile(fileURLToPath(migrationUrl), "utf8");
-  await pool.query(migration);
+  for (const migrationUrl of migrationUrls) {
+    const migration = await readFile(fileURLToPath(migrationUrl), "utf8");
+    await pool.query(migration);
+  }
 };
 
 const isDirectExecution =

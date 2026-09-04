@@ -3,6 +3,7 @@ import {
   check,
   index,
   integer,
+  jsonb,
   pgTable,
   primaryKey,
   text,
@@ -146,6 +147,127 @@ export const productRelations = pgTable(
     check(
       "product_relations_not_self",
       sql`${table.sourceProductId} <> ${table.targetProductId}`,
+    ),
+  ],
+);
+
+export const conversations = pgTable(
+  "conversations",
+  {
+    id: text("id").primaryKey(),
+    merchantId: text("merchant_id")
+      .notNull()
+      .references(() => merchants.id, { onDelete: "cascade" }),
+    state: text("state").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    check(
+      "conversations_state_allowed",
+      sql`${table.state} IN ('collecting', 'ready', 'recommendations_shown', 'product_selected', 'cancelled')`,
+    ),
+  ],
+);
+
+export const shoppingIntents = pgTable("shopping_intents", {
+  conversationId: text("conversation_id")
+    .primaryKey()
+    .references(() => conversations.id, { onDelete: "cascade" }),
+  document: jsonb("document").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+export const conversationMessages = pgTable(
+  "conversation_messages",
+  {
+    id: text("id").primaryKey(),
+    conversationId: text("conversation_id")
+      .notNull()
+      .references(() => conversations.id, { onDelete: "cascade" }),
+    sequence: integer("sequence").notNull(),
+    role: text("role").notNull(),
+    content: text("content").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("conversation_messages_sequence_idx").on(
+      table.conversationId,
+      table.sequence,
+    ),
+    check(
+      "conversation_messages_role_allowed",
+      sql`${table.role} IN ('user', 'assistant')`,
+    ),
+    check(
+      "conversation_messages_sequence_positive",
+      sql`${table.sequence} > 0`,
+    ),
+  ],
+);
+
+export const agentRuns = pgTable(
+  "agent_runs",
+  {
+    id: text("id").primaryKey(),
+    conversationId: text("conversation_id")
+      .notNull()
+      .references(() => conversations.id, { onDelete: "cascade" }),
+    state: text("state").notNull(),
+    eventCount: integer("event_count").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    check(
+      "agent_runs_state_allowed",
+      sql`${table.state} IN ('collecting', 'ready', 'recommendations_shown', 'product_selected', 'cancelled')`,
+    ),
+    check("agent_runs_event_count_nonnegative", sql`${table.eventCount} >= 0`),
+  ],
+);
+
+export const conversationEvents = pgTable(
+  "conversation_events",
+  {
+    id: text("id").primaryKey(),
+    conversationId: text("conversation_id")
+      .notNull()
+      .references(() => conversations.id, { onDelete: "cascade" }),
+    agentRunId: text("agent_run_id")
+      .notNull()
+      .references(() => agentRuns.id, { onDelete: "cascade" }),
+    sequence: integer("sequence").notNull(),
+    type: text("type").notNull(),
+    name: text("name").notNull(),
+    outcome: text("outcome").notNull(),
+    metadata: jsonb("metadata").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("conversation_events_run_sequence_idx").on(
+      table.agentRunId,
+      table.sequence,
+    ),
+    index("conversation_events_conversation_idx").on(table.conversationId),
+    check(
+      "conversation_events_type_allowed",
+      sql`${table.type} IN ('model_call', 'tool_call', 'policy_decision')`,
+    ),
+    check(
+      "conversation_events_outcome_allowed",
+      sql`${table.outcome} IN ('allowed', 'completed', 'rejected')`,
     ),
   ],
 );
