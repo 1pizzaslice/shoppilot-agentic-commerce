@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 
-import { Pool, type PoolClient } from "pg";
+import type { Pool, PoolClient } from "pg";
 import { z } from "zod";
 
 import {
@@ -21,6 +21,7 @@ import {
   type PaymentProvider,
   type PaymentService,
 } from "@shoppilot/domain";
+import { createRuntimePool, currentCorrelationId } from "./runtime.js";
 
 const rowSchema = z.object({
   checkout_attempt_id: z.string(),
@@ -93,14 +94,15 @@ const appendAudit = async (
 ): Promise<void> => {
   await client.query(
     `INSERT INTO audit_events
-       (id, entity_type, entity_id, event_type, outcome, metadata)
-     VALUES ($1, 'checkout', $2, $3, $4, $5::jsonb)`,
+       (id, entity_type, entity_id, event_type, outcome, metadata, correlation_id)
+     VALUES ($1, 'checkout', $2, $3, $4, $5::jsonb, $6)`,
     [
       nextId(),
       attemptId,
       eventType,
       outcome,
       JSON.stringify(redactAuditMetadata(metadata)),
+      currentCorrelationId(),
     ],
   );
 };
@@ -116,14 +118,15 @@ const appendWebhookAudit = (
   client
     .query(
       `INSERT INTO audit_events
-         (id, entity_type, entity_id, event_type, outcome, metadata)
-       VALUES ($1, 'webhook', $2, $3, $4, $5::jsonb)`,
+         (id, entity_type, entity_id, event_type, outcome, metadata, correlation_id)
+       VALUES ($1, 'webhook', $2, $3, $4, $5::jsonb, $6)`,
       [
         nextId(),
         eventId,
         eventType,
         outcome,
         JSON.stringify(redactAuditMetadata(metadata)),
+        currentCorrelationId(),
       ],
     )
     .then(() => undefined);
@@ -292,6 +295,10 @@ export const createPostgresPaymentService = (
         );
       }
       const payment = await withTransaction(pool, async (client) => {
+        await client.query(
+          "SELECT id FROM checkout_attempts WHERE id = $1 FOR UPDATE",
+          [attemptId],
+        );
         transitionCheckoutState("creating", "created");
         const result = await client.query(
           `UPDATE payment_orders
@@ -607,7 +614,7 @@ export const createPaymentDependencies = (
   databaseUrl: string,
   provider: PaymentProvider,
 ): PaymentDependencies => {
-  const pool = new Pool({ connectionString: databaseUrl });
+  const pool = createRuntimePool(databaseUrl);
   return {
     service: createPostgresPaymentService(pool, provider),
     close: () => pool.end(),

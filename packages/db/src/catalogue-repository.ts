@@ -12,7 +12,7 @@ import {
 } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { alias } from "drizzle-orm/pg-core";
-import { Pool } from "pg";
+import type { Pool } from "pg";
 import { z } from "zod";
 
 import {
@@ -35,6 +35,7 @@ import {
   products,
   productVariants,
 } from "./schema.js";
+import { createRuntimePool } from "./runtime.js";
 
 const productRowSchema = z.object({
   id: z.string(),
@@ -332,11 +333,7 @@ export interface CatalogueDependencies extends CatalogueReader {
 export const createCatalogueDependencies = (
   databaseUrl: string,
 ): CatalogueDependencies => {
-  const pool = new Pool({
-    connectionString: databaseUrl,
-    connectionTimeoutMillis: 2_000,
-    max: 10,
-  });
+  const pool = createRuntimePool(databaseUrl);
   const reader = createPostgresCatalogueReader(pool);
   return { ...reader, close: async () => pool.end() };
 };

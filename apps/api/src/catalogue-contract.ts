@@ -333,7 +333,7 @@ export const openApiDocument = {
       post: {
         operationId: "authorizeCheckout",
         description:
-          "Runs the deterministic policy gate and creates an idempotent internal authorization. External payment order creation begins in Session 5.",
+          "Runs the deterministic policy gate and creates an idempotent internal authorization. A separate endpoint consumes it to create one provider order.",
         requestBody: {
           required: true,
           content: {
