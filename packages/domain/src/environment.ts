@@ -24,6 +24,7 @@ const commonEnvironmentSchema = z
     RAZORPAY_KEY_SECRET: optionalSecret,
     RAZORPAY_WEBHOOK_SECRET: optionalSecret,
     MODEL_PROVIDER: z.enum(["fake", "openai"]).default("fake"),
+    OPENAI_MODEL: z.string().min(1).default("gpt-5.4-mini"),
     OPENAI_API_KEY: optionalSecret,
   })
   .superRefine((environment, context) => {

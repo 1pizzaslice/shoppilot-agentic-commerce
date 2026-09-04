@@ -10,16 +10,29 @@ import {
 import {
   catalogueProductSchema,
   catalogueSearchResponseSchema,
+  createShoppingConversationHandler,
 } from "@shoppilot/domain";
+import {
+  createDeterministicIdGenerator,
+  createFakeShoppingModel,
+  createMemoryConversationStore,
+} from "../../packages/testkit/src/index.js";
 
 const databaseUrl =
   process.env.DATABASE_URL ??
   "postgresql://shoppilot:shoppilot_dev@localhost:5432/shoppilot";
 const pool = new Pool({ connectionString: databaseUrl });
 const catalogue = createPostgresCatalogueReader(pool);
+const ids = createDeterministicIdGenerator("catalogue-conversation");
 const app = buildApi({
   readiness: { check: () => Promise.resolve([]) },
   catalogue,
+  conversation: createShoppingConversationHandler({
+    model: createFakeShoppingModel(),
+    catalogue,
+    store: createMemoryConversationStore(),
+    nextId: ids.next,
+  }),
 });
 
 beforeAll(async () => {

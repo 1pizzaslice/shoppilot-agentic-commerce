@@ -50,19 +50,19 @@ Acceptance:
 
 ## Session 3 — grounded shopping conversation
 
-- [ ] Implement conversation/session persistence and a typed shopping-intent schema.
-- [ ] Implement the minimum-question policy: ask only for missing hard constraints; combine questions where possible.
-- [ ] Add agent tools for catalogue search and lookup with strict Zod inputs and read-only permissions.
-- [ ] Implement deterministic candidate filtering and scoring; use the model only to extract intent and explain results.
-- [ ] Present at most three recommendations with price, fit, trade-off, and the exact constraints matched.
-- [ ] Add deterministic fake-model mode for tests and local demonstrations without an API key.
+- [x] Implement conversation/session persistence and a typed shopping-intent schema.
+- [x] Implement the minimum-question policy: ask only for missing hard constraints; combine questions where possible.
+- [x] Add agent tools for catalogue search and lookup with strict Zod inputs and read-only permissions.
+- [x] Implement deterministic candidate filtering and scoring; use the model only to extract intent and explain results.
+- [x] Present at most three recommendations with price, fit, trade-off, and the exact constraints matched.
+- [x] Add deterministic fake-model mode for tests and local demonstrations without an API key.
 
 Acceptance:
 
-- [ ] “Running shoes under ₹4,000” asks for size and at most one compact preference question.
-- [ ] Every recommendation exists in the database and satisfies hard constraints.
-- [ ] The agent admits when fewer than three or no valid products exist.
-- [ ] Unit, integration, and recorded-conversation tests pass without network access.
+- [x] “Running shoes under ₹4,000” asks for size and at most one compact preference question.
+- [x] Every recommendation exists in the database and satisfies hard constraints.
+- [x] The agent admits when fewer than three or no valid products exist.
+- [x] Unit, integration, and recorded-conversation tests pass without network access.
 
 ## Session 4 — cart, upsell, policy gate, and approval
 
