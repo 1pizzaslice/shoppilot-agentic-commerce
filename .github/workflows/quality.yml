@@ -59,12 +59,12 @@ jobs:
         run: pnpm test
       - name: Integration tests
         run: pnpm test:integration
-      - name: Browser journeys
-        run: pnpm test:e2e
       - name: Adversarial evaluation
         run: pnpm eval
       - name: Production build
         run: pnpm build
+      - name: Browser journeys
+        run: pnpm test:e2e
 
   secrets:
     runs-on: ubuntu-latest
