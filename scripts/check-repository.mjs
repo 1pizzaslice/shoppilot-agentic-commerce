@@ -57,7 +57,10 @@ const textExtensions = new Set([
 const secretPatterns = [
   { label: "private key", pattern: /-----BEGIN [A-Z ]*PRIVATE KEY-----/u },
   { label: "Razorpay live key", pattern: /rzp_live_[A-Za-z0-9]+/u },
-  { label: "OpenAI API key", pattern: /sk-(?:proj-)?[A-Za-z0-9_-]{20,}/u },
+  {
+    label: "model API key",
+    pattern: /sk-(?:(?:proj|ant)-)?[A-Za-z0-9_-]{20,}/u,
+  },
   { label: "GitHub token", pattern: /gh[pousr]_[A-Za-z0-9]{20,}/u },
 ];
 

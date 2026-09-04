@@ -167,6 +167,8 @@ Acceptance:
 - [x] Reconcile successful Standard Checkout callbacks directly with Razorpay
   and route desktop/mobile shoppers to a verified receipt without requiring a
   localhost webhook.
+- [x] Replace the unused OpenAI runtime configuration with a typed Claude
+  Messages adapter and Anthropic structured output.
 
 Acceptance:
 

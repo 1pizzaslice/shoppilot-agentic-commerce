@@ -6,7 +6,7 @@ Last updated: 2026-09-04
 
 - Active session: Session 10 — submission and video readiness
 - Overall state: the complete product flow and Razorpay test checkout are
-  implemented; live model language awaits a local OpenAI API key, while final
+  implemented; live model language awaits a local Anthropic API key, while final
   video capture, upload, and form submission require submitter account actions
 - Current branch: `session/10-submission-video-readiness`
 - Release tag: `shoppilot-submission-v1` at
@@ -44,6 +44,10 @@ Last updated: 2026-09-04
 - Added focused adapter and PostgreSQL integration coverage plus desktop/mobile
   browser coverage for the callback-to-receipt route. Reduced Playwright worker
   contention so the live rehearsal and new dynamic route run reliably together.
+- Replaced the unused OpenAI runtime with a direct Anthropic Messages adapter.
+  Claude responses use JSON-schema structured output, are validated again with
+  Zod, and remain limited to intent extraction and grounded recommendation
+  explanations. Claude Haiku 4.5 is the default low-latency model.
 
 ## Verification
 
@@ -69,12 +73,18 @@ Passed on 2026-09-04:
   checks, 41 unit/contract tests, 28 PostgreSQL/Redis integration tests, all
   builds, and 50/50 evaluation passed. The focused Razorpay success regression
   passed twice, then the full eight-run desktop/mobile Playwright suite passed.
+- Claude-provider migration on 2026-09-04: repository hygiene, formatting,
+  lint, strict type checks, 42 unit/contract tests, 28 PostgreSQL/Redis
+  integration tests, all builds, and 50/50 evaluation passed. The first E2E
+  attempt reused a development server while `next build` replaced its output;
+  after stopping that stale process, all eight clean desktop/mobile Playwright
+  runs passed.
 
 ## Blockers
 
-- Real model inference is not active because `OPENAI_API_KEY` is absent and
+- Real model inference is not active because `ANTHROPIC_API_KEY` is absent and
   `MODEL_PROVIDER=fake` remains configured. The submitter must add the key to
-  the ignored local `.env` and set `MODEL_PROVIDER=openai`; catalogue facts and
+  the ignored local `.env` and set `MODEL_PROVIDER=anthropic`; catalogue facts and
   money authorization intentionally remain deterministic PostgreSQL/policy
   decisions rather than model-authored values.
 - Final video capture and upload require the submitter's recording environment
@@ -87,9 +97,9 @@ Passed on 2026-09-04:
 
 ## Exact next action
 
-Add `OPENAI_API_KEY` to the ignored local `.env`, set
-`MODEL_PROVIDER=openai`, and rerun the browser flow with the already configured
-Razorpay test credentials. Then record from the updated session branch using
+Add `ANTHROPIC_API_KEY` to the ignored local `.env`, set
+`MODEL_PROVIDER=anthropic`, and rerun the browser flow with the already
+configured Razorpay test credentials. Then record from the updated session branch using
 `docs/SUBMISSION.md`, keep the final cut at five minutes or less, upload it with
 public/viewer access, verify the link signed out, fill the personal fields, and
 submit the form. Check the two remaining Session 10 acceptance boxes and merge

@@ -24,9 +24,9 @@ const commonEnvironmentSchema = z
     RAZORPAY_KEY_SECRET: optionalSecret,
     RAZORPAY_WEBHOOK_SECRET: optionalSecret,
     PAYMENT_PROVIDER: z.enum(["fake", "razorpay"]).default("fake"),
-    MODEL_PROVIDER: z.enum(["fake", "openai"]).default("fake"),
-    OPENAI_MODEL: z.string().min(1).default("gpt-5.4-mini"),
-    OPENAI_API_KEY: optionalSecret,
+    MODEL_PROVIDER: z.enum(["fake", "anthropic"]).default("fake"),
+    ANTHROPIC_MODEL: z.string().min(1).default("claude-haiku-4-5-20251001"),
+    ANTHROPIC_API_KEY: optionalSecret,
   })
   .superRefine((environment, context) => {
     if (
@@ -55,13 +55,13 @@ const commonEnvironmentSchema = z
     }
 
     if (
-      environment.MODEL_PROVIDER === "openai" &&
-      environment.OPENAI_API_KEY === undefined
+      environment.MODEL_PROVIDER === "anthropic" &&
+      environment.ANTHROPIC_API_KEY === undefined
     ) {
       context.addIssue({
         code: "custom",
-        message: "OPENAI_API_KEY is required when MODEL_PROVIDER=openai",
-        path: ["OPENAI_API_KEY"],
+        message: "ANTHROPIC_API_KEY is required when MODEL_PROVIDER=anthropic",
+        path: ["ANTHROPIC_API_KEY"],
       });
     }
   });
