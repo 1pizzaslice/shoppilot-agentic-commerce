@@ -94,6 +94,7 @@ const auditActor = (eventType: string): "policy" | "you" | "system" => {
 export function ShopperJourney() {
   const [scenario, setScenario] = useState<DemoScenario>("happy");
   const [prompt, setPrompt] = useState("");
+  const [initialRequest, setInitialRequest] = useState("");
   const [response, setResponse] = useState<ShoppingResponse | null>(null);
   const [selected, setSelected] = useState<ShoppingRecommendation | null>(null);
   const [product, setProduct] = useState<CatalogueProduct | null>(null);
@@ -158,15 +159,18 @@ export function ShopperJourney() {
     mode: "fresh" | "continue" = response === null ? "fresh" : "continue",
   ) => {
     if (prompt.trim() === "") return;
+    const submittedPrompt = prompt.trim();
+    const startingFresh = mode === "fresh" || response === null;
     await perform(async () => {
       const next = await postJson(
         shoppingResponseSchema,
-        mode === "fresh" || response === null
+        startingFresh
           ? "/v1/conversations"
           : `/v1/conversations/${response.conversationId}/messages`,
-        { message: prompt },
+        { message: submittedPrompt },
       );
-      if (mode === "fresh") {
+      if (startingFresh) {
+        setInitialRequest(submittedPrompt);
         setSelected(null);
         setProduct(null);
         setCart(null);
@@ -177,6 +181,13 @@ export function ShopperJourney() {
       setResponse(next);
       setPrompt("");
     });
+  };
+
+  const editOriginalRequest = () => {
+    setPrompt(initialRequest);
+    setResponse(null);
+    setError(null);
+    setStale(false);
   };
 
   const chooseProduct = async (recommendation: ShoppingRecommendation) => {
@@ -276,7 +287,9 @@ export function ShopperJourney() {
       setPayment(launch.payment);
       setCart({ ...cart, state: "checkout_started" });
       if (launch.payment.provider === "razorpay") {
-        window.location.assign(`/checkout/${authorization.attempt.id}`);
+        window.location.assign(
+          `/checkout/${authorization.attempt.id}?story=${scenario}`,
+        );
       }
     });
   };
@@ -344,6 +357,7 @@ export function ShopperJourney() {
 
   const reset = () => {
     setPrompt("");
+    setInitialRequest("");
     setResponse(null);
     setSelected(null);
     setProduct(null);
@@ -407,22 +421,36 @@ export function ShopperJourney() {
               </p>
               <div className="preset-row" aria-label="Demo presets">
                 <button
+                  className={scenario === "happy" ? "selected" : undefined}
                   type="button"
+                  aria-pressed={scenario === "happy"}
                   onClick={() => {
                     setScenario("happy");
                     setPrompt("Running shoes under ₹4,000");
                   }}
                 >
-                  <span>01</span> Happy path
+                  <span>01</span>
+                  <div>
+                    <strong>Successful checkout</strong>
+                    <small>
+                      Prefill the search; choose Success in Razorpay
+                    </small>
+                  </div>
                 </button>
                 <button
+                  className={scenario === "recovery" ? "selected" : undefined}
                   type="button"
+                  aria-pressed={scenario === "recovery"}
                   onClick={() => {
                     setScenario("recovery");
                     setPrompt("Running shoes under ₹4,000");
                   }}
                 >
-                  <span>02</span> Decline & recover
+                  <span>02</span>
+                  <div>
+                    <strong>Failure & recovery</strong>
+                    <small>Same search; choose Failure at payment</small>
+                  </div>
                 </button>
               </div>
               <form
@@ -488,6 +516,13 @@ export function ShopperJourney() {
                 Size is required because it changes which variants are actually
                 available.
               </p>
+              <button
+                className="back-button"
+                type="button"
+                onClick={editOriginalRequest}
+              >
+                ← Edit original request
+              </button>
               <form
                 className="answer-form"
                 onSubmit={(event) => {
@@ -893,6 +928,27 @@ export function ShopperJourney() {
                 Your approval matches the frozen cart. Stock and price will be
                 checked again before a payment order is created.
               </p>
+              <div
+                className="money-boundary"
+                aria-label="Payment responsibilities"
+              >
+                <div>
+                  <span>ShopPilot agent</span>
+                  <strong>Prepares and submits</strong>
+                  <p>
+                    Selected the exact SKU, froze the total, checked policy, and
+                    will create one server-side Razorpay order.
+                  </p>
+                </div>
+                <div>
+                  <span>You</span>
+                  <strong>Authorize and authenticate</strong>
+                  <p>
+                    You approved the exact amount and complete the secure test
+                    authentication inside Razorpay.
+                  </p>
+                </div>
+              </div>
               <button
                 className="primary-button"
                 type="button"
@@ -900,6 +956,13 @@ export function ShopperJourney() {
                 disabled={busy}
               >
                 Continue to secure payment
+              </button>
+              <button
+                className="text-button approval-audit-link"
+                type="button"
+                onClick={() => void openAudit()}
+              >
+                Review the complete safety trail
               </button>
             </section>
           ) : null}
@@ -1082,7 +1145,8 @@ export function ShopperJourney() {
             <p>
               <strong>The model proposes.</strong>
               <br />
-              Deterministic policy code authorizes every cart and money action.
+              Policy bounds the order. You approve the total. Razorpay handles
+              payment authentication.
             </p>
           </div>
           {(response !== null || selected !== null) &&

@@ -100,11 +100,12 @@ pnpm dev:worker
 ```
 
 Open `http://localhost:3000` for the complete responsive shopper journey. The
-“Happy path” preset reaches a verified fake-provider receipt without external
-credentials. “Decline & recover” deliberately fails the first payment attempt,
-then retries the same server-created order to demonstrate duplicate-safe
-recovery. The safety trail identifies what the agent proposed, what
-deterministic policy allowed, and what the shopper approved.
+“Successful checkout” preset reaches a verified fake-provider receipt without
+external credentials. “Failure & recovery” deliberately fails the first payment
+attempt, then retries the same server-created order to demonstrate
+duplicate-safe recovery. Both presets use the same product request because the
+story changes only at payment. The safety trail identifies what the agent
+proposed, what deterministic policy allowed, and what the shopper approved.
 
 After Compose is healthy and the database is migrated and seeded, run
 `pnpm demo:rehearse` for the release rehearsal. It drives the live API, web app,

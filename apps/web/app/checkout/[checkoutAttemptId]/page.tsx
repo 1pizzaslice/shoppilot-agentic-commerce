@@ -2,10 +2,14 @@ import { CheckoutLauncher } from "./checkout-launcher";
 
 export default async function CheckoutPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ checkoutAttemptId: string }>;
+  searchParams: Promise<{ story?: string }>;
 }) {
   const { checkoutAttemptId } = await params;
+  const { story } = await searchParams;
+  const checkoutStory = story === "recovery" ? "recovery" : "happy";
   return (
     <main className="payment-shell">
       <a className="payment-brand" href="/">
@@ -19,7 +23,10 @@ export default async function CheckoutPage({
           Razorpay’s checkout; ShopPilot receives only signed payment evidence.
         </p>
       </div>
-      <CheckoutLauncher checkoutAttemptId={checkoutAttemptId} />
+      <CheckoutLauncher
+        checkoutAttemptId={checkoutAttemptId}
+        story={checkoutStory}
+      />
     </main>
   );
 }

@@ -251,7 +251,7 @@ const mockApi = async (page: Page) => {
 
 const reachPayment = async (
   page: Page,
-  preset: "Happy path" | "Decline & recover",
+  preset: "Successful checkout" | "Failure & recovery",
 ) => {
   await page.goto("/");
   await page.getByRole("button", { name: preset }).click();
@@ -280,7 +280,7 @@ test.describe("deterministic browser states", () => {
   test.beforeEach(async ({ page }) => mockApi(page));
 
   test("completes the grounded, consented happy path", async ({ page }) => {
-    await reachPayment(page, "Happy path");
+    await reachPayment(page, "Successful checkout");
     await page.getByRole("button", { name: "Complete test payment" }).click();
     await expect(
       page.getByRole("heading", { name: /Paid in test mode/ }),
@@ -296,7 +296,7 @@ test.describe("deterministic browser states", () => {
       if (new URL(request.url()).pathname === "/v1/payment-orders")
         orderRequests += 1;
     });
-    await reachPayment(page, "Decline & recover");
+    await reachPayment(page, "Failure & recovery");
     await page.getByRole("button", { name: "Complete test payment" }).click();
     await expect(
       page.getByRole("heading", { name: "The demo card was declined." }),
@@ -308,6 +308,19 @@ test.describe("deterministic browser states", () => {
       page.getByRole("heading", { name: /Paid in test mode/ }),
     ).toBeVisible();
     expect(orderRequests).toBe(1);
+  });
+
+  test("returns from clarification to edit the original request", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: /Successful checkout/ }).click();
+    await page.getByRole("button", { name: "Find my pair" }).click();
+    await expect(page.getByLabel("Your answer")).toBeVisible();
+    await page.getByRole("button", { name: "Edit original request" }).click();
+    await expect(page.getByLabel("What are you looking for?")).toHaveValue(
+      "Running shoes under ₹4,000",
+    );
   });
 });
 
@@ -554,7 +567,7 @@ test("release rehearsal completes the live failure-recovery story", async ({
       orderRequests += 1;
   });
 
-  await reachPayment(page, "Decline & recover");
+  await reachPayment(page, "Failure & recovery");
   await page.getByRole("button", { name: "Complete test payment" }).click();
   await expect(
     page.getByRole("heading", { name: "The demo card was declined." }),
