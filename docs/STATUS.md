@@ -8,8 +8,8 @@ Last updated: 2026-09-04
 - Overall state: release preparation is complete; final video capture, upload,
   and form submission require the submitter's credentials and account actions
 - Current branch: `session/10-submission-video-readiness`
-- Release tag: `shoppilot-submission-v1` (exact tagged commit is recorded after
-  tag creation in the final handoff commit)
+- Release tag: `shoppilot-submission-v1` at
+  `bd0e4f281bada2c44e1ec936adccafe576434e4d`
 - Session 9 merge: PR #11 at `fe97407`; follow-up status merge at `e44f057`
 
 ## Completed

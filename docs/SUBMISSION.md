@@ -108,7 +108,7 @@ submitter's test credentials and reachable test webhook.
 ## Frozen release evidence
 
 - Release tag: `shoppilot-submission-v1`
-- Tagged commit: recorded in `docs/STATUS.md` after the immutable tag is created
+- Tagged commit: `bd0e4f281bada2c44e1ec936adccafe576434e4d`
 - Source branch: `session/10-submission-video-readiness`
 - Payment mode: test only; fake adapter for the reproducible rehearsal
 - Dataset: `eval/v1/cases.jsonl`, 50 reviewed cases
