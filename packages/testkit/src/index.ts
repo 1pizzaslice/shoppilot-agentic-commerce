@@ -8,7 +8,24 @@ import {
   type IntentPatch,
   type ShoppingIntent,
   type ShoppingModel,
+  type CommerceService,
 } from "@shoppilot/domain";
+
+export const createUnavailableCommerceService = (): CommerceService => {
+  const unavailable = (): never => {
+    throw new Error("Commerce service is not used by this test.");
+  };
+  return {
+    createCart: unavailable,
+    getCart: unavailable,
+    addPrimaryLine: unavailable,
+    decideAddon: unavailable,
+    reviewCart: unavailable,
+    approveCart: unavailable,
+    authorizeCheckout: unavailable,
+    getAuditTimeline: unavailable,
+  };
+};
 
 export interface DeterministicIdGenerator {
   next: () => string;

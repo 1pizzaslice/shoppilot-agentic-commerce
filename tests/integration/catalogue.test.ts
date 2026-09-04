@@ -16,6 +16,7 @@ import {
   createDeterministicIdGenerator,
   createFakeShoppingModel,
   createMemoryConversationStore,
+  createUnavailableCommerceService,
 } from "../../packages/testkit/src/index.js";
 
 const databaseUrl =
@@ -33,6 +34,7 @@ const app = buildApi({
     store: createMemoryConversationStore(),
     nextId: ids.next,
   }),
+  commerce: createUnavailableCommerceService(),
 });
 
 beforeAll(async () => {

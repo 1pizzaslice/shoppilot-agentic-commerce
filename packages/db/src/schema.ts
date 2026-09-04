@@ -271,3 +271,248 @@ export const conversationEvents = pgTable(
     ),
   ],
 );
+
+export const carts = pgTable(
+  "carts",
+  {
+    id: text("id").primaryKey(),
+    merchantId: text("merchant_id")
+      .notNull()
+      .references(() => merchants.id, { onDelete: "cascade" }),
+    userId: text("user_id").notNull(),
+    state: text("state").notNull(),
+    version: integer("version").default(1).notNull(),
+    budgetPaise: integer("budget_paise"),
+    currency: text("currency").default("INR").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index("carts_merchant_user_idx").on(table.merchantId, table.userId),
+    check(
+      "carts_state_allowed",
+      sql`${table.state} IN ('draft', 'review', 'approved', 'checkout_started', 'terminal')`,
+    ),
+    check("carts_version_positive", sql`${table.version} > 0`),
+    check(
+      "carts_budget_positive",
+      sql`${table.budgetPaise} IS NULL OR ${table.budgetPaise} > 0`,
+    ),
+    check("carts_currency_inr", sql`${table.currency} = 'INR'`),
+  ],
+);
+
+export const cartLines = pgTable(
+  "cart_lines",
+  {
+    id: text("id").primaryKey(),
+    cartId: text("cart_id")
+      .notNull()
+      .references(() => carts.id, { onDelete: "cascade" }),
+    variantId: text("variant_id")
+      .notNull()
+      .references(() => productVariants.id, { onDelete: "restrict" }),
+    kind: text("kind").notNull(),
+    quantity: integer("quantity").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("cart_lines_one_kind_idx").on(table.cartId, table.kind),
+    uniqueIndex("cart_lines_variant_idx").on(table.cartId, table.variantId),
+    check(
+      "cart_lines_kind_allowed",
+      sql`${table.kind} IN ('primary', 'addon')`,
+    ),
+    check("cart_lines_quantity_range", sql`${table.quantity} BETWEEN 1 AND 3`),
+  ],
+);
+
+export const addonOffers = pgTable(
+  "addon_offers",
+  {
+    id: text("id").primaryKey(),
+    cartId: text("cart_id")
+      .notNull()
+      .references(() => carts.id, { onDelete: "cascade" }),
+    cartVersion: integer("cart_version").notNull(),
+    sourceProductId: text("source_product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "restrict" }),
+    productId: text("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "restrict" }),
+    variantId: text("variant_id")
+      .notNull()
+      .references(() => productVariants.id, { onDelete: "restrict" }),
+    name: text("name").notNull(),
+    reason: text("reason").notNull(),
+    pricePaise: integer("price_paise").notNull(),
+    currency: text("currency").default("INR").notNull(),
+    outcome: text("outcome"),
+    decidedAt: timestamp("decided_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("addon_offers_cart_version_idx").on(
+      table.cartId,
+      table.cartVersion,
+    ),
+    index("addon_offers_cart_idx").on(table.cartId, table.createdAt),
+    check("addon_offers_version_positive", sql`${table.cartVersion} > 0`),
+    check("addon_offers_price_nonnegative", sql`${table.pricePaise} >= 0`),
+    check("addon_offers_currency_inr", sql`${table.currency} = 'INR'`),
+    check(
+      "addon_offers_outcome_allowed",
+      sql`${table.outcome} IS NULL OR ${table.outcome} IN ('accepted', 'declined', 'skipped')`,
+    ),
+  ],
+);
+
+export const checkoutSnapshots = pgTable(
+  "checkout_snapshots",
+  {
+    id: text("id").primaryKey(),
+    cartId: text("cart_id")
+      .notNull()
+      .references(() => carts.id, { onDelete: "cascade" }),
+    cartVersion: integer("cart_version").notNull(),
+    hash: text("hash").notNull(),
+    document: jsonb("document").notNull(),
+    subtotalPaise: integer("subtotal_paise").notNull(),
+    discountPaise: integer("discount_paise").notNull(),
+    taxPaise: integer("tax_paise").notNull(),
+    deliveryPaise: integer("delivery_paise").notNull(),
+    totalPaise: integer("total_paise").notNull(),
+    currency: text("currency").default("INR").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("checkout_snapshots_cart_version_idx").on(
+      table.cartId,
+      table.cartVersion,
+    ),
+    uniqueIndex("checkout_snapshots_hash_idx").on(table.hash),
+    check("checkout_snapshots_version_positive", sql`${table.cartVersion} > 0`),
+    check("checkout_snapshots_total_positive", sql`${table.totalPaise} > 0`),
+    check("checkout_snapshots_currency_inr", sql`${table.currency} = 'INR'`),
+  ],
+);
+
+export const approvals = pgTable(
+  "approvals",
+  {
+    id: text("id").primaryKey(),
+    cartId: text("cart_id")
+      .notNull()
+      .references(() => carts.id, { onDelete: "cascade" }),
+    snapshotId: text("snapshot_id")
+      .notNull()
+      .references(() => checkoutSnapshots.id, { onDelete: "restrict" }),
+    cartHash: text("cart_hash").notNull(),
+    userId: text("user_id").notNull(),
+    totalPaise: integer("total_paise").notNull(),
+    currency: text("currency").default("INR").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    usedAt: timestamp("used_at", { withTimezone: true }),
+    invalidatedAt: timestamp("invalidated_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("approvals_snapshot_idx").on(table.snapshotId),
+    index("approvals_cart_idx").on(table.cartId, table.createdAt),
+    check("approvals_total_positive", sql`${table.totalPaise} > 0`),
+    check("approvals_currency_inr", sql`${table.currency} = 'INR'`),
+  ],
+);
+
+export const policyDecisions = pgTable(
+  "policy_decisions",
+  {
+    id: text("id").primaryKey(),
+    cartId: text("cart_id").notNull(),
+    approvalId: text("approval_id").notNull(),
+    outcome: text("outcome").notNull(),
+    reason: text("reason").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index("policy_decisions_cart_idx").on(table.cartId, table.createdAt),
+    check(
+      "policy_decisions_outcome_allowed",
+      sql`${table.outcome} IN ('allowed', 'rejected')`,
+    ),
+  ],
+);
+
+export const checkoutAttempts = pgTable(
+  "checkout_attempts",
+  {
+    id: text("id").primaryKey(),
+    cartId: text("cart_id")
+      .notNull()
+      .references(() => carts.id, { onDelete: "cascade" }),
+    approvalId: text("approval_id")
+      .notNull()
+      .references(() => approvals.id, { onDelete: "cascade" }),
+    policyDecisionId: text("policy_decision_id")
+      .notNull()
+      .references(() => policyDecisions.id, { onDelete: "cascade" }),
+    idempotencyKey: text("idempotency_key").notNull(),
+    state: text("state").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("checkout_attempts_approval_idx").on(table.approvalId),
+    uniqueIndex("checkout_attempts_idempotency_idx").on(table.idempotencyKey),
+    check(
+      "checkout_attempts_state_authorized",
+      sql`${table.state} = 'authorized'`,
+    ),
+  ],
+);
+
+export const auditEvents = pgTable(
+  "audit_events",
+  {
+    id: text("id").primaryKey(),
+    entityType: text("entity_type").notNull(),
+    entityId: text("entity_id").notNull(),
+    eventType: text("event_type").notNull(),
+    outcome: text("outcome").notNull(),
+    metadata: jsonb("metadata").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index("audit_events_entity_idx").on(
+      table.entityType,
+      table.entityId,
+      table.createdAt,
+    ),
+    check(
+      "audit_events_entity_type_allowed",
+      sql`${table.entityType} IN ('cart', 'addon_offer', 'approval', 'checkout')`,
+    ),
+    check(
+      "audit_events_outcome_allowed",
+      sql`${table.outcome} IN ('completed', 'allowed', 'rejected', 'invalidated')`,
+    ),
+  ],
+);
