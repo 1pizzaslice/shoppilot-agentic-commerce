@@ -164,6 +164,9 @@ Acceptance:
 - [x] Capture final evaluation numbers and the failure-recovery evidence.
 - [x] Complete public repository, architecture, pitch, and form-field checklists.
 - [x] Verify all URLs from a signed-out/private browser where applicable.
+- [x] Reconcile successful Standard Checkout callbacks directly with Razorpay
+  and route desktop/mobile shoppers to a verified receipt without requiring a
+  localhost webhook.
 
 Acceptance:
 

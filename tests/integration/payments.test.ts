@@ -103,7 +103,9 @@ const webhookBody = (
 
 describe("fake-provider payment lifecycle", () => {
   it("runs an authorized checkout to paid through the HTTP boundary", async () => {
-    const provider = createFakePaymentProvider();
+    const provider = createFakePaymentProvider({
+      paymentStatus: "authorized",
+    });
     const payments = createPostgresPaymentService(pool, provider, {
       nextId: ids.next,
       now: () => new Date(currentTime),
@@ -181,7 +183,9 @@ describe("fake-provider payment lifecycle", () => {
   });
 
   it("creates one order, verifies callback evidence, and reaches paid", async () => {
-    const provider = createFakePaymentProvider();
+    const provider = createFakePaymentProvider({
+      paymentStatus: "authorized",
+    });
     const payments = createPostgresPaymentService(pool, provider, {
       nextId: ids.next,
       now: () => new Date(currentTime),
@@ -217,6 +221,37 @@ describe("fake-provider payment lifecycle", () => {
       rawBody: captured,
     });
     expect(result.payment?.state).toBe("paid");
+  });
+
+  it("confirms a captured callback through the provider status API", async () => {
+    const provider = createFakePaymentProvider();
+    const payments = createPostgresPaymentService(pool, provider, {
+      nextId: ids.next,
+      now: () => new Date(currentTime),
+    });
+    const attempt = await authorize();
+    const launch = await payments.createOrder(attempt.id);
+    const orderId = launch.payment.providerOrderId;
+    if (orderId === null) throw new Error("Expected provider order");
+    const paymentId = `pay_${ids.next()}`;
+
+    const payment = await payments.recordCallback({
+      checkoutAttemptId: attempt.id,
+      razorpayOrderId: orderId,
+      razorpayPaymentId: paymentId,
+      razorpaySignature: provider.checkoutSignature(orderId, paymentId),
+    });
+
+    expect(payment).toMatchObject({
+      state: "paid",
+      providerPaymentId: paymentId,
+    });
+    const audit = await pool.query<{ count: string }>(
+      `SELECT count(*) FROM audit_events
+       WHERE entity_id = $1 AND event_type = 'provider_payment_status_verified'`,
+      [attempt.id],
+    );
+    expect(audit.rows[0]?.count).toBe("1");
   });
 
   it("serializes concurrent order creation without a second provider call", async () => {

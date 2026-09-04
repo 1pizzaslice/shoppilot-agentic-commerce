@@ -8,18 +8,32 @@ import { createRazorpayPaymentProvider } from "./razorpay-payment.js";
 
 describe("Razorpay payment adapter", () => {
   it("maps a test-mode order and signs only on the server", async () => {
-    const request = vi.fn<typeof fetch>().mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          id: "order_test_1",
-          amount: 123_400,
-          currency: "INR",
-          receipt: "receipt-1",
-          status: "created",
-        }),
-        { status: 200, headers: { "content-type": "application/json" } },
-      ),
-    );
+    const request = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            id: "order_test_1",
+            amount: 123_400,
+            currency: "INR",
+            receipt: "receipt-1",
+            status: "created",
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            id: "pay_test_1",
+            order_id: "order_test_1",
+            amount: 123_400,
+            currency: "INR",
+            status: "captured",
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        ),
+      );
     const provider = createRazorpayPaymentProvider({
       keyId: "rzp_test_public",
       keySecret: "checkout-secret",
@@ -55,6 +69,14 @@ describe("Razorpay payment adapter", () => {
         signature: checkoutSignature,
       }),
     ).toBe(true);
+    await expect(provider.fetchPayment("pay_test_1")).resolves.toEqual({
+      id: "pay_test_1",
+      orderId: "order_test_1",
+      amountPaise: 123_400,
+      currency: "INR",
+      status: "captured",
+    });
+    expect(request).toHaveBeenCalledTimes(2);
     const rawBody = Buffer.from('{"event":"payment.captured"}');
     const webhookSignature = createHmac("sha256", "webhook-secret")
       .update(rawBody)

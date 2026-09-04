@@ -286,6 +286,92 @@ test.describe("deterministic browser states", () => {
   });
 });
 
+test("routes a captured Razorpay callback to the verified receipt", async ({
+  page,
+}) => {
+  let callbackComplete = false;
+  const razorpayPayment = (state: "created" | "paid") => ({
+    ...payment(state),
+    provider: "razorpay",
+    providerOrderId: "order_test_demo",
+    providerPaymentId: state === "paid" ? "pay_test_demo" : null,
+  });
+
+  await page.addInitScript(() => {
+    type CheckoutOptions = {
+      handler: (response: {
+        razorpay_order_id: string;
+        razorpay_payment_id: string;
+        razorpay_signature: string;
+      }) => void;
+    };
+    const browserWindow = window as typeof window & {
+      Razorpay?: new (options: CheckoutOptions) => { open: () => void };
+    };
+    browserWindow.Razorpay = class {
+      readonly options: CheckoutOptions;
+
+      constructor(options: CheckoutOptions) {
+        this.options = options;
+      }
+
+      open() {
+        this.options.handler({
+          razorpay_order_id: "order_test_demo",
+          razorpay_payment_id: "pay_test_demo",
+          razorpay_signature: "a".repeat(64),
+        });
+      }
+    };
+  });
+
+  await page.route("**/v1/**", async (route) => {
+    const request = route.request();
+    const pathname = new URL(request.url()).pathname;
+    let result: unknown;
+    if (
+      request.method() === "GET" &&
+      pathname === "/v1/checkouts/attempt-demo"
+    ) {
+      result = razorpayPayment(callbackComplete ? "paid" : "created");
+    } else if (pathname === "/v1/payment-orders") {
+      result = {
+        payment: razorpayPayment("created"),
+        checkout: {
+          keyId: "rzp_test_public",
+          orderId: "order_test_demo",
+          amountPaise: 229_900,
+          currency: "INR",
+          merchantName: "StepUp Shoes",
+          description: "ShopPilot approved cart",
+        },
+      };
+    } else if (pathname === "/v1/payments/callback") {
+      callbackComplete = true;
+      result = razorpayPayment("paid");
+    } else {
+      return route.fulfill({ status: 404, body: "{}" });
+    }
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(result),
+    });
+  });
+
+  await page.goto("/checkout/attempt-demo");
+  await page
+    .getByRole("button", { name: "Open Razorpay test checkout" })
+    .click();
+  await expect(page).toHaveURL(/\/checkout\/attempt-demo\/success$/, {
+    timeout: 15_000,
+  });
+  await expect(
+    page.getByRole("heading", { name: "Payment successful." }),
+  ).toBeVisible();
+  await expect(page.getByText("order_test_demo")).toBeVisible();
+});
+
 test("release rehearsal completes the live failure-recovery story", async ({
   page,
 }) => {

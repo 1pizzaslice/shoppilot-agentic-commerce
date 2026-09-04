@@ -5,8 +5,9 @@ Last updated: 2026-09-04
 ## Current position
 
 - Active session: Session 10 — submission and video readiness
-- Overall state: release preparation is complete; final video capture, upload,
-  and form submission require the submitter's credentials and account actions
+- Overall state: the complete product flow and Razorpay test checkout are
+  implemented; live model language awaits a local OpenAI API key, while final
+  video capture, upload, and form submission require submitter account actions
 - Current branch: `session/10-submission-video-readiness`
 - Release tag: `shoppilot-submission-v1` at
   `bd0e4f281bada2c44e1ec936adccafe576434e4d`
@@ -35,6 +36,14 @@ Last updated: 2026-09-04
   integration evidence.
 - Published the session branch and annotated `shoppilot-submission-v1` tag to
   the public GitHub repository without merging `main`.
+- Replaced the localhost Razorpay `payment_pending` dead end with server-side
+  provider reconciliation. A signed Standard Checkout callback now fetches the
+  Razorpay payment, verifies its provider order, amount, currency, and captured
+  status, and routes to a polished verified receipt. Pending checkout/receipt
+  reads retry safely, while signed webhooks remain the asynchronous fallback.
+- Added focused adapter and PostgreSQL integration coverage plus desktop/mobile
+  browser coverage for the callback-to-receipt route. Reduced Playwright worker
+  contention so the live rehearsal and new dynamic route run reliably together.
 
 ## Verification
 
@@ -56,19 +65,32 @@ Passed on 2026-09-04:
   merchant, and discovery surfaces. The in-app browser had no connected
   instance, so it could not provide an additional interactive pass.
 - `git diff --check` and release-candidate secret-pattern scan passed.
+- Follow-up payment hardening on 2026-09-04: formatting, lint, strict type
+  checks, 41 unit/contract tests, 28 PostgreSQL/Redis integration tests, all
+  builds, and 50/50 evaluation passed. The focused Razorpay success regression
+  passed twice, then the full eight-run desktop/mobile Playwright suite passed.
 
 ## Blockers
 
+- Real model inference is not active because `OPENAI_API_KEY` is absent and
+  `MODEL_PROVIDER=fake` remains configured. The submitter must add the key to
+  the ignored local `.env` and set `MODEL_PROVIDER=openai`; catalogue facts and
+  money authorization intentionally remain deterministic PostgreSQL/policy
+  decisions rather than model-authored values.
 - Final video capture and upload require the submitter's recording environment
-  and hosting account. A Razorpay Standard Checkout take additionally requires
-  the submitter's test keys and a reachable test webhook; the fully reproducible
-  fake-provider take is ready and must be disclosed as fake.
+  and hosting account. Razorpay test credentials are configured locally; the
+  callback/API reconciliation now supports an immediate verified localhost
+  result without a public webhook, while a reachable webhook is still required
+  to demonstrate asynchronous delivery.
 - Personal form fields and the irreversible form submission require the
   submitter. The uploaded video URL must then be replayed without sign-in.
 
 ## Exact next action
 
-Record from `shoppilot-submission-v1` using `docs/SUBMISSION.md`, keep the final
-cut at five minutes or less, upload it with public/viewer access, verify the link
-signed out, fill the personal fields, and submit the form. Then check the two
-remaining Session 10 acceptance boxes and merge only with explicit approval.
+Add `OPENAI_API_KEY` to the ignored local `.env`, set
+`MODEL_PROVIDER=openai`, and rerun the browser flow with the already configured
+Razorpay test credentials. Then record from the updated session branch using
+`docs/SUBMISSION.md`, keep the final cut at five minutes or less, upload it with
+public/viewer access, verify the link signed out, fill the personal fields, and
+submit the form. Check the two remaining Session 10 acceptance boxes and merge
+only with explicit approval.

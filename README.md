@@ -216,8 +216,12 @@ ID, integer-paise amount, and currency, but never either secret. Checkout API
 requests use the web app's same-origin `/v1` proxy; `API_BASE_URL` configures
 its server-side destination and defaults to the local API on port 3001.
 
-The callback endpoint verifies `order_id|payment_id` server-side. The webhook
-endpoint verifies the HMAC over the exact raw request bytes, deduplicates by
+The callback endpoint verifies `order_id|payment_id` server-side, then fetches
+that payment from Razorpay and checks its provider order, amount, currency, and
+captured status before showing the verified receipt. Pending pages repeat that
+server-side reconciliation, so localhost demos do not depend on an inbound
+webhook for immediate success UX. The webhook remains the asynchronous source of
+truth: it verifies the HMAC over the exact raw request bytes, deduplicates by
 `x-razorpay-event-id`, and preserves `paid` when older evidence arrives later.
 Provider calls left in an uncertain `creating` state time out to `expired` and
 remain single-shot rather than risking a duplicate order.
