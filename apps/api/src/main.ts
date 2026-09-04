@@ -5,15 +5,20 @@ import {
   createCommerceDependencies,
   createConversationDependencies,
   createReadinessDependencies,
+  createPaymentDependencies,
 } from "@shoppilot/db";
 import {
   createShoppingConversationHandler,
   parseApiEnvironment,
 } from "@shoppilot/domain";
-import { createFakeShoppingModel } from "@shoppilot/testkit";
+import {
+  createFakePaymentProvider,
+  createFakeShoppingModel,
+} from "@shoppilot/testkit";
 
 import { buildApi } from "./app.js";
 import { createOpenAIShoppingModel } from "./openai-model.js";
+import { createRazorpayPaymentProvider } from "./razorpay-payment.js";
 
 const environment = parseApiEnvironment(process.env);
 const model = (() => {
@@ -39,6 +44,27 @@ const conversationDependencies = createConversationDependencies(
 const commerceDependencies = createCommerceDependencies(
   environment.DATABASE_URL,
 );
+const paymentProvider = (() => {
+  if (environment.PAYMENT_PROVIDER === "fake") {
+    return createFakePaymentProvider();
+  }
+  if (
+    environment.RAZORPAY_KEY_ID === undefined ||
+    environment.RAZORPAY_KEY_SECRET === undefined ||
+    environment.RAZORPAY_WEBHOOK_SECRET === undefined
+  ) {
+    throw new Error("Razorpay test credentials are required.");
+  }
+  return createRazorpayPaymentProvider({
+    keyId: environment.RAZORPAY_KEY_ID,
+    keySecret: environment.RAZORPAY_KEY_SECRET,
+    webhookSecret: environment.RAZORPAY_WEBHOOK_SECRET,
+  });
+})();
+const paymentDependencies = createPaymentDependencies(
+  environment.DATABASE_URL,
+  paymentProvider,
+);
 const conversation = createShoppingConversationHandler({
   model,
   catalogue,
@@ -50,6 +76,7 @@ const app = buildApi({
   catalogue,
   conversation,
   commerce: commerceDependencies.service,
+  payments: paymentDependencies.service,
 });
 
 const shutdown = async (): Promise<void> => {
@@ -57,6 +84,7 @@ const shutdown = async (): Promise<void> => {
   await catalogue.close();
   await conversationDependencies.close();
   await commerceDependencies.close();
+  await paymentDependencies.close();
   await readiness.close();
 };
 
@@ -69,6 +97,7 @@ try {
   await catalogue.close();
   await conversationDependencies.close();
   await commerceDependencies.close();
+  await paymentDependencies.close();
   await readiness.close();
   throw error;
 }

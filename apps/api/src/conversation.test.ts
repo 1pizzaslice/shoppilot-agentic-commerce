@@ -10,6 +10,7 @@ import {
   createFakeShoppingModel,
   createMemoryConversationStore,
   createUnavailableCommerceService,
+  createUnavailablePaymentService,
 } from "@shoppilot/testkit";
 
 import { buildApi } from "./app.js";
@@ -66,6 +67,7 @@ const setup = () => {
       nextId: ids.next,
     }),
     commerce: createUnavailableCommerceService(),
+    payments: createUnavailablePaymentService(),
   });
   apps.push(app);
   return { app, store };

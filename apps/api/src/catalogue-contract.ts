@@ -20,6 +20,12 @@ import {
   conversationMessageInputSchema,
   shoppingResponseSchema,
   versionedCartInputSchema,
+  cancelPaymentInputSchema,
+  checkoutCallbackInputSchema,
+  checkoutLaunchSchema,
+  createPaymentOrderInputSchema,
+  paymentErrorSchema,
+  paymentOrderSchema,
 } from "@shoppilot/domain";
 
 export const discoverySchema = z
@@ -352,6 +358,111 @@ export const openApiDocument = {
               },
             },
           },
+        },
+      },
+    },
+    "/v1/payment-orders": {
+      post: {
+        operationId: "createPaymentOrder",
+        description:
+          "Consumes one allowed checkout authorization and creates at most one provider order.",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: z.toJSONSchema(createPaymentOrderInputSchema),
+            },
+          },
+        },
+        responses: {
+          "201": {
+            description: "Public Standard Checkout configuration",
+            content: {
+              "application/json": {
+                schema: z.toJSONSchema(checkoutLaunchSchema),
+              },
+            },
+          },
+          "502": {
+            description: "Provider call failed or became uncertain",
+            content: {
+              "application/json": {
+                schema: z.toJSONSchema(paymentErrorSchema),
+              },
+            },
+          },
+        },
+      },
+    },
+    "/v1/checkouts/{checkoutAttemptId}": {
+      get: {
+        operationId: "getPaymentState",
+        responses: {
+          "200": {
+            description: "Reconciled payment state",
+            content: {
+              "application/json": {
+                schema: z.toJSONSchema(paymentOrderSchema),
+              },
+            },
+          },
+        },
+      },
+    },
+    "/v1/payments/callback": {
+      post: {
+        operationId: "verifyCheckoutCallback",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: z.toJSONSchema(checkoutCallbackInputSchema),
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Signature-verified callback evidence",
+            content: {
+              "application/json": {
+                schema: z.toJSONSchema(paymentOrderSchema),
+              },
+            },
+          },
+        },
+      },
+    },
+    "/v1/payments/cancel": {
+      post: {
+        operationId: "cancelPayment",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: z.toJSONSchema(cancelPaymentInputSchema),
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Cancelled checkout state",
+            content: {
+              "application/json": {
+                schema: z.toJSONSchema(paymentOrderSchema),
+              },
+            },
+          },
+        },
+      },
+    },
+    "/v1/webhooks/razorpay": {
+      post: {
+        operationId: "receiveRazorpayWebhook",
+        description:
+          "Verifies the signature over exact raw bytes, deduplicates event IDs, and reconciles out-of-order evidence.",
+        responses: {
+          "200": { description: "Webhook accepted or already processed" },
+          "401": { description: "Invalid webhook signature" },
         },
       },
     },

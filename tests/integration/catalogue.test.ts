@@ -17,6 +17,7 @@ import {
   createFakeShoppingModel,
   createMemoryConversationStore,
   createUnavailableCommerceService,
+  createUnavailablePaymentService,
 } from "../../packages/testkit/src/index.js";
 
 const databaseUrl =
@@ -35,6 +36,7 @@ const app = buildApi({
     nextId: ids.next,
   }),
   commerce: createUnavailableCommerceService(),
+  payments: createUnavailablePaymentService(),
 });
 
 beforeAll(async () => {

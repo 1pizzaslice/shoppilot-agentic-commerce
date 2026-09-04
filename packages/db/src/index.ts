@@ -14,6 +14,12 @@ export {
   type CommerceDependencies,
   type CommerceRepositoryOptions,
 } from "./commerce-repository.js";
+export {
+  createPaymentDependencies,
+  createPostgresPaymentService,
+  type PaymentDependencies,
+  type PaymentRepositoryOptions,
+} from "./payment-repository.js";
 export { migrateCatalogue } from "./migrate.js";
 export * as catalogueSchema from "./schema.js";
 export { seedCatalogue } from "./seed.js";
