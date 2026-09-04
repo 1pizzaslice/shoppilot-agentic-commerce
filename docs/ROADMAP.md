@@ -143,19 +143,19 @@ Acceptance:
 
 ## Session 9 — hardening and public-repository review
 
-- [ ] Add structured logs, request/job correlation IDs, rate limits, time-outs, and redaction tests.
-- [ ] Run dependency, secret, license, and container checks; fix high-confidence issues.
-- [ ] Review database indexes, migrations, concurrency, failure recovery, and data cleanup.
-- [ ] Produce an architecture diagram, API overview, setup steps, demo data instructions, limitations, and evaluation results.
-- [ ] Verify every README claim against the running product.
-- [ ] Remove dead code, placeholders, local artifacts, unused dependencies, and unnecessary files.
+- [x] Add structured logs, request/job correlation IDs, rate limits, time-outs, and redaction tests.
+- [x] Run dependency, secret, license, and container checks; fix high-confidence issues.
+- [x] Review database indexes, migrations, concurrency, failure recovery, and data cleanup.
+- [x] Produce an architecture diagram, API overview, setup steps, demo data instructions, limitations, and evaluation results.
+- [x] Verify every README claim against the running product.
+- [x] Remove dead code, placeholders, local artifacts, unused dependencies, and unnecessary files.
 
 Acceptance:
 
-- [ ] A clean clone reaches the fake-provider demo with documented commands.
-- [ ] Full CI and evaluation suite pass twice from a clean state.
-- [ ] Secret scan is clean and all sample keys are obviously fake.
-- [ ] Known limitations and non-goals are honest and current.
+- [x] A clean clone reaches the fake-provider demo with documented commands.
+- [x] Full CI and evaluation suite pass twice from a clean state.
+- [x] Secret scan is clean and all sample keys are obviously fake.
+- [x] Known limitations and non-goals are honest and current.
 
 ## Session 10 — submission and video readiness
 
