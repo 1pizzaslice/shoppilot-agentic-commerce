@@ -144,6 +144,10 @@ Passed through 2026-09-05:
   exposed stale test labels and an over-specific socks assertion; after updating
   them to the shipped accessible names and any compatible add-on image, the full
   browser suite and then the complete pipeline passed.
+- A final live-Claude wording probe caught raw paise formatting in otherwise
+  grounded prose. The prompt now requires natural rupee notation; its four
+  focused adapter tests, API strict type check, API build, formatting, and diff
+  checks passed after the last change.
 
 ## Blockers
 

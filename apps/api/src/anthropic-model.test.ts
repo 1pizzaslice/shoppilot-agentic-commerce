@@ -154,6 +154,7 @@ describe("Anthropic shopping model adapter", () => {
       .passthrough()
       .parse(JSON.parse(request.body));
     expect(payload.system).toContain("Do not compare it with another product");
+    expect(payload.system).toContain("249900 paise must be written as ₹2,499");
   });
 
   it("rejects truncated model output", async () => {
