@@ -4,8 +4,12 @@ import type {
   CatalogueReader,
   DependencyStatus,
   ShoppingConversationHandler,
+  PaymentService,
 } from "@shoppilot/domain";
-import { createUnavailableCommerceService } from "@shoppilot/testkit";
+import {
+  createUnavailableCommerceService,
+  createUnavailablePaymentService,
+} from "@shoppilot/testkit";
 
 import { buildApi } from "./app.js";
 
@@ -29,6 +33,7 @@ const createApp = (statuses: readonly DependencyStatus[]) => {
     catalogue: emptyCatalogue,
     conversation: emptyConversation,
     commerce: createUnavailableCommerceService(),
+    payments: createUnavailablePaymentService(),
   });
   apps.push(app);
   return app;
@@ -100,5 +105,41 @@ describe("catalogue contract", () => {
       error: "invalid_request",
       message: "Search filters are invalid.",
     });
+  });
+});
+
+describe("payment HTTP boundary", () => {
+  it("passes the exact raw webhook bytes to signature verification", async () => {
+    const rawBody = Buffer.from(
+      '{"event":"payment.captured","payload":{"payment":{"entity":{"id":"pay_1","order_id":"order_1","status":"captured"}}}}',
+    );
+    let received: Buffer | null = null;
+    const payments: PaymentService = {
+      ...createUnavailablePaymentService(),
+      processWebhook: (input) => {
+        received = input.rawBody;
+        return Promise.resolve({ duplicate: false, payment: null });
+      },
+    };
+    const app = buildApi({
+      readiness: { check: () => Promise.resolve([]) },
+      catalogue: emptyCatalogue,
+      conversation: emptyConversation,
+      commerce: createUnavailableCommerceService(),
+      payments,
+    });
+    apps.push(app);
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/webhooks/razorpay",
+      headers: {
+        "content-type": "application/json",
+        "x-razorpay-event-id": "event-1",
+        "x-razorpay-signature": "signature",
+      },
+      payload: rawBody,
+    });
+    expect(response.statusCode).toBe(200);
+    expect(received).toEqual(rawBody);
   });
 });

@@ -16,9 +16,29 @@ describe("environment parsing", () => {
     const environment = parseApiEnvironment(dependencies);
 
     expect(environment.RAZORPAY_MODE).toBe("test");
+    expect(environment.PAYMENT_PROVIDER).toBe("fake");
     expect(environment.MODEL_PROVIDER).toBe("fake");
     expect(environment.OPENAI_MODEL).toBe("gpt-5.4-mini");
     expect(environment.API_PORT).toBe(3001);
+  });
+
+  it("requires all test credentials for the Razorpay provider", () => {
+    expect(() =>
+      parseApiEnvironment({
+        ...dependencies,
+        PAYMENT_PROVIDER: "razorpay",
+        RAZORPAY_KEY_ID: "rzp_test_public",
+      }),
+    ).toThrow(/webhook secret/);
+    expect(
+      parseApiEnvironment({
+        ...dependencies,
+        PAYMENT_PROVIDER: "razorpay",
+        RAZORPAY_KEY_ID: "rzp_test_public",
+        RAZORPAY_KEY_SECRET: "key-secret",
+        RAZORPAY_WEBHOOK_SECRET: "webhook-secret",
+      }).PAYMENT_PROVIDER,
+    ).toBe("razorpay");
   });
 
   it("rejects Razorpay live mode and live key identifiers", () => {

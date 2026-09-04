@@ -29,6 +29,19 @@ import {
   type CatalogueReader,
   type CommerceService,
   type ShoppingConversationHandler,
+  cancelPaymentInputSchema,
+  checkoutAttemptParamsSchema,
+  checkoutCallbackInputSchema,
+  checkoutLaunchSchema,
+  createPaymentOrderInputSchema,
+  paymentErrorSchema,
+  paymentOrderSchema,
+  paymentWebhookHeadersSchema,
+  PaymentConflictError,
+  PaymentNotFoundError,
+  PaymentProviderError,
+  PaymentSignatureError,
+  type PaymentService,
 } from "@shoppilot/domain";
 import type { ReadinessDependencies } from "@shoppilot/db";
 
@@ -43,6 +56,7 @@ export interface ApiDependencies {
   catalogue: CatalogueReader;
   conversation: ShoppingConversationHandler;
   commerce: CommerceService;
+  payments: PaymentService;
 }
 
 const productParamsSchema = z
@@ -54,6 +68,7 @@ export const buildApi = ({
   catalogue,
   conversation,
   commerce,
+  payments,
 }: ApiDependencies): FastifyInstance => {
   const app = Fastify({ logger: false });
 
@@ -80,6 +95,38 @@ export const buildApi = ({
           error: "policy_rejected",
           message: error.message,
           decision: error.decision,
+        }),
+      );
+    }
+    if (error instanceof PaymentNotFoundError) {
+      return reply.code(404).send(
+        paymentErrorSchema.parse({
+          error: "not_found",
+          message: error.message,
+        }),
+      );
+    }
+    if (error instanceof PaymentConflictError) {
+      return reply.code(409).send(
+        paymentErrorSchema.parse({
+          error: "conflict",
+          message: error.message,
+        }),
+      );
+    }
+    if (error instanceof PaymentSignatureError) {
+      return reply.code(401).send(
+        paymentErrorSchema.parse({
+          error: "invalid_signature",
+          message: error.message,
+        }),
+      );
+    }
+    if (error instanceof PaymentProviderError) {
+      return reply.code(502).send(
+        paymentErrorSchema.parse({
+          error: "provider_error",
+          message: error.message,
         }),
       );
     }
@@ -299,6 +346,97 @@ export const buildApi = ({
           await commerce.authorizeCheckout(body.data),
         ),
       );
+  });
+
+  app.post("/v1/payment-orders", async (request, reply) => {
+    const body = createPaymentOrderInputSchema.safeParse(request.body);
+    if (!body.success) {
+      return reply.code(400).send(
+        paymentErrorSchema.parse({
+          error: "invalid_request",
+          message: "Payment order request is invalid.",
+        }),
+      );
+    }
+    return reply
+      .code(201)
+      .send(
+        checkoutLaunchSchema.parse(
+          await payments.createOrder(body.data.checkoutAttemptId),
+        ),
+      );
+  });
+
+  app.get("/v1/checkouts/:checkoutAttemptId", async (request, reply) => {
+    const params = checkoutAttemptParamsSchema.safeParse(request.params);
+    if (!params.success) {
+      return reply.code(400).send(
+        paymentErrorSchema.parse({
+          error: "invalid_request",
+          message: "Checkout identifier is invalid.",
+        }),
+      );
+    }
+    await payments.expireTimedOut();
+    const payment = await payments.getPayment(params.data.checkoutAttemptId);
+    if (payment === null) throw new PaymentNotFoundError("Payment not found.");
+    return paymentOrderSchema.parse(payment);
+  });
+
+  app.post("/v1/payments/callback", async (request, reply) => {
+    const body = checkoutCallbackInputSchema.safeParse(request.body);
+    if (!body.success) {
+      return reply.code(400).send(
+        paymentErrorSchema.parse({
+          error: "invalid_request",
+          message: "Checkout callback is invalid.",
+        }),
+      );
+    }
+    return paymentOrderSchema.parse(await payments.recordCallback(body.data));
+  });
+
+  app.post("/v1/payments/cancel", async (request, reply) => {
+    const body = cancelPaymentInputSchema.safeParse(request.body);
+    if (!body.success) {
+      return reply.code(400).send(
+        paymentErrorSchema.parse({
+          error: "invalid_request",
+          message: "Payment cancellation request is invalid.",
+        }),
+      );
+    }
+    return paymentOrderSchema.parse(
+      await payments.cancel(body.data.checkoutAttemptId),
+    );
+  });
+
+  void app.register((webhookApp, _options, done) => {
+    webhookApp.addContentTypeParser(
+      "application/json",
+      { parseAs: "buffer" },
+      (_request, body, done) => done(null, body),
+    );
+    webhookApp.post("/v1/webhooks/razorpay", async (request, reply) => {
+      const headers = paymentWebhookHeadersSchema.safeParse(request.headers);
+      if (!headers.success || !Buffer.isBuffer(request.body)) {
+        return reply.code(400).send(
+          paymentErrorSchema.parse({
+            error: "invalid_request",
+            message: "Webhook request is invalid.",
+          }),
+        );
+      }
+      const result = await payments.processWebhook({
+        eventId: headers.data["x-razorpay-event-id"],
+        signature: headers.data["x-razorpay-signature"],
+        rawBody: request.body,
+      });
+      return reply
+        .code(200)
+        .send({ accepted: true, duplicate: result.duplicate });
+    });
+    done();
   });
 
   app.get("/v1/carts/:cartId/audit", async (request, reply) => {
