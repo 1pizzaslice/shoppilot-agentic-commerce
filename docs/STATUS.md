@@ -4,8 +4,8 @@ Last updated: 2026-09-04
 
 ## Current position
 
-- Active session: Session 5 — Razorpay test-mode checkout (implementation complete; manual credentialed smoke test blocked)
-- Overall state: all Session 5 code, automated tasks, and credential-free acceptance checks pass; Session 6 has not started
+- Active session: Session 5 — Razorpay test-mode checkout (complete; awaiting review/merge)
+- Overall state: all Session 5 tasks and acceptance criteria pass, including a real Razorpay test-mode transaction; Session 6 has not started on this branch
 - Current branch: `session/05-razorpay-test-checkout`
 
 ## Completed
@@ -17,6 +17,9 @@ Last updated: 2026-09-04
 - Added raw-body webhook signature verification, event-ID deduplication, unknown-event handling, and out-of-order reconciliation. Verified capture can correct failed, expired, or cancelled local evidence; no later event can regress `paid`.
 - Added pending, paid, failed, expired, and cancelled API states. An uncertain provider call stays single-shot in `creating` and expires with explicit `provider_timeout` evidence rather than being retried silently.
 - Added append-only, redacted audit events for provider order creation, callback verification/rejection, timeout, cancellation, and every webhook outcome.
+- Routed browser checkout calls through a same-origin Next.js proxy so normal browsers can reach the API without cross-origin failures; the upstream remains server-configurable with `API_BASE_URL`.
+- Expanded the cart audit timeline to include its related checkout and webhook records, with regression coverage for provider order creation, callback verification, and processed webhook evidence.
+- Completed a ₹2,349 Razorpay test-mode purchase using an approved immutable cart. The server created one Razorpay Order, processed signed webhook deliveries, safely ignored later/out-of-order evidence, and persisted the terminal `paid` state with the matching payment ID.
 - Published payment endpoints in OpenAPI and documented fake-provider setup, Razorpay test-mode setup, browser launch, signatures, retry behavior, and the durable payment architecture decision.
 
 ## Verification
@@ -34,15 +37,15 @@ Passed on 2026-09-04:
 - `corepack pnpm build` — shared packages, API, worker, and production Next.js application pass
 - `git diff --check`
 
-Payment coverage includes an HTTP-boundary fake-provider purchase, one-order concurrency, same-order retry, callback and raw webhook signature verification, success, decline, cancellation, provider timeout, duplicate webhook, out-of-order webhook, terminal-state reconciliation, and durable rejection audit evidence.
+Payment coverage includes an HTTP-boundary fake-provider purchase, one-order concurrency, same-order retry, callback and raw webhook signature verification, success, decline, cancellation, provider timeout, duplicate webhook, out-of-order webhook, terminal-state reconciliation, full cart-linked payment audit visibility, and durable rejection audit evidence. A credentialed manual smoke test additionally verified real test-order creation, Standard Checkout, signed webhook delivery, and terminal `paid` reconciliation.
 
 `test:e2e` and `eval` scripts do not exist yet; their roadmap implementations begin in Sessions 8 and 7 respectively, so they are not applicable to Session 5.
 
 ## Blockers
 
-- The three Razorpay variables are absent from the current process environment. A manual Razorpay test transaction and webhook delivery require `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, and `RAZORPAY_WEBHOOK_SECRET`, plus a test-mode webhook configured to reach the local/public callback. No credential value was read or logged.
-- No automated work is blocked; all fake-provider and adapter verification is complete.
+- None for Session 5.
+- The temporary Cloudflare webhook tunnel used for the manual test was stopped after verification; future manual transactions need a newly configured reachable webhook URL.
 
 ## Exact next action
 
-Supply the three Razorpay test credentials locally and configure a test webhook, then run one manual Standard Checkout transaction through `/checkout/:checkoutAttemptId`, confirm the verified terminal state and audit events, and record the result here. After that acceptance item passes, review and merge `session/05-razorpay-test-checkout`; Session 6 must start from the updated `main` on `session/06-merchant-growth-evidence`.
+Review and merge `session/05-razorpay-test-checkout`. Session 6 must be based on this verified Session 5 branch because its growth metrics consume payment records.

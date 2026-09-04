@@ -151,7 +151,9 @@ mode, set `PAYMENT_PROVIDER=razorpay` together with all three server-only
 The key ID must start with `rzp_test_`; live keys are rejected. Open
 `http://localhost:3000/checkout/<checkout-attempt-id>` after authorization to
 launch Standard Checkout. The browser receives the public key ID, provider order
-ID, integer-paise amount, and currency, but never either secret.
+ID, integer-paise amount, and currency, but never either secret. Checkout API
+requests use the web app's same-origin `/v1` proxy; `API_BASE_URL` configures
+its server-side destination and defaults to the local API on port 3001.
 
 The callback endpoint verifies `order_id|payment_id` server-side. The webhook
 endpoint verifies the HMAC over the exact raw request bytes, deduplicates by

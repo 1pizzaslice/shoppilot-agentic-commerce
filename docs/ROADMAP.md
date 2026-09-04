@@ -93,7 +93,7 @@ Acceptance:
 Acceptance:
 
 - [x] Fake-provider end-to-end tests cover success, decline, cancellation, time-out, duplicate webhook, and out-of-order webhook.
-- [ ] A manual Razorpay test transaction reaches a verified terminal state when credentials are available. (Blocked: no Razorpay test credentials or configured webhook are available in this environment.)
+- [x] A manual Razorpay test transaction reaches a verified terminal state when credentials are available.
 - [x] The deliberately demonstrated failure is a duplicated webhook or a price/stock change, handled without duplicate order or charge.
 
 ## Session 6 — merchant growth evidence

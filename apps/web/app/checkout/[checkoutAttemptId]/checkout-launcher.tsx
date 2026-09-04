@@ -31,8 +31,7 @@ interface RazorpayOptions {
   modal: { ondismiss: () => void };
 }
 
-const apiBaseUrl =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001";
+const apiBaseUrl = "";
 
 const loadCheckoutScript = (): Promise<void> =>
   new Promise((resolve, reject) => {
