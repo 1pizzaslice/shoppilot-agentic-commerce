@@ -4,9 +4,9 @@ Last updated: 2026-09-04
 
 ## Current position
 
-- Active session: Session 3 — grounded shopping conversation (complete; awaiting review/merge)
+- Active session: Session 3 — grounded shopping conversation (complete and merged)
 - Overall state: all Session 3 tasks and acceptance criteria pass; Session 4 has not started
-- Current branch: `session/03-grounded-shopping-conversation`
+- Current branch: `main`
 
 ## Completed
 
@@ -35,6 +35,7 @@ Passed on 2026-09-04:
 - `DATABASE_URL=postgresql://shoppilot:shoppilot_dev@localhost:5432/shoppilot REDIS_URL=redis://localhost:6380 corepack pnpm test:integration` — nine PostgreSQL/Redis tests pass
 - `corepack pnpm build` — shared packages, API, worker, and the production Next.js application pass
 - `DATABASE_URL=postgresql://shoppilot:shoppilot_dev@localhost:5432/shoppilot REDIS_URL=redis://localhost:6380 corepack pnpm quality` — the complete applicable gate passes
+- GitHub PR #4 — both quality runs and both secret scans passed before merge at `d267888`
 - Built API smoke test in fake-model mode: the required prompt asked one compact size question; the continued turn returned three canonical in-stock UK-size-8 running variants below ₹4,000 with exact prices and constraints.
 
 `test:e2e` and `eval` scripts do not exist yet; their roadmap implementations begin in Sessions 8 and 7 respectively, so they are not applicable to Session 3.
@@ -47,4 +48,4 @@ Passed on 2026-09-04:
 
 ## Exact next action
 
-Review the complete Session 3 diff against `main`. After the user chooses to merge it, create `session/04-cart-policy-approval` from the updated local `main` and begin the first unchecked Session 4 task in `docs/ROADMAP.md` using the state and authority boundaries in `docs/ARCHITECTURE.md`.
+Create `session/04-cart-policy-approval` from the updated local `main`, update this status to Session 4, and begin the first unchecked Session 4 task in `docs/ROADMAP.md` using the state and authority boundaries in `docs/ARCHITECTURE.md`.
