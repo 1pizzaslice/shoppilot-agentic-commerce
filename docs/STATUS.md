@@ -33,6 +33,8 @@ Last updated: 2026-09-04
 - Froze the 50/50 ShopPilot evaluation (baseline 45/50) and documented the
   visible one-order decline/recovery story plus duplicate/out-of-order webhook
   integration evidence.
+- Published the session branch and annotated `shoppilot-submission-v1` tag to
+  the public GitHub repository without merging `main`.
 
 ## Verification
 
@@ -49,9 +51,10 @@ Passed on 2026-09-04:
   vulnerabilities; reviewed license allow-list passed. The first sandboxed npm
   request failed DNS resolution; the approved network retry passed.
 - `corepack pnpm container:check` — resolved Compose and hardening checks passed.
-- Public URL checks returned HTTP 200; fresh isolated Playwright contexts
-  verified shopper, merchant, and discovery surfaces. The in-app browser had no
-  connected instance, so it could not provide an additional interactive pass.
+- Public URL checks, including the published release tag and branch handoff,
+  returned HTTP 200; fresh isolated Playwright contexts verified shopper,
+  merchant, and discovery surfaces. The in-app browser had no connected
+  instance, so it could not provide an additional interactive pass.
 - `git diff --check` and release-candidate secret-pattern scan passed.
 
 ## Blockers
