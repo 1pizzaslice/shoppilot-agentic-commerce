@@ -150,6 +150,17 @@ describe("cart, add-on, approval, and checkout policy", () => {
     ).rejects.toThrow("immutable");
   });
 
+  it("does not offer an add-on that would exceed the shopper budget", async () => {
+    const cart = await createCartWithPrimary(250_000);
+
+    expect(cart.lines).toHaveLength(1);
+    expect(cart.addonOffer).toBeNull();
+
+    const review = await reviewAndApprove(cart);
+    expect(review.review.snapshot.lines).toHaveLength(1);
+    expect(review.review.snapshot.totalPaise).toBeLessThanOrEqual(250_000);
+  });
+
   it("records declined and skipped outcomes without mutating the cart", async () => {
     const declinedCart = await createCartWithPrimary();
     const declinedOffer = declinedCart.addonOffer;

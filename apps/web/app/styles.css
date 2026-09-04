@@ -192,9 +192,11 @@ h1 {
 }
 
 .payment-button,
+.payment-actions,
 .checkout-responsibility,
 .confirmation-progress,
-.payment-footnote {
+.payment-footnote,
+.payment-back-link {
   grid-column: 2;
 }
 
@@ -215,6 +217,17 @@ h1 {
 
 .payment-button {
   width: fit-content;
+}
+
+.payment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.payment-back-link {
+  margin-top: -0.35rem;
+  font-size: 0.82rem;
 }
 
 .confirmation-progress {
@@ -306,9 +319,11 @@ h1 {
   }
 
   .payment-button,
+  .payment-actions,
   .checkout-responsibility,
   .confirmation-progress,
-  .payment-footnote {
+  .payment-footnote,
+  .payment-back-link {
     grid-column: 1;
   }
 
@@ -1192,14 +1207,13 @@ a {
   animation: spin 700ms linear infinite;
 }
 .error-banner {
-  position: fixed;
-  z-index: 25;
-  right: 2rem;
-  bottom: 2rem;
+  position: relative;
+  z-index: 2;
   display: flex;
   gap: 1.5rem;
   align-items: center;
-  max-width: 36rem;
+  width: min(100%, 58rem);
+  margin: 1rem auto 0;
   padding: 1rem;
   border: 1px solid #efb09d;
   border-radius: 1rem;
@@ -1227,7 +1241,7 @@ a {
   position: absolute;
   top: 0;
   right: 0;
-  width: min(34rem, 100%);
+  width: min(42rem, 100%);
   height: 100%;
   overflow-y: auto;
   padding: clamp(1.5rem, 4vw, 2.5rem);
@@ -1258,17 +1272,22 @@ a {
 }
 .audit-primer {
   display: grid;
-  gap: 0.6rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
   margin: 1.5rem 0;
   padding: 1rem;
   border-radius: 1rem;
   background: #ece9e1;
 }
 .audit-primer > div {
-  display: grid;
-  grid-template-columns: 4rem 1fr;
-  gap: 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
   align-items: flex-start;
+  padding: 0.9rem;
+  border: 1px solid #dddcd5;
+  border-radius: 0.85rem;
+  background: #faf8f2;
 }
 .audit-primer p {
   margin: 0;
@@ -1300,19 +1319,62 @@ a {
   color: #73513b;
 }
 .audit-list {
+  position: relative;
   margin: 0;
   padding: 0;
   list-style: none;
 }
-.audit-list li {
-  display: grid;
-  grid-template-columns: 4rem 1fr;
-  gap: 0.8rem;
-  padding: 1rem 0;
-  border-top: 1px solid #dddcd5;
+.audit-list::before {
+  position: absolute;
+  top: 1.4rem;
+  bottom: 1.4rem;
+  left: 1.12rem;
+  width: 1px;
+  background: #d6d7d0;
+  content: "";
 }
-.audit-list strong {
-  text-transform: capitalize;
+.audit-list .audit-event {
+  position: relative;
+  display: grid;
+  grid-template-columns: 2.25rem 1fr;
+  gap: 0.9rem;
+  padding: 0.5rem 0;
+}
+.audit-step {
+  z-index: 1;
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  border: 1px solid #d2d5ce;
+  border-radius: 50%;
+  background: #faf8f2;
+  color: #657069;
+  font-size: 0.64rem;
+  font-weight: 800;
+}
+.audit-event-card {
+  padding: 1rem;
+  border: 1px solid #dddcd5;
+  border-radius: 1rem;
+  background: #fff;
+}
+.audit-event-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 0.7rem;
+}
+.audit-outcome {
+  color: #5b6961;
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.audit-outcome.rejected {
+  color: #a5442c;
 }
 .audit-list p {
   margin: 0.3rem 0;
@@ -1498,10 +1560,10 @@ a {
     overflow-wrap: anywhere;
   }
   .error-banner {
-    right: 1rem;
-    bottom: 1rem;
-    left: 1rem;
     display: grid;
+  }
+  .audit-primer {
+    grid-template-columns: 1fr;
   }
 }
 
