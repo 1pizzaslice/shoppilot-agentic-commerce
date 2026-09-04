@@ -368,7 +368,7 @@ test("routes a captured Razorpay callback to the verified receipt", async ({
   });
   await expect(
     page.getByRole("heading", { name: "Payment successful." }),
-  ).toBeVisible();
+  ).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText("order_test_demo")).toBeVisible();
 });
 

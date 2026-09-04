@@ -169,6 +169,9 @@ Acceptance:
   localhost webhook.
 - [x] Replace the unused OpenAI runtime configuration with a typed Claude
   Messages adapter and Anthropic structured output.
+- [x] Harden Claude's structured responses against unsupported schema keywords,
+  unknown products, duplicate explanations, invented catalogue facts, and
+  first-request latency.
 
 Acceptance:
 

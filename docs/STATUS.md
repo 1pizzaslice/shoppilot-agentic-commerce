@@ -6,8 +6,9 @@ Last updated: 2026-09-04
 
 - Active session: Session 10 — submission and video readiness
 - Overall state: the complete product flow and Razorpay test checkout are
-  implemented; live model language awaits a local Anthropic API key, while final
-  video capture, upload, and form submission require submitter account actions
+  implemented; live Claude inference and Razorpay test mode are configured,
+  while final video capture, upload, and form submission require submitter
+  account actions
 - Current branch: `session/10-submission-video-readiness`
 - Release tag: `shoppilot-submission-v1` at
   `bd0e4f281bada2c44e1ec936adccafe576434e4d`
@@ -48,6 +49,10 @@ Last updated: 2026-09-04
   Claude responses use JSON-schema structured output, are validated again with
   Zod, and remain limited to intent extraction and grounded recommendation
   explanations. Claude Haiku 4.5 is the default low-latency model.
+- Removed JSON Schema constraints that Anthropic does not accept while keeping
+  the original Zod validation after every response. Extended the API request
+  ceiling beyond the bounded Claude call so first-use schema compilation cannot
+  close the shopper connection prematurely.
 
 ## Verification
 
@@ -79,14 +84,20 @@ Passed on 2026-09-04:
   attempt reused a development server while `next build` replaced its output;
   after stopping that stale process, all eight clean desktop/mobile Playwright
   runs passed.
+- Final Claude hardening on 2026-09-04: the complete `pnpm quality` pipeline
+  passed with repository hygiene (120 files), formatting, lint, strict type
+  checks, 43 unit/contract tests, 28 PostgreSQL/Redis integration tests, all
+  builds, the 50/50 evaluation (baseline 45/50), and all eight desktop/mobile
+  Playwright runs. The callback-to-receipt regression also passed six repeated
+  runs before the final suite.
+- Live Anthropic smoke testing used the configured ignored local key. Claude
+  correctly extracted a running-shoe, ₹4,000, UK-size-8 intent; ShopPilot then
+  queried PostgreSQL and returned three live in-stock products with
+  Claude-written explanations. Unsupported schema constraints were removed
+  before the request and the original Zod schemas were enforced afterward.
 
 ## Blockers
 
-- Real model inference is not active because `ANTHROPIC_API_KEY` is absent and
-  `MODEL_PROVIDER=fake` remains configured. The submitter must add the key to
-  the ignored local `.env` and set `MODEL_PROVIDER=anthropic`; catalogue facts and
-  money authorization intentionally remain deterministic PostgreSQL/policy
-  decisions rather than model-authored values.
 - Final video capture and upload require the submitter's recording environment
   and hosting account. Razorpay test credentials are configured locally; the
   callback/API reconciliation now supports an immediate verified localhost
@@ -97,9 +108,8 @@ Passed on 2026-09-04:
 
 ## Exact next action
 
-Add `ANTHROPIC_API_KEY` to the ignored local `.env`, set
-`MODEL_PROVIDER=anthropic`, and rerun the browser flow with the already
-configured Razorpay test credentials. Then record from the updated session branch using
+Rerun the browser flow with live Claude and the configured Razorpay test
+credentials. Then record from the updated session branch using
 `docs/SUBMISSION.md`, keep the final cut at five minutes or less, upload it with
 public/viewer access, verify the link signed out, fill the personal fields, and
 submit the form. Check the two remaining Session 10 acceptance boxes and merge

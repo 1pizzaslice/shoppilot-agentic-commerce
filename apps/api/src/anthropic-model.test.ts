@@ -54,6 +54,9 @@ describe("Anthropic shopping model adapter", () => {
       model: "test-model",
       output_config: { format: { type: "json_schema" } },
     });
+    expect(JSON.stringify(payload)).not.toMatch(
+      /\$(?:schema)|minimum|maximum|minLength|maxLength/,
+    );
   });
 
   it("rejects malformed external output", async () => {
@@ -69,6 +72,74 @@ describe("Anthropic shopping model adapter", () => {
         currency: "INR",
       }),
     ).rejects.toThrow();
+  });
+
+  it("keeps only known product explanations and bounds model wording", async () => {
+    const model = createAnthropicShoppingModel({
+      apiKey: "test-key",
+      model: "test-model",
+      fetchImpl: () =>
+        Promise.resolve(
+          responseWith({
+            explanations: [
+              {
+                productId: "unknown-product",
+                fit: "Unknown",
+                tradeoff: "Unknown",
+              },
+              {
+                productId: "shoe-01",
+                fit: "x".repeat(220),
+                tradeoff: "Only the supplied price and stock are compared.",
+              },
+              {
+                productId: "shoe-01",
+                fit: "Duplicate",
+                tradeoff: "Duplicate",
+              },
+            ],
+          }),
+        ),
+    });
+
+    const explanations = await model.explainRecommendations(
+      [
+        {
+          id: "shoe-01",
+          slug: "aero-pace",
+          name: "Aero Pace",
+          description: "Catalogue description",
+          productType: "running",
+          returnPolicyDays: 14,
+          lowestPricePaise: 229_900,
+          currency: "INR",
+          matchingVariants: [
+            {
+              id: "variant-01",
+              sku: "STEP-01-8",
+              colour: "Midnight Blue",
+              sizeUk: 8,
+              pricePaise: 229_900,
+              currency: "INR",
+              stockQuantity: 5,
+              inStock: true,
+            },
+          ],
+        },
+      ],
+      {
+        merchantId: "stepup-shoes",
+        productType: "running",
+        maxPricePaise: 400_000,
+        currency: "INR",
+        sizeUk: 8,
+      },
+    );
+
+    expect(explanations).toHaveLength(1);
+    expect(explanations[0]?.productId).toBe("shoe-01");
+    expect(explanations[0]?.fit).toHaveLength(180);
+    expect(explanations[0]?.fit.endsWith("…")).toBe(true);
   });
 
   it("rejects truncated model output", async () => {
