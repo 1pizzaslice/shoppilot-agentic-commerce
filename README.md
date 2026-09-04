@@ -118,6 +118,31 @@ Shopping conversation endpoints:
 - Continue:
   `POST http://localhost:3001/v1/conversations/:conversationId/messages`
 
+Cart and approval endpoints:
+
+- Create/read: `POST /v1/carts`, `GET /v1/carts/:cartId`
+- Select one primary variant: `POST /v1/carts/:cartId/lines`
+- Accept, decline, or skip the one compatible offer:
+  `POST /v1/carts/:cartId/addon-decision`
+- Freeze and approve: `POST /v1/carts/:cartId/review`, then
+  `POST /v1/carts/:cartId/approve`
+- Run the checkout policy gate: `POST /v1/checkouts`
+- Inspect redacted evidence: `GET /v1/carts/:cartId/audit`
+
+Every cart mutation supplies `expectedVersion`; stale writers receive `409`
+instead of silently overwriting a newer cart. Selecting a shoe creates at most
+one in-stock add-on offer from the catalogue compatibility relation. The add-on
+is inserted only when the decision body explicitly says `accepted`; reviewing an
+unanswered offer records it as `skipped` without inserting it.
+
+Review freezes SKU, variant, quantity, unit price, discount, tax, delivery, and
+integer-paise totals in a database-immutable snapshot. Approval binds the
+shopper ID, snapshot hash, total, and a short expiry. `POST /v1/checkouts`
+revalidates approval freshness, cart version, budget, quantity, live price, and
+stock before creating one unique internal checkout authorization. Session 4 does
+not call a payment provider or create a Razorpay order; Session 5 will consume
+only this allowed authorization boundary.
+
 The default `MODEL_PROVIDER=fake` mode is deterministic and needs no API key.
 Set `MODEL_PROVIDER=openai`, `OPENAI_API_KEY`, and optionally `OPENAI_MODEL` to
 use the server-side OpenAI Responses adapter. Responses are requested with
@@ -165,6 +190,6 @@ Compose.
 
 ## Current state
 
-The grounded shopping conversation is implemented through Session 3. See
-[current project state](docs/STATUS.md) for verified commands and the exact next
-action.
+The guarded cart and checkout-authorization flow is implemented through
+Session 4. See [current project state](docs/STATUS.md) for verified commands and
+the exact next action.

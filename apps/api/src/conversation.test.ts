@@ -9,6 +9,7 @@ import {
   createDeterministicIdGenerator,
   createFakeShoppingModel,
   createMemoryConversationStore,
+  createUnavailableCommerceService,
 } from "@shoppilot/testkit";
 
 import { buildApi } from "./app.js";
@@ -64,6 +65,7 @@ const setup = () => {
       store,
       nextId: ids.next,
     }),
+    commerce: createUnavailableCommerceService(),
   });
   apps.push(app);
   return { app, store };

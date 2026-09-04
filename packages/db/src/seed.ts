@@ -3,6 +3,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 
 import {
+  carts,
   catalogueVersions,
   inventory,
   merchants,
@@ -164,6 +165,7 @@ export const seedCatalogue = async (pool: Pool): Promise<void> => {
   const db = drizzle(pool);
 
   await db.transaction(async (transaction) => {
+    await transaction.delete(carts).where(eq(carts.merchantId, merchantId));
     await transaction
       .delete(products)
       .where(eq(products.merchantId, merchantId));
