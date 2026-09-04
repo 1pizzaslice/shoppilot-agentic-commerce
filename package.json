@@ -19,7 +19,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
-    "quality": "corepack pnpm repo:check && corepack pnpm format:check && corepack pnpm lint && corepack pnpm typecheck && corepack pnpm test && corepack pnpm test:integration && corepack pnpm eval && corepack pnpm build && corepack pnpm test:e2e",
+    "quality": "corepack pnpm repo:check && corepack pnpm format:check && corepack pnpm lint && corepack pnpm typecheck && corepack pnpm test && corepack pnpm test:integration && corepack pnpm build && corepack pnpm eval && corepack pnpm test:e2e",
     "repo:check": "node scripts/check-repository.mjs",
     "test": "vitest run --config vitest.config.ts",
     "test:e2e": "playwright test",
