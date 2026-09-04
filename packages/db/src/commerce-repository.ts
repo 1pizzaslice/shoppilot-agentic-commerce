@@ -1066,7 +1066,26 @@ export const createPostgresCommerceService = (
       const result = await pool.query(
         `SELECT id, entity_type, entity_id, event_type, outcome, metadata, created_at
          FROM audit_events
-         WHERE entity_id = $1 OR metadata->>'cartId' = $1
+         WHERE entity_id = $1
+            OR metadata->>'cartId' = $1
+            OR (
+              entity_type = 'checkout'
+              AND entity_id IN (
+                SELECT id FROM checkout_attempts WHERE cart_id = $1
+              )
+            )
+            OR (
+              entity_type = 'webhook'
+              AND entity_id IN (
+                SELECT webhook.event_id
+                FROM payment_webhook_events webhook
+                JOIN payment_orders payment
+                  ON payment.provider_order_id = webhook.provider_order_id
+                JOIN checkout_attempts checkout
+                  ON checkout.id = payment.checkout_attempt_id
+                WHERE checkout.cart_id = $1
+              )
+            )
          ORDER BY created_at, id`,
         [cartId],
       );

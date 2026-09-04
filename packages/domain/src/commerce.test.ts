@@ -16,7 +16,7 @@ describe("commerce state machines", () => {
     );
   });
 
-  it("does not permit checkout to skip authorization or leave a terminal state", () => {
+  it("does not permit checkout to skip authorization or regress after paid", () => {
     expect(transitionCheckoutState("not_created", "authorized")).toBe(
       "authorized",
     );
@@ -26,6 +26,7 @@ describe("commerce state machines", () => {
     expect(() => transitionCheckoutState("paid", "failed")).toThrow(
       "Invalid checkout transition",
     );
+    expect(transitionCheckoutState("cancelled", "paid")).toBe("paid");
   });
 });
 

@@ -140,8 +140,26 @@ integer-paise totals in a database-immutable snapshot. Approval binds the
 shopper ID, snapshot hash, total, and a short expiry. `POST /v1/checkouts`
 revalidates approval freshness, cart version, budget, quantity, live price, and
 stock before creating one unique internal checkout authorization. Session 4 does
-not call a payment provider or create a Razorpay order; Session 5 will consume
-only this allowed authorization boundary.
+not call a payment provider. `POST /v1/payment-orders` now consumes only this
+allowed authorization boundary and persists one fake or Razorpay test Order per
+checkout attempt. Repeating the request returns the recorded state and never
+silently calls the provider again.
+
+`PAYMENT_PROVIDER=fake` is the credential-free default. To use Razorpay test
+mode, set `PAYMENT_PROVIDER=razorpay` together with all three server-only
+`RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, and `RAZORPAY_WEBHOOK_SECRET` values.
+The key ID must start with `rzp_test_`; live keys are rejected. Open
+`http://localhost:3000/checkout/<checkout-attempt-id>` after authorization to
+launch Standard Checkout. The browser receives the public key ID, provider order
+ID, integer-paise amount, and currency, but never either secret. Checkout API
+requests use the web app's same-origin `/v1` proxy; `API_BASE_URL` configures
+its server-side destination and defaults to the local API on port 3001.
+
+The callback endpoint verifies `order_id|payment_id` server-side. The webhook
+endpoint verifies the HMAC over the exact raw request bytes, deduplicates by
+`x-razorpay-event-id`, and preserves `paid` when older evidence arrives later.
+Provider calls left in an uncertain `creating` state time out to `expired` and
+remain single-shot rather than risking a duplicate order.
 
 The default `MODEL_PROVIDER=fake` mode is deterministic and needs no API key.
 Set `MODEL_PROVIDER=openai`, `OPENAI_API_KEY`, and optionally `OPENAI_MODEL` to
@@ -190,6 +208,7 @@ Compose.
 
 ## Current state
 
-The guarded cart and checkout-authorization flow is implemented through
-Session 4. See [current project state](docs/STATUS.md) for verified commands and
-the exact next action.
+The guarded test-payment flow is implemented through Session 5, except for the
+credential-dependent manual Razorpay transaction when credentials are absent.
+See [current project state](docs/STATUS.md) for verified commands and the exact
+next action.

@@ -9,7 +9,13 @@ import {
   type ShoppingIntent,
   type ShoppingModel,
   type CommerceService,
+  type PaymentService,
 } from "@shoppilot/domain";
+
+export {
+  createFakePaymentProvider,
+  type FakePaymentProvider,
+} from "./fake-payment.js";
 
 export const createUnavailableCommerceService = (): CommerceService => {
   const unavailable = (): never => {
@@ -24,6 +30,20 @@ export const createUnavailableCommerceService = (): CommerceService => {
     approveCart: unavailable,
     authorizeCheckout: unavailable,
     getAuditTimeline: unavailable,
+  };
+};
+
+export const createUnavailablePaymentService = (): PaymentService => {
+  const unavailable = (): never => {
+    throw new Error("Payment service is not used by this test.");
+  };
+  return {
+    createOrder: unavailable,
+    getPayment: unavailable,
+    recordCallback: unavailable,
+    cancel: unavailable,
+    expireTimedOut: unavailable,
+    processWebhook: unavailable,
   };
 };
 

@@ -23,6 +23,7 @@ const commonEnvironmentSchema = z
     RAZORPAY_KEY_ID: optionalSecret,
     RAZORPAY_KEY_SECRET: optionalSecret,
     RAZORPAY_WEBHOOK_SECRET: optionalSecret,
+    PAYMENT_PROVIDER: z.enum(["fake", "razorpay"]).default("fake"),
     MODEL_PROVIDER: z.enum(["fake", "openai"]).default("fake"),
     OPENAI_MODEL: z.string().min(1).default("gpt-5.4-mini"),
     OPENAI_API_KEY: optionalSecret,
@@ -36,6 +37,20 @@ const commonEnvironmentSchema = z
         code: "custom",
         message: "RAZORPAY_KEY_ID must be a Razorpay test key",
         path: ["RAZORPAY_KEY_ID"],
+      });
+    }
+
+    if (
+      environment.PAYMENT_PROVIDER === "razorpay" &&
+      (environment.RAZORPAY_KEY_ID === undefined ||
+        environment.RAZORPAY_KEY_SECRET === undefined ||
+        environment.RAZORPAY_WEBHOOK_SECRET === undefined)
+    ) {
+      context.addIssue({
+        code: "custom",
+        message:
+          "Razorpay test key ID, key secret, and webhook secret are required when PAYMENT_PROVIDER=razorpay",
+        path: ["PAYMENT_PROVIDER"],
       });
     }
 
