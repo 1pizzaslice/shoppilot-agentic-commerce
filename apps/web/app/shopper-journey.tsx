@@ -83,12 +83,48 @@ const auditCopy: Record<string, string> = {
   payment_webhook_processed: "Verified payment evidence and updated the order.",
 };
 
+const auditTitle: Record<string, string> = {
+  cart_created: "Private cart opened",
+  cart_primary_line_set: "Selected shoe added",
+  addon_offered: "Optional add-on proposed",
+  addon_outcome_recorded: "Add-on choice saved",
+  cart_addon_line_added: "Consented add-on added",
+  cart_snapshot_created: "Exact total frozen",
+  cart_approved: "Approval bound to this cart",
+  checkout_policy_decided: "Safety policy evaluated",
+  checkout_authorized: "One checkout authorized",
+  provider_order_created: "Razorpay order created",
+  payment_webhook_processed: "Payment evidence verified",
+};
+
 const auditActor = (eventType: string): "policy" | "you" | "system" => {
   if (eventType.includes("policy") || eventType === "checkout_authorized")
     return "policy";
   if (eventType === "cart_approved" || eventType === "addon_outcome_recorded")
     return "you";
   return "system";
+};
+
+const auditDescription = (event: AuditEvent): string => {
+  const totalPaise = event.metadata.totalPaise;
+  if (
+    (event.eventType === "cart_snapshot_created" ||
+      event.eventType === "cart_approved") &&
+    typeof totalPaise === "number"
+  ) {
+    return event.eventType === "cart_snapshot_created"
+      ? `Locked every line and the ${money(totalPaise)} total for review.`
+      : `Your approval applies only to the locked ${money(totalPaise)} total.`;
+  }
+  const budgetPaise = event.metadata.budgetPaise;
+  if (event.eventType === "cart_created" && typeof budgetPaise === "number") {
+    return `Opened a private draft with a ${money(budgetPaise)} spending limit.`;
+  }
+  const reason = event.metadata.reason;
+  if (event.outcome === "rejected" && typeof reason === "string") {
+    return `Stopped before order creation: ${reason.replaceAll("_", " ")}.`;
+  }
+  return auditCopy[event.eventType] ?? event.eventType.replaceAll("_", " ");
 };
 
 export function ShopperJourney() {
@@ -277,8 +313,13 @@ export function ShopperJourney() {
         "/v1/checkouts",
         { cartId: cart.id, approvalId: approval.id },
       );
-      if (authorization.attempt === null)
-        throw new Error("Policy did not authorize this checkout.");
+      if (authorization.attempt === null) {
+        throw new Error(
+          authorization.decision.reason === "budget_exceeded"
+            ? "This cart is over your stated budget, so no payment order was created. Remove the optional item or start again with a higher budget."
+            : "The safety policy did not authorize this checkout. No payment order was created.",
+        );
+      }
       const launch = await postJson(
         checkoutLaunchSchema,
         "/v1/payment-orders",
@@ -387,7 +428,7 @@ export function ShopperJourney() {
   return (
     <main className="shop-shell">
       <header className="site-header">
-        <a className="brand" href="#top" aria-label="ShopPilot home">
+        <a className="brand" href="/" aria-label="ShopPilot home">
           ShopPilot
         </a>
         <div className="trust-chip">
@@ -846,6 +887,11 @@ export function ShopperJourney() {
                   <strong>{cart.addonOffer.name}</strong>
                   <span>{money(cart.addonOffer.pricePaise)}</span>
                 </div>
+              ) : cart.addonOffer === null ? (
+                <p className="declined-note">
+                  No compatible add-on fits this cart and budget — checkout
+                  continues with your selected shoe only.
+                </p>
               ) : (
                 <p className="declined-note">
                   Optional add-on declined — checkout continues normally.
@@ -1174,7 +1220,7 @@ export function ShopperJourney() {
             <div className="drawer-header">
               <div>
                 <p className="step-label">Human-readable audit</p>
-                <h2 id="audit-title">Who decided what</h2>
+                <h2 id="audit-title">Every decision, in order</h2>
               </div>
               <button
                 ref={auditCloseRef}
@@ -1188,21 +1234,29 @@ export function ShopperJourney() {
             <div className="audit-primer">
               <div>
                 <span className="actor agent">Agent</span>
-                <p>Proposes matches and explains trade-offs.</p>
+                <p>
+                  Suggests catalogue matches. It cannot edit the cart or spend.
+                </p>
               </div>
               <div>
                 <span className="actor policy">Policy</span>
-                <p>Validates catalogue facts and allows bounded actions.</p>
+                <p>Checks product IDs, stock, price, budget and approval.</p>
               </div>
               <div>
                 <span className="actor you">You</span>
-                <p>Select, consent, approve and pay.</p>
+                <p>Selects, consents and approves the exact frozen total.</p>
               </div>
             </div>
             <ol className="audit-list">
-              <li>
-                <span className="actor agent">Agent</span>
-                <div>
+              <li className="audit-event">
+                <span className="audit-step" aria-hidden="true">
+                  01
+                </span>
+                <div className="audit-event-card">
+                  <div className="audit-event-meta">
+                    <span className="actor agent">Agent</span>
+                    <span className="audit-outcome completed">Proposed</span>
+                  </div>
                   <strong>Proposed catalogue matches</strong>
                   <p>
                     {selected === null
@@ -1211,32 +1265,42 @@ export function ShopperJourney() {
                   </p>
                 </div>
               </li>
-              {audit.map((event) => (
-                <li key={event.id}>
-                  <span className={`actor ${auditActor(event.eventType)}`}>
-                    {auditActor(event.eventType) === "policy"
-                      ? "Policy"
-                      : auditActor(event.eventType) === "you"
-                        ? "You"
-                        : "System"}
-                  </span>
-                  <div>
-                    <strong>
-                      {event.outcome === "rejected" ? "Blocked" : "Recorded"}
-                    </strong>
-                    <p>
-                      {auditCopy[event.eventType] ??
-                        event.eventType.replaceAll("_", " ")}
-                    </p>
-                    <time>
-                      {new Date(event.createdAt).toLocaleTimeString("en-IN", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </time>
-                  </div>
-                </li>
-              ))}
+              {audit.map((event, index) => {
+                const actor = auditActor(event.eventType);
+                return (
+                  <li className="audit-event" key={event.id}>
+                    <span className="audit-step" aria-hidden="true">
+                      {String(index + 2).padStart(2, "0")}
+                    </span>
+                    <div className="audit-event-card">
+                      <div className="audit-event-meta">
+                        <span className={`actor ${actor}`}>
+                          {actor === "policy"
+                            ? "Policy"
+                            : actor === "you"
+                              ? "You"
+                              : "System"}
+                        </span>
+                        <span className={`audit-outcome ${event.outcome}`}>
+                          {event.outcome === "rejected"
+                            ? "Blocked"
+                            : "Complete"}
+                        </span>
+                      </div>
+                      <strong>
+                        {auditTitle[event.eventType] ?? "Action recorded"}
+                      </strong>
+                      <p>{auditDescription(event)}</p>
+                      <time>
+                        {new Date(event.createdAt).toLocaleTimeString("en-IN", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </time>
+                    </div>
+                  </li>
+                );
+              })}
             </ol>
             {audit.length === 0 ? (
               <p className="empty-audit">

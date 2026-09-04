@@ -208,6 +208,16 @@ export function CheckoutLauncher({
   };
 
   const confirming = payment?.state === "payment_pending";
+  const terminalState =
+    payment?.state === "cancelled" ||
+    payment?.state === "failed" ||
+    payment?.state === "expired";
+  const terminalHeading =
+    payment?.state === "cancelled"
+      ? "Checkout closed safely."
+      : payment?.state === "failed"
+        ? "Payment was not completed."
+        : "This approval has expired.";
 
   return (
     <section className="payment-card" aria-live="polite">
@@ -216,27 +226,43 @@ export function CheckoutLauncher({
       </div>
       <div>
         <p className="payment-kicker">
-          {confirming ? "Verifying payment" : "Razorpay Standard Checkout"}
+          {terminalState
+            ? "No charge completed"
+            : confirming
+              ? "Verifying payment"
+              : "Razorpay Standard Checkout"}
         </p>
         <h2>
-          {confirming
-            ? "Your payment was received."
-            : "Finish securely with Razorpay."}
+          {terminalState
+            ? terminalHeading
+            : confirming
+              ? "Your payment was received."
+              : "Finish securely with Razorpay."}
         </h2>
-        <p className="payment-message">{message}</p>
+        <p className="payment-message">
+          {terminalState
+            ? "No payment was captured. This frozen attempt cannot be reused; return to ShopPilot to start a fresh, fully bounded order."
+            : message}
+        </p>
       </div>
       <div className="checkout-responsibility">
         <span>Agent prepared one bounded order</span>
-        <span>You authenticate the simulated payment</span>
+        <span>You complete secure authentication</span>
       </div>
-      {!confirming ? (
+      {terminalState ? (
+        <div className="payment-actions">
+          <a className="primary-button link-button" href="/">
+            Return to ShopPilot
+          </a>
+        </div>
+      ) : !confirming ? (
         <button
           className="primary-button payment-button"
           type="button"
           onClick={() => void openCheckout()}
           disabled={busy}
         >
-          {busy ? "Preparing Razorpay…" : "Open Razorpay test checkout"}
+          {busy ? "Preparing Razorpay…" : "Open secure Razorpay checkout"}
         </button>
       ) : (
         <div className="confirmation-progress" role="status">
@@ -248,6 +274,11 @@ export function CheckoutLauncher({
         Test mode only · no real money moves · ShopPilot never sees payment
         credentials
       </p>
+      {!terminalState ? (
+        <a className="payment-back-link" href="/">
+          Return to shopping
+        </a>
+      ) : null}
     </section>
   );
 }

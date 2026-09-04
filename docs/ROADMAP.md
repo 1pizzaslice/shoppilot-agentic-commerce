@@ -187,6 +187,10 @@ Acceptance:
   success and recovery demo stories, carry the selected story into Razorpay
   guidance, expose the audit trail before payment, and let shoppers return from
   clarification to edit their original request.
+- [x] Harden the final commerce UX: constrain optional add-ons to the remaining
+  shopper budget, make cancelled/failed/expired Razorpay attempts recoverable,
+  restore reliable home navigation, and turn the safety drawer into an
+  amount-aware, actor-labelled decision timeline.
 
 Acceptance:
 

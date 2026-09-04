@@ -16,10 +16,10 @@ export default async function CheckoutPage({
         ShopPilot
       </a>
       <div className="payment-heading">
-        <p className="eyebrow">Approved cart · test-mode payment</p>
+        <p className="eyebrow">Approved cart · secure checkout</p>
         <h1>One last secure step.</h1>
         <p>
-          Your exact cart is frozen and approved. Enter test payment details in
+          Your exact cart is frozen and approved. Complete authentication in
           Razorpay’s checkout; ShopPilot receives only signed payment evidence.
         </p>
       </div>

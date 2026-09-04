@@ -6,9 +6,10 @@ Last updated: 2026-09-05
 
 - Active session: Session 10 — submission and video readiness
 - Overall state: the complete product flow and Razorpay test checkout are
-  implemented; live Claude inference and Razorpay test mode are configured,
-  while final video capture, upload, and form submission require submitter
-  account actions
+  implemented; live Claude inference and Razorpay test mode are configured.
+  Budget-safe add-ons, terminal checkout recovery, reliable return navigation,
+  and the redesigned audit timeline are verified. Final video capture, upload,
+  and form submission require submitter account actions
 - Current branch: `session/10-submission-video-readiness`
 - Release tag: `shoppilot-submission-v1` at
   `bd0e4f281bada2c44e1ec936adccafe576434e4d`
@@ -93,6 +94,17 @@ Last updated: 2026-09-05
   must approve and authenticate. The complete safety trail is linked beside
   that handoff, and clarification screens can return to the populated original
   request instead of trapping the shopper.
+- Prevented an optional add-on from being offered when its canonical price
+  would exceed the shopper's remaining budget. The final checkout policy still
+  revalidates the complete frozen total as an independent second guard.
+- Recovered cancelled, failed, and expired Razorpay attempts with an explicit
+  no-charge terminal state and a direct route back to a fresh ShopPilot
+  journey. Checkout pages now retain a visible return link, and the ShopPilot
+  brand returns to a clean home journey.
+- Rebuilt the safety drawer as a numbered decision timeline with actor and
+  outcome labels, clearer responsibility definitions, and canonical budget and
+  approved-total amounts when present. Error messages now sit in journey
+  context instead of appearing as unexplained bottom-corner alerts.
 
 ## Verification
 
@@ -181,6 +193,14 @@ Passed through 2026-09-05:
   production builds, the 50/50 evaluation (baseline 43/50), and all 16
   desktop/mobile Playwright journeys, including the new clarification-back
   regression and both success/recovery stories.
+- Final budget/navigation/audit hardening on 2026-09-05: the complete
+  `pnpm quality` pipeline passed repository hygiene (121 files), formatting,
+  lint, strict type checks, 44 unit/contract tests, 30 PostgreSQL/Redis
+  integration tests, all production builds, the 50/50 evaluation (baseline
+  43/50), and all 18 desktop/mobile Playwright journeys. An initial sandboxed
+  integration run could not open localhost PostgreSQL/Redis (`EPERM`). A later
+  browser retry found an orphaned Next.js test server on port 3000; after
+  stopping that exact process, the clean complete pipeline passed.
 
 ## Blockers
 
@@ -191,12 +211,19 @@ Passed through 2026-09-05:
   to demonstrate asynchronous delivery.
 - Personal form fields and the irreversible form submission require the
   submitter. The uploaded video URL must then be replayed without sign-in.
+- A true shopper-independent payment option is not available through the
+  current one-time Razorpay Standard Checkout credentials. Saved cards still
+  require shopper authentication, while unattended debits require a separately
+  registered mandate/token and a recurring-payment use case plus Razorpay
+  account enablement. No fake "agent pays" toggle has been added.
 
 ## Exact next action
 
 Rerun the browser flow with live Claude and the configured Razorpay test
-credentials. Then record from the updated session branch using
-`docs/SUBMISSION.md`, keep the final cut at five minutes or less, upload it with
-public/viewer access, verify the link signed out, fill the personal fields, and
-submit the form. Check the two remaining Session 10 acceptance boxes and merge
-only with explicit approval.
+credentials, including closing one Razorpay modal to confirm the recovery
+route. Then record from the updated session branch using `docs/SUBMISSION.md`,
+keep the final cut at five minutes or less, upload it with public/viewer access,
+verify the link signed out, fill the personal fields, and submit the form.
+Check the two remaining Session 10 acceptance boxes and merge only with
+explicit approval. Treat a mandate-backed unattended-payment path as a future
+scope decision requiring Razorpay account enablement, not as a UI-only mode.

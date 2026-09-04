@@ -115,7 +115,7 @@ const snapshot = {
   createdAt: now,
 };
 
-const payment = (state: "created" | "failed" | "paid") => ({
+const payment = (state: "created" | "failed" | "paid" | "cancelled") => ({
   checkoutAttemptId: "attempt-demo",
   state,
   provider: "fake",
@@ -233,7 +233,28 @@ const mockApi = async (page: Page) => {
     } else if (url.pathname === "/v1/demo/payments/settle") {
       result = payment(body?.outcome === "declined" ? "failed" : "paid");
     } else if (url.pathname.endsWith("/audit")) {
-      result = [];
+      result = [
+        {
+          id: "audit-cart-created",
+          entityType: "cart",
+          entityId: "cart-demo",
+          eventType: "cart_created",
+          outcome: "completed",
+          metadata: { budgetPaise: 400_000 },
+          correlationId: "request-demo",
+          createdAt: now,
+        },
+        {
+          id: "audit-cart-approved",
+          entityType: "approval",
+          entityId: "approval-demo",
+          eventType: "cart_approved",
+          outcome: "completed",
+          metadata: { totalPaise: 229_900 },
+          correlationId: "request-demo",
+          createdAt: now,
+        },
+      ];
     } else {
       return route.fulfill({
         status: 404,
@@ -281,6 +302,13 @@ test.describe("deterministic browser states", () => {
 
   test("completes the grounded, consented happy path", async ({ page }) => {
     await reachPayment(page, "Successful checkout");
+    await page.getByRole("button", { name: "View safety trail" }).click();
+    await expect(
+      page.getByRole("heading", { name: "Every decision, in order" }),
+    ).toBeVisible();
+    await expect(page.getByText("₹4,000 spending limit")).toBeVisible();
+    await expect(page.getByText("locked ₹2,299 total")).toBeVisible();
+    await page.getByRole("button", { name: "Close safety trail" }).click();
     await page.getByRole("button", { name: "Complete test payment" }).click();
     await expect(
       page.getByRole("heading", { name: /Paid in test mode/ }),
@@ -529,7 +557,7 @@ test("routes a captured Razorpay callback to the verified receipt", async ({
 
   await page.goto("/checkout/attempt-demo");
   await page
-    .getByRole("button", { name: "Open Razorpay test checkout" })
+    .getByRole("button", { name: "Open secure Razorpay checkout" })
     .click();
   await expect(page).toHaveURL(/\/checkout\/attempt-demo\/success$/, {
     timeout: 15_000,
@@ -538,6 +566,33 @@ test("routes a captured Razorpay callback to the verified receipt", async ({
     page.getByRole("heading", { name: "Payment successful." }),
   ).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText("order_test_demo")).toBeVisible();
+});
+
+test("a closed Razorpay attempt has a clear route back to shopping", async ({
+  page,
+}) => {
+  await page.route("**/v1/checkouts/attempt-demo", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ...payment("cancelled"),
+        provider: "razorpay",
+        providerOrderId: "order_test_cancelled",
+      }),
+    });
+  });
+
+  await page.goto("/checkout/attempt-demo");
+  await expect(
+    page.getByRole("heading", { name: "Checkout closed safely." }),
+  ).toBeVisible();
+  await expect(page.getByText("No payment was captured.")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Open secure Razorpay checkout" }),
+  ).toHaveCount(0);
+  await page.getByRole("link", { name: "Return to ShopPilot" }).click();
+  await expect(page).toHaveURL(/\/$/);
 });
 
 test("stops polling when a receipt link has expired", async ({ page }) => {
@@ -580,7 +635,7 @@ test("release rehearsal completes the live failure-recovery story", async ({
 
   await page.getByRole("button", { name: "See how this stayed safe" }).click();
   await expect(
-    page.getByRole("dialog", { name: "Who decided what" }),
+    page.getByRole("dialog", { name: "Every decision, in order" }),
   ).toBeVisible();
   await expect(
     page.getByText("Policy verified approval, stock, price and budget."),
