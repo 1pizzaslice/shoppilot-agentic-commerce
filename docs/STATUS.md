@@ -4,10 +4,10 @@ Last updated: 2026-09-04
 
 ## Current position
 
-- Active session: Session 7 — adversarial evaluation harness (complete; awaiting review/merge)
-- Overall state: every Session 7 task and acceptance target passes; Session 8 has not started
-- Current branch: `session/07-adversarial-evaluation`
-- Branch base: synced `main` at `48bff9e`, after Session 5 PR #7 and Session 6 PR #8 were merged in dependency order
+- Active session: Session 8 — demo experience and accessibility (ready to start)
+- Overall state: Sessions 1–7 are merged into `main`; Session 8 implementation has not started
+- Current branch: `session/08-demo-experience-accessibility`
+- Branch base: synced `main` at `efa6324`, after Session 7 PR #9 was merged
 
 ## Completed
 
@@ -46,8 +46,8 @@ Passed on 2026-09-04:
 
 ## Blockers
 
-- None for Session 7.
+- None for Session 8.
 
 ## Exact next action
 
-Review and merge `session/07-adversarial-evaluation`. Then create `session/08-demo-experience-accessibility` from updated `main` and build the complete shopper journey and Playwright coverage.
+Build the polished responsive shopper journey, starting with the prompt and compact clarification flow, then continue through recommendations, product detail, cart, add-on consent, approval, fake payment, receipt, and the human-readable audit drawer.
