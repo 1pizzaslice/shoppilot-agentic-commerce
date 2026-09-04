@@ -63,3 +63,272 @@ a {
   font-weight: 700;
   text-underline-offset: 0.2em;
 }
+
+.merchant-shell {
+  display: block;
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: clamp(2rem, 5vw, 5rem);
+}
+
+.merchant-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(18rem, 0.6fr);
+  gap: 3rem;
+  align-items: end;
+  margin-bottom: 3rem;
+}
+
+.merchant-title {
+  max-width: 13ch;
+  font-size: clamp(3rem, 7vw, 6rem);
+}
+
+.merchant-intro {
+  color: #526059;
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.metric-card,
+.merchant-panel {
+  border: 1px solid #d9ddd6;
+  border-radius: 1.25rem;
+  background: #fff;
+  box-shadow: 0 1rem 3rem rgb(24 35 30 / 0.06);
+}
+
+.metric-card {
+  display: grid;
+  gap: 0.75rem;
+  min-height: 12rem;
+  padding: 1.4rem;
+}
+
+.metric-card span,
+.metric-card small,
+.panel-note,
+.suggestion-list p,
+.definitions-panel dd {
+  color: #66716b;
+}
+
+.metric-card strong {
+  align-self: end;
+  font-size: clamp(1.8rem, 3vw, 2.7rem);
+  letter-spacing: -0.05em;
+}
+
+.accent-card {
+  border-color: #183f2a;
+  background: #183f2a;
+  color: #fff;
+}
+
+.accent-card span,
+.accent-card small {
+  color: #c7dbcd;
+}
+
+.merchant-columns {
+  display: grid;
+  grid-template-columns: 1.35fr 0.65fr;
+  gap: 1rem;
+}
+
+.merchant-panel {
+  margin-top: 1rem;
+  padding: clamp(1.4rem, 3vw, 2.2rem);
+}
+
+.merchant-panel h2 {
+  margin: 0.2rem 0 1.5rem;
+  font-size: clamp(1.5rem, 3vw, 2.2rem);
+  letter-spacing: -0.035em;
+}
+
+.panel-heading {
+  display: flex;
+  gap: 2rem;
+  align-items: start;
+  justify-content: space-between;
+}
+
+.panel-heading > span {
+  color: #526059;
+  text-align: right;
+}
+
+.funnel-list {
+  padding: 0;
+  list-style: none;
+}
+
+.funnel-list li {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr auto;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.9rem 0;
+  border-top: 1px solid #eceeea;
+}
+
+.funnel-list li > span {
+  color: #799184;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.funnel-list li > strong {
+  font-size: 1.5rem;
+}
+
+.outcome-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.outcome-grid div {
+  display: grid;
+  gap: 0.25rem;
+  padding: 1rem;
+  border-radius: 0.9rem;
+  background: #f3f5f1;
+}
+
+.outcome-grid strong {
+  font-size: 1.8rem;
+}
+
+.simulation-label {
+  max-width: 18rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 999px;
+  background: #fff2ca;
+  color: #694f00 !important;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.comparison-row {
+  display: grid;
+  grid-template-columns: 10rem minmax(8rem, 1fr) 9rem;
+  gap: 1rem;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.comparison-row > div {
+  height: 0.75rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e7ebe5;
+}
+
+.comparison-row i {
+  display: block;
+  height: 100%;
+  min-width: 0.3rem;
+  border-radius: inherit;
+  background: #82968a;
+}
+
+.policy-row i {
+  background: #2f8050;
+}
+
+.comparison-row strong {
+  text-align: right;
+}
+
+.incremental-value {
+  margin-top: 1.5rem;
+  color: #386b4c;
+}
+
+.suggestion-list article {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2rem;
+  padding: 1rem 0;
+  border-top: 1px solid #eceeea;
+}
+
+.suggestion-list p {
+  max-width: 48rem;
+  margin: 0.35rem 0 0;
+}
+
+.suggestion-outcome {
+  display: grid;
+  gap: 0.25rem;
+  align-content: start;
+  text-align: right;
+}
+
+.suggestion-outcome span {
+  color: #24653f;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.definitions-panel dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+
+.definitions-panel dt {
+  font-weight: 800;
+}
+
+.definitions-panel dd {
+  margin: 0.4rem 0 0;
+  line-height: 1.5;
+}
+
+@media (max-width: 800px) {
+  .merchant-header,
+  .merchant-columns {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .metric-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .comparison-row {
+    grid-template-columns: 1fr;
+  }
+
+  .comparison-row strong,
+  .panel-heading > span {
+    text-align: left;
+  }
+}
+
+@media (max-width: 520px) {
+  .metric-grid,
+  .definitions-panel dl {
+    grid-template-columns: 1fr;
+  }
+
+  .panel-heading,
+  .suggestion-list article {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .suggestion-outcome {
+    text-align: left;
+  }
+}

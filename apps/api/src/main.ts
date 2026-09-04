@@ -6,6 +6,7 @@ import {
   createConversationDependencies,
   createReadinessDependencies,
   createPaymentDependencies,
+  createGrowthDependencies,
 } from "@shoppilot/db";
 import {
   createShoppingConversationHandler,
@@ -65,6 +66,7 @@ const paymentDependencies = createPaymentDependencies(
   environment.DATABASE_URL,
   paymentProvider,
 );
+const growthDependencies = createGrowthDependencies(environment.DATABASE_URL);
 const conversation = createShoppingConversationHandler({
   model,
   catalogue,
@@ -77,6 +79,7 @@ const app = buildApi({
   conversation,
   commerce: commerceDependencies.service,
   payments: paymentDependencies.service,
+  growth: growthDependencies.reader,
 });
 
 const shutdown = async (): Promise<void> => {
@@ -85,6 +88,7 @@ const shutdown = async (): Promise<void> => {
   await conversationDependencies.close();
   await commerceDependencies.close();
   await paymentDependencies.close();
+  await growthDependencies.close();
   await readiness.close();
 };
 
@@ -98,6 +102,7 @@ try {
   await conversationDependencies.close();
   await commerceDependencies.close();
   await paymentDependencies.close();
+  await growthDependencies.close();
   await readiness.close();
   throw error;
 }

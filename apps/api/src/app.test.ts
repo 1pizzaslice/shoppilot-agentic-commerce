@@ -9,6 +9,7 @@ import type {
 import {
   createUnavailableCommerceService,
   createUnavailablePaymentService,
+  createUnavailableGrowthReader,
 } from "@shoppilot/testkit";
 
 import { buildApi } from "./app.js";
@@ -34,6 +35,7 @@ const createApp = (statuses: readonly DependencyStatus[]) => {
     conversation: emptyConversation,
     commerce: createUnavailableCommerceService(),
     payments: createUnavailablePaymentService(),
+    growth: createUnavailableGrowthReader(),
   });
   apps.push(app);
   return app;
@@ -90,6 +92,9 @@ describe("catalogue contract", () => {
     expect(document).toMatchObject({ openapi: "3.1.0" });
     expect(JSON.stringify(document)).toContain("/v1/catalog/search");
     expect(JSON.stringify(document)).toContain("/v1/checkouts");
+    expect(JSON.stringify(document)).toContain(
+      "/v1/merchants/{merchantId}/growth",
+    );
   });
 
   it("rejects malformed search input before calling the catalogue", async () => {
@@ -127,6 +132,7 @@ describe("payment HTTP boundary", () => {
       conversation: emptyConversation,
       commerce: createUnavailableCommerceService(),
       payments,
+      growth: createUnavailableGrowthReader(),
     });
     apps.push(app);
     const response = await app.inject({

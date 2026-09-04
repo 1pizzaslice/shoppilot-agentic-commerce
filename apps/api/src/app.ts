@@ -42,6 +42,9 @@ import {
   PaymentProviderError,
   PaymentSignatureError,
   type PaymentService,
+  merchantGrowthParamsSchema,
+  merchantGrowthSummarySchema,
+  type MerchantGrowthReader,
 } from "@shoppilot/domain";
 import type { ReadinessDependencies } from "@shoppilot/db";
 
@@ -57,6 +60,7 @@ export interface ApiDependencies {
   conversation: ShoppingConversationHandler;
   commerce: CommerceService;
   payments: PaymentService;
+  growth: MerchantGrowthReader;
 }
 
 const productParamsSchema = z
@@ -69,6 +73,7 @@ export const buildApi = ({
   conversation,
   commerce,
   payments,
+  growth,
 }: ApiDependencies): FastifyInstance => {
   const app = Fastify({ logger: false });
 
@@ -454,6 +459,21 @@ export const buildApi = ({
     return z
       .array(auditEventSchema)
       .parse(await commerce.getAuditTimeline(params.data.cartId));
+  });
+
+  app.get("/v1/merchants/:merchantId/growth", async (request, reply) => {
+    const params = merchantGrowthParamsSchema.safeParse(request.params);
+    if (!params.success) {
+      return reply.code(400).send(
+        catalogueErrorSchema.parse({
+          error: "invalid_request",
+          message: "Merchant identifier is invalid.",
+        }),
+      );
+    }
+    return merchantGrowthSummarySchema.parse(
+      await growth.getSummary(params.data.merchantId),
+    );
   });
 
   return app;

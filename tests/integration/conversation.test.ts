@@ -17,6 +17,7 @@ import {
   createFakeShoppingModel,
   createUnavailableCommerceService,
   createUnavailablePaymentService,
+  createUnavailableGrowthReader,
 } from "../../packages/testkit/src/index.js";
 
 const databaseUrl =
@@ -37,6 +38,7 @@ const app = buildApi({
   conversation,
   commerce: createUnavailableCommerceService(),
   payments: createUnavailablePaymentService(),
+  growth: createUnavailableGrowthReader(),
 });
 
 beforeAll(async () => {
