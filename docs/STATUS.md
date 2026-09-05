@@ -201,6 +201,11 @@ Passed through 2026-09-05:
   integration run could not open localhost PostgreSQL/Redis (`EPERM`). A later
   browser retry found an orphaned Next.js test server on port 3000; after
   stopping that exact process, the clean complete pipeline passed.
+- The final live smoke loaded the ignored local configuration explicitly:
+  Claude extracted a walking-shoe, UK-size-7, ₹5,000 intent and explained three
+  distinct PostgreSQL-grounded results; API and web readiness passed with the
+  Razorpay test provider configured. No in-app browser instance was connected,
+  so the 18-run Playwright suite remains the final interactive evidence.
 
 ## Blockers
 
