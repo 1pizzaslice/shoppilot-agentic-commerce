@@ -53,6 +53,7 @@ const offerRowSchema = z.object({
   product_id: z.string(),
   variant_id: z.string(),
   name: z.string(),
+  image_url: z.url(),
   reason: z.string(),
   price_paise: z.number().int(),
   currency: z.string(),
@@ -256,10 +257,12 @@ const readCart = async (
     [cartId],
   );
   const offerResult = await client.query<Record<string, unknown>>(
-    `SELECT id, source_product_id, product_id, variant_id, name, reason,
-            price_paise, currency, outcome
-     FROM addon_offers WHERE cart_id = $1
-     ORDER BY created_at DESC, id DESC LIMIT 1`,
+    `SELECT ao.id, ao.source_product_id, ao.product_id, ao.variant_id,
+            ao.name, p.image_url, ao.reason, ao.price_paise, ao.currency,
+            ao.outcome
+     FROM addon_offers ao JOIN products p ON p.id = ao.product_id
+     WHERE ao.cart_id = $1
+     ORDER BY ao.created_at DESC, ao.id DESC LIMIT 1`,
     [cartId],
   );
   const rawOffer = offerResult.rows[0];
@@ -274,6 +277,7 @@ const readCart = async (
             productId: parsed.product_id,
             variantId: parsed.variant_id,
             name: parsed.name,
+            imageUrl: parsed.image_url,
             reason: parsed.reason,
             pricePaise: parsed.price_paise,
             currency: parsed.currency,
@@ -346,9 +350,10 @@ const invalidateApproval = async (
 const selectAddon = async (
   client: PoolClient,
   sourceProductId: string,
+  maxPricePaise: number | null,
 ): Promise<z.infer<typeof offerRowSchema> | null> => {
   const result = await client.query(
-    `SELECT p.id AS product_id, p.name, pr.reason, pv.id AS variant_id,
+    `SELECT p.id AS product_id, p.name, p.image_url, pr.reason, pv.id AS variant_id,
             pv.price_paise, pv.currency, $1::text AS source_product_id,
             ''::text AS id, NULL::text AS outcome
      FROM product_relations pr
@@ -357,8 +362,9 @@ const selectAddon = async (
      JOIN inventory i ON i.variant_id = pv.id AND i.quantity > 0
      WHERE pr.source_product_id = $1 AND pr.relation_type = 'compatible_addon'
        AND p.product_type = 'accessory'
+       AND ($2::integer IS NULL OR pv.price_paise <= $2)
      ORDER BY pv.price_paise, p.id, pv.id LIMIT 1`,
-    [sourceProductId],
+    [sourceProductId, maxPricePaise],
   );
   return result.rows[0] === undefined
     ? null
@@ -451,7 +457,8 @@ export const createPostgresCommerceService = (
           throw new CommerceConflictError("Cart can no longer be changed.");
         }
         const variantResult = await client.query<Record<string, unknown>>(
-          `SELECT pv.id AS variant_id, pv.product_id, pv.active AS variant_active,
+          `SELECT pv.id AS variant_id, pv.product_id, pv.price_paise,
+                  pv.active AS variant_active,
                   p.active AS product_active, p.product_type, i.quantity
            FROM product_variants pv
            JOIN products p ON p.id = pv.product_id
@@ -462,6 +469,7 @@ export const createPostgresCommerceService = (
         const variantSchema = z.object({
           variant_id: z.string(),
           product_id: z.string(),
+          price_paise: z.number().int().nonnegative(),
           variant_active: z.boolean(),
           product_active: z.boolean(),
           product_type: z.string(),
@@ -512,7 +520,18 @@ export const createPostgresCommerceService = (
            WHERE id = $1`,
           [cartId, nextVersion, now()],
         );
-        const addon = await selectAddon(client, variant.product_id);
+        const remainingBudgetPaise =
+          cart.budgetPaise === null
+            ? null
+            : Math.max(
+                0,
+                cart.budgetPaise - variant.price_paise * input.quantity,
+              );
+        const addon = await selectAddon(
+          client,
+          variant.product_id,
+          remainingBudgetPaise,
+        );
         if (addon !== null) {
           const offerId = nextId();
           await client.query(
@@ -572,9 +591,11 @@ export const createPostgresCommerceService = (
           throw new CommerceConflictError("Cart can no longer be changed.");
         }
         const result = await client.query<Record<string, unknown>>(
-          `SELECT id, source_product_id, product_id, variant_id, name, reason,
-                  price_paise, currency, outcome
-           FROM addon_offers WHERE id = $1 AND cart_id = $2 FOR UPDATE`,
+          `SELECT ao.id, ao.source_product_id, ao.product_id, ao.variant_id,
+                  ao.name, p.image_url, ao.reason, ao.price_paise, ao.currency,
+                  ao.outcome
+           FROM addon_offers ao JOIN products p ON p.id = ao.product_id
+           WHERE ao.id = $1 AND ao.cart_id = $2 FOR UPDATE OF ao`,
           [input.offerId, cartId],
         );
         const rawOffer = result.rows[0];

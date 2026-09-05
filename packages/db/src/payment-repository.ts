@@ -19,6 +19,7 @@ import {
   type CheckoutState,
   type PaymentOrder,
   type PaymentProvider,
+  type ProviderPayment,
   type PaymentService,
 } from "@shoppilot/domain";
 import { createRuntimePool, currentCorrelationId } from "./runtime.js";
@@ -188,6 +189,77 @@ export const createPostgresPaymentService = (
         }
       : null;
 
+  const reconcileProviderPayment = async (
+    attemptId: string,
+    evidence: ProviderPayment,
+    source: "checkout_callback" | "status_poll",
+  ): Promise<PaymentOrder> =>
+    withTransaction(pool, async (client) => {
+      await client.query(
+        "SELECT id FROM checkout_attempts WHERE id = $1 FOR UPDATE",
+        [attemptId],
+      );
+      const payment = await readPayment(client, attemptId, true);
+      if (payment === null)
+        throw new PaymentNotFoundError("Payment not found.");
+      if (
+        payment.providerOrderId !== evidence.orderId ||
+        evidence.id !== payment.providerPaymentId ||
+        payment.amountPaise !== evidence.amountPaise ||
+        payment.currency !== evidence.currency
+      ) {
+        await appendAudit(
+          client,
+          nextId,
+          attemptId,
+          "provider_payment_status_rejected",
+          "rejected",
+          { source, providerStatus: evidence.status },
+        );
+        throw new PaymentConflictError(
+          "Razorpay payment evidence does not match the approved order.",
+        );
+      }
+      const nextState: CheckoutState =
+        evidence.status === "captured"
+          ? "paid"
+          : evidence.status === "failed"
+            ? "failed"
+            : "payment_pending";
+      if (payment.state === "paid") return payment;
+      if (payment.state === nextState) return payment;
+      if (
+        ["failed", "expired", "cancelled"].includes(payment.state) &&
+        nextState !== "paid"
+      ) {
+        return payment;
+      }
+      transitionCheckoutState(payment.state, nextState);
+      const updated = await client.query(
+        `UPDATE payment_orders SET state = $2, failure_code = $3, updated_at = $4
+         WHERE checkout_attempt_id = $1 RETURNING *`,
+        [
+          attemptId,
+          nextState,
+          nextState === "failed" ? "provider_reported_failed" : null,
+          now(),
+        ],
+      );
+      await client.query(
+        "UPDATE checkout_attempts SET state = $2 WHERE id = $1",
+        [attemptId, nextState],
+      );
+      await appendAudit(
+        client,
+        nextId,
+        attemptId,
+        "provider_payment_status_verified",
+        "completed",
+        { source, providerStatus: evidence.status, nextState },
+      );
+      return toPayment(updated.rows[0]);
+    });
+
   return {
     createOrder: async (attemptId): Promise<CheckoutLaunch> => {
       const claim = await withTransaction(pool, async (client) => {
@@ -339,8 +411,24 @@ export const createPostgresPaymentService = (
       });
     },
 
-    getPayment: (attemptId) =>
-      withTransaction(pool, (client) => readPayment(client, attemptId)),
+    getPayment: async (attemptId) => {
+      const payment = await withTransaction(pool, (client) =>
+        readPayment(client, attemptId),
+      );
+      if (
+        payment?.state !== "payment_pending" ||
+        payment.providerPaymentId === null
+      ) {
+        return payment;
+      }
+      try {
+        const evidence = await provider.fetchPayment(payment.providerPaymentId);
+        return reconcileProviderPayment(attemptId, evidence, "status_poll");
+      } catch (error: unknown) {
+        if (error instanceof PaymentProviderError) return payment;
+        throw error;
+      }
+    },
 
     recordCallback: async (rawInput: CheckoutCallbackInput) => {
       const input = checkoutCallbackInputSchema.parse(rawInput);
@@ -371,7 +459,7 @@ export const createPostgresPaymentService = (
         );
         throw new PaymentSignatureError("Checkout signature is invalid.");
       }
-      return withTransaction(pool, async (client) => {
+      const pending = await withTransaction(pool, async (client) => {
         const payment = await readPayment(
           client,
           input.checkoutAttemptId,
@@ -415,6 +503,18 @@ export const createPostgresPaymentService = (
         );
         return toPayment(updated.rows[0]);
       });
+      if (pending.state === "paid") return pending;
+      try {
+        const evidence = await provider.fetchPayment(input.razorpayPaymentId);
+        return await reconcileProviderPayment(
+          input.checkoutAttemptId,
+          evidence,
+          "checkout_callback",
+        );
+      } catch (error: unknown) {
+        if (error instanceof PaymentProviderError) return pending;
+        throw error;
+      }
     },
 
     cancel: (attemptId) =>

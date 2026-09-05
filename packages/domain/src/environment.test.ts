@@ -18,7 +18,7 @@ describe("environment parsing", () => {
     expect(environment.RAZORPAY_MODE).toBe("test");
     expect(environment.PAYMENT_PROVIDER).toBe("fake");
     expect(environment.MODEL_PROVIDER).toBe("fake");
-    expect(environment.OPENAI_MODEL).toBe("gpt-5.4-mini");
+    expect(environment.ANTHROPIC_MODEL).toBe("claude-haiku-4-5-20251001");
     expect(environment.API_PORT).toBe(3001);
   });
 
@@ -57,9 +57,9 @@ describe("environment parsing", () => {
     expect(() =>
       parseWorkerEnvironment({
         ...dependencies,
-        MODEL_PROVIDER: "openai",
+        MODEL_PROVIDER: "anthropic",
       }),
-    ).toThrow(/OPENAI_API_KEY/);
+    ).toThrow(/ANTHROPIC_API_KEY/);
   });
 
   it("validates public web configuration", () => {

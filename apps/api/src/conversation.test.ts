@@ -20,13 +20,16 @@ const catalogue: CatalogueReader = {
   search: (input) =>
     Promise.resolve({
       products:
-        input.maxPricePaise !== undefined && input.maxPricePaise < 300_000
+        (input.maxPricePaise !== undefined && input.maxPricePaise < 300_000) ||
+        input.colour === "Black"
           ? []
           : [1, 2, 3, 4].map((number) => ({
               id: `shoe-${String(number)}`,
               slug: `shoe-${String(number)}`,
               name: `Shoe ${String(number)}`,
               description: "Canonical catalogue data.",
+              imageUrl:
+                "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=82",
               productType: "running" as const,
               returnPolicyDays: 14,
               lowestPricePaise: 300_000 + number * 10_000,
@@ -134,5 +137,32 @@ describe("recorded shopping conversation", () => {
     expect(body.kind).toBe("recommendations");
     expect(body.recommendations).toHaveLength(2);
     expect(body.notice).toBe("Only 2 valid products matched all constraints.");
+  });
+
+  it("relaxes an unavailable optional colour without relaxing hard constraints", async () => {
+    const { app, store } = setup();
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/conversations",
+      payload: { message: "Running shoes under ₹4,000 size 8 black" },
+    });
+    const body = shoppingResponseSchema.parse(response.json());
+    expect(body.kind).toBe("recommendations");
+    expect(body.notice).toContain("No exact Black matches");
+    expect(body.recommendations).toHaveLength(3);
+    expect(
+      body.recommendations.every(
+        ({ variant, matchedConstraints }) =>
+          variant.sizeUk === 8 &&
+          variant.pricePaise <= 400_000 &&
+          variant.inStock &&
+          !matchedConstraints.some((constraint) =>
+            constraint.toLowerCase().includes("black"),
+          ),
+      ),
+    ).toBe(true);
+    expect(
+      store.turns[0]?.events.filter(({ name }) => name === "searchCatalog"),
+    ).toHaveLength(2);
   });
 });

@@ -66,7 +66,7 @@ describe("PostgreSQL shopping conversation", () => {
       method: "POST",
       url: `/v1/conversations/${first.conversationId}/messages`,
       headers: { "x-request-id": "conversation-request-2" },
-      payload: { message: "UK 8, Cloud Grey" },
+      payload: { message: "UK 8, grey colour" },
     });
     const second = shoppingResponseSchema.parse(secondResponse.json());
     expect(second.kind).toBe("recommendations");
@@ -116,5 +116,25 @@ describe("PostgreSQL shopping conversation", () => {
       error: "not_found",
       message: "Conversation not found.",
     });
+  });
+
+  it("returns a price spectrum for a broad budget instead of the same cheapest rows", async () => {
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/conversations",
+      payload: { message: "Running shoes under ₹8,000, UK size 8" },
+    });
+    const body = shoppingResponseSchema.parse(response.json());
+    expect(body.kind).toBe("recommendations");
+    expect(body.recommendations).toHaveLength(3);
+    const prices = body.recommendations.map(
+      (recommendation) => recommendation.variant.pricePaise,
+    );
+    expect(Math.max(...prices) - Math.min(...prices)).toBeGreaterThanOrEqual(
+      300_000,
+    );
+    expect(
+      new Set(body.recommendations.map(({ imageUrl }) => imageUrl)).size,
+    ).toBe(3);
   });
 });

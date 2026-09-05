@@ -12,6 +12,7 @@ export const buildProductJsonLd = (product: CatalogueProduct) => ({
   sku: product.id,
   name: product.name,
   description: product.description,
+  image: product.imageUrl,
   category: product.productType,
   offers: product.variants.map((variant) => ({
     "@type": "Offer",

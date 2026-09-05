@@ -11,6 +11,8 @@ const product: CatalogueProduct = {
   slug: "aero-pace",
   name: "Aero Pace",
   description: "</script><script>unsafe()</script>",
+  imageUrl:
+    "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=82",
   productType: "running",
   returnPolicyDays: 14,
   variants: [

@@ -2,18 +2,31 @@ import { CheckoutLauncher } from "./checkout-launcher";
 
 export default async function CheckoutPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ checkoutAttemptId: string }>;
+  searchParams: Promise<{ story?: string }>;
 }) {
   const { checkoutAttemptId } = await params;
+  const { story } = await searchParams;
+  const checkoutStory = story === "recovery" ? "recovery" : "happy";
   return (
-    <main>
-      <p className="eyebrow">Test-mode payment</p>
-      <h1>Complete your approved purchase</h1>
-      <p>
-        Review the Razorpay test checkout and enter payment details yourself.
-      </p>
-      <CheckoutLauncher checkoutAttemptId={checkoutAttemptId} />
+    <main className="payment-shell">
+      <a className="payment-brand" href="/">
+        ShopPilot
+      </a>
+      <div className="payment-heading">
+        <p className="eyebrow">Approved cart · secure checkout</p>
+        <h1>One last secure step.</h1>
+        <p>
+          Your exact cart is frozen and approved. Complete authentication in
+          Razorpay’s checkout; ShopPilot receives only signed payment evidence.
+        </p>
+      </div>
+      <CheckoutLauncher
+        checkoutAttemptId={checkoutAttemptId}
+        story={checkoutStory}
+      />
     </main>
   );
 }

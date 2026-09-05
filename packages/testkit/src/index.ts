@@ -115,12 +115,13 @@ const parseSize = (
 };
 
 const parseColour = (message: string): string | undefined => {
-  const named = /\b(midnight blue|cloud grey|black|neutral)\b/i.exec(
+  const named = /\b(midnight blue|cloud grey|grey|gray|black|neutral)\b/i.exec(
     message,
   )?.[1];
   if (named === undefined) return undefined;
   return named
     .toLowerCase()
+    .replaceAll("gray", "grey")
     .replace(/\b\w/g, (character) => character.toUpperCase());
 };
 

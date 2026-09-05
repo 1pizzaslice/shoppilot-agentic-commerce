@@ -100,10 +100,10 @@ export const buildApi = ({
 }: ApiDependencies): FastifyInstance => {
   const app = Fastify({
     bodyLimit: 64 * 1_024,
-    connectionTimeout: 5_000,
+    connectionTimeout: 45_000,
     keepAliveTimeout: 5_000,
     logger: false,
-    requestTimeout: 15_000,
+    requestTimeout: 40_000,
   });
   const logger = operations?.logger ?? silentLogger;
   const now = operations?.now ?? Date.now;

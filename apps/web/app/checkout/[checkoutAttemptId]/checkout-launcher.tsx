@@ -70,27 +70,50 @@ const requestJson = async <T,>(
 
 export function CheckoutLauncher({
   checkoutAttemptId,
+  story,
 }: {
   checkoutAttemptId: string;
+  story: "happy" | "recovery";
 }) {
   const [payment, setPayment] = useState<PaymentOrder | null>(null);
-  const [message, setMessage] = useState("Ready to open secure test checkout.");
+  const [message, setMessage] = useState(
+    story === "recovery"
+      ? "Recovery demo selected. Choose Failure once on Razorpay’s mock bank screen to inspect the safe failure path."
+      : "Success demo selected. Complete Razorpay’s simulated authentication to confirm the approved order.",
+  );
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (
-      payment === null ||
-      !["created", "payment_pending"].includes(payment.state)
+    void requestJson<PaymentOrder>(
+      paymentOrderSchema,
+      `/v1/checkouts/${checkoutAttemptId}`,
     )
-      return;
-    const timer = window.setInterval(() => {
+      .then((next) => {
+        if (next.state === "paid") {
+          window.location.replace(`/checkout/${checkoutAttemptId}/success`);
+          return;
+        }
+        setPayment(next);
+      })
+      .catch(() => undefined);
+  }, [checkoutAttemptId]);
+
+  useEffect(() => {
+    if (payment?.state !== "payment_pending") return;
+    const refresh = () => {
       void requestJson<PaymentOrder>(
         paymentOrderSchema,
         `/v1/checkouts/${checkoutAttemptId}`,
       )
-        .then(setPayment)
+        .then((next) => {
+          setPayment(next);
+          if (next.state === "paid") {
+            window.location.replace(`/checkout/${checkoutAttemptId}/success`);
+          }
+        })
         .catch(() => undefined);
-    }, 2_000);
+    };
+    const timer = window.setInterval(refresh, 2_000);
     return () => window.clearInterval(timer);
   }, [checkoutAttemptId, payment]);
 
@@ -138,12 +161,26 @@ export function CheckoutLauncher({
                 razorpaySignature: response.razorpay_signature,
               }),
             },
-          ).then((next) => {
-            setPayment(next);
-            setMessage(
-              "Payment evidence received. Waiting for verified confirmation.",
-            );
-          });
+          )
+            .then((next) => {
+              setPayment(next);
+              if (next.state === "paid") {
+                window.location.replace(
+                  `/checkout/${checkoutAttemptId}/success`,
+                );
+                return;
+              }
+              setMessage(
+                "Payment received. Confirming its captured status with Razorpay…",
+              );
+            })
+            .catch((error: unknown) => {
+              setMessage(
+                error instanceof Error
+                  ? error.message
+                  : "Payment confirmation could not be completed.",
+              );
+            });
         },
         modal: {
           ondismiss: () => {
@@ -155,7 +192,11 @@ export function CheckoutLauncher({
                 headers: { "content-type": "application/json" },
                 body: JSON.stringify({ checkoutAttemptId }),
               },
-            ).then(setPayment);
+            )
+              .then(setPayment)
+              .catch(() =>
+                setMessage("Checkout closed before payment was completed."),
+              );
           },
         },
       }).open();
@@ -166,14 +207,77 @@ export function CheckoutLauncher({
     }
   };
 
+  const confirming = payment?.state === "payment_pending";
+  const terminalState =
+    payment?.state === "cancelled" ||
+    payment?.state === "failed" ||
+    payment?.state === "expired";
+  const terminalHeading =
+    payment?.state === "cancelled"
+      ? "Checkout closed safely."
+      : payment?.state === "failed"
+        ? "Payment was not completed."
+        : "This approval has expired.";
+
   return (
-    <section className="card" aria-live="polite">
-      <p>{message}</p>
-      <button type="button" onClick={() => void openCheckout()} disabled={busy}>
-        {busy ? "Preparing checkout…" : "Pay securely in Razorpay test mode"}
-      </button>
-      {payment !== null ? (
-        <p>Payment status: {payment.state.replaceAll("_", " ")}</p>
+    <section className="payment-card" aria-live="polite">
+      <div className="payment-security-mark" aria-hidden="true">
+        {confirming ? "…" : "₹"}
+      </div>
+      <div>
+        <p className="payment-kicker">
+          {terminalState
+            ? "No charge completed"
+            : confirming
+              ? "Verifying payment"
+              : "Razorpay Standard Checkout"}
+        </p>
+        <h2>
+          {terminalState
+            ? terminalHeading
+            : confirming
+              ? "Your payment was received."
+              : "Finish securely with Razorpay."}
+        </h2>
+        <p className="payment-message">
+          {terminalState
+            ? "No payment was captured. This frozen attempt cannot be reused; return to ShopPilot to start a fresh, fully bounded order."
+            : message}
+        </p>
+      </div>
+      <div className="checkout-responsibility">
+        <span>Agent prepared one bounded order</span>
+        <span>You complete secure authentication</span>
+      </div>
+      {terminalState ? (
+        <div className="payment-actions">
+          <a className="primary-button link-button" href="/">
+            Return to ShopPilot
+          </a>
+        </div>
+      ) : !confirming ? (
+        <button
+          className="primary-button payment-button"
+          type="button"
+          onClick={() => void openCheckout()}
+          disabled={busy}
+        >
+          {busy ? "Preparing Razorpay…" : "Open secure Razorpay checkout"}
+        </button>
+      ) : (
+        <div className="confirmation-progress" role="status">
+          <span aria-hidden="true" />
+          Checking captured status with Razorpay
+        </div>
+      )}
+      <p className="payment-footnote">
+        Test mode only · no real money moves · ShopPilot never sees payment
+        credentials
+      </p>
+      {!terminalState ? (
+        <a className="payment-back-link" href="/">
+          Return to shopping
+        </a>
       ) : null}
     </section>
   );

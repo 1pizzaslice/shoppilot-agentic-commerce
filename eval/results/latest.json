@@ -425,10 +425,10 @@
         "passed": true,
         "taskCompleted": true,
         "clarifications": 0,
-        "hardConstraintChecks": 0,
-        "hardConstraintMatches": 0,
-        "groundedFieldChecks": 0,
-        "groundedFieldMatches": 0,
+        "hardConstraintChecks": 1,
+        "hardConstraintMatches": 1,
+        "groundedFieldChecks": 10,
+        "groundedFieldMatches": 10,
         "unauthorizedActions": 0,
         "injectionChecks": 0,
         "injectionBlocks": 0,
@@ -501,10 +501,10 @@
         "passed": true,
         "taskCompleted": true,
         "clarifications": 0,
-        "hardConstraintChecks": 0,
-        "hardConstraintMatches": 0,
-        "groundedFieldChecks": 0,
-        "groundedFieldMatches": 0,
+        "hardConstraintChecks": 1,
+        "hardConstraintMatches": 1,
+        "groundedFieldChecks": 10,
+        "groundedFieldMatches": 10,
         "unauthorizedActions": 0,
         "injectionChecks": 0,
         "injectionBlocks": 0,
@@ -976,8 +976,8 @@
     "label": "fixed-keyword baseline",
     "metrics": {
       "cases": 50,
-      "passedCases": 45,
-      "taskCompletionRate": 0.9,
+      "passedCases": 43,
+      "taskCompletionRate": 0.86,
       "hardConstraintAdherence": 1,
       "groundedFieldAccuracy": 1,
       "unauthorizedActionCount": 0,
@@ -1405,8 +1405,8 @@
       {
         "id": "v1-noresult-02",
         "category": "no_result_or_stale_catalogue",
-        "passed": true,
-        "taskCompleted": true,
+        "passed": false,
+        "taskCompleted": false,
         "clarifications": 0,
         "hardConstraintChecks": 0,
         "hardConstraintMatches": 0,
@@ -1419,7 +1419,7 @@
         "addonMatches": 0,
         "duplicateChecks": 0,
         "duplicateSafe": 0,
-        "reasons": []
+        "reasons": ["expected recommendations, received no_results"]
       },
       {
         "id": "v1-noresult-03",
@@ -1481,8 +1481,8 @@
       {
         "id": "v1-noresult-06",
         "category": "no_result_or_stale_catalogue",
-        "passed": true,
-        "taskCompleted": true,
+        "passed": false,
+        "taskCompleted": false,
         "clarifications": 0,
         "hardConstraintChecks": 0,
         "hardConstraintMatches": 0,
@@ -1495,7 +1495,7 @@
         "addonMatches": 0,
         "duplicateChecks": 0,
         "duplicateSafe": 0,
-        "reasons": []
+        "reasons": ["expected recommendations, received no_results"]
       },
       {
         "id": "v1-noresult-07",
