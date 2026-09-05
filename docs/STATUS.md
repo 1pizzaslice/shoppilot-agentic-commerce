@@ -19,6 +19,10 @@ Last updated: 2026-09-05
 
 ## Completed
 
+- Corrected the autonomous route's desktop composition after the global narrow
+  `main` rule constrained it to the left side. The route now fills the viewport,
+  keeps the buyer explanation on the left, and places delegation plus live API
+  execution in the available right side; mobile continues to stack naturally.
 - Added a separate `/ai-buyer` machine-client journey without changing the
   guided shopper flow. One complete instruction, hard cap, optional add-on rule,
   and visible preparation delegation now drive live discovery, grounded search,
@@ -164,6 +168,12 @@ Last updated: 2026-09-05
 
 Passed through 2026-09-05:
 
+- Session 14 responsive follow-up: full strict type checking and the focused
+  autonomous Playwright flow passed on desktop and mobile against the running
+  live-configured API. The regression verifies full viewport width, above-fold
+  desktop controls, one shared correlation ID, and one provider-order request;
+  it now accepts both fake-provider completion and the expected Razorpay
+  test-mode checkout navigation.
 - Session 14 partial verification: formatting, lint, full strict type checking,
   all 46 unit/contract tests, every production build, and the frozen evaluation
   (50/50 ShopPilot versus 43/50 baseline) passed. Before the final server-audit

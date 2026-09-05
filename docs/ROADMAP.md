@@ -307,6 +307,9 @@ product scope: [`docs/PRODUCT.md`](PRODUCT.md).
   one server-created Razorpay test order, and secure payment authentication.
 - [x] Distinguish the autonomous-buyer handoff on the secure checkout page and
   add desktop/mobile browser coverage for the complete separate flow.
+- [x] Use the full desktop viewport for the autonomous route, placing delegation
+  and execution beside the buyer explanation while retaining the stacked mobile
+  layout.
 
 Acceptance:
 
@@ -316,4 +319,6 @@ Acceptance:
   human product or add-on choice.
 - [x] Server audit readback proves the same correlation ID and a durable single
   provider-order event while the payment boundary remains human-controlled.
+- [x] Desktop controls begin above the fold instead of inheriting the global
+  narrow-page width, and a browser assertion guards the full-width layout.
 - [ ] The complete quality pipeline passes on the session branch.
