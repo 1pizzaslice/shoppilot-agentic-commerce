@@ -300,6 +300,27 @@ h1 {
   font-size: 0.78rem;
 }
 
+@media (min-width: 1100px) {
+  .payment-shell {
+    grid-template-areas: "payment-heading payment-checkout";
+    grid-template-columns: minmax(0, 1fr) minmax(38rem, 0.9fr);
+    column-gap: clamp(3rem, 4vw, 5rem);
+    align-items: center;
+    padding: 5rem clamp(4rem, 5vw, 7rem) 2rem;
+  }
+
+  .payment-heading {
+    grid-area: payment-heading;
+  }
+
+  .payment-card {
+    grid-area: payment-checkout;
+    width: 100%;
+    max-width: 48rem;
+    justify-self: end;
+  }
+}
+
 .payment-success-shell {
   place-items: center;
 }
