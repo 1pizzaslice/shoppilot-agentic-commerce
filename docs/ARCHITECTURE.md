@@ -281,7 +281,7 @@ The MVP avoids accounts and minimizes personal data. Use fictional delivery data
     Key-based and credential-shaped redaction is tested. Redis limits abuse at
     selected boundaries, while PostgreSQL remains the only authority for money
     safety.
-15. **The external AI-buyer trace is an observable projection, not another
+15. **The machine-contract trace is an observable projection, not another
     agent.** The web client fetches and validates the merchant discovery
     profile from the public same-origin route, then maps the current typed
     recommendation, selected variant, versioned cart, immutable snapshot,
@@ -289,3 +289,17 @@ The MVP avoids accounts and minimizes personal data. Use fictional delivery data
     checkout page carries a compact handoff through Razorpay navigation. This
     surface creates no cart or payment side effects, exposes no credentials or
     raw prompts, and cannot bypass the existing consent or policy boundaries.
+16. **Autonomous buying is a separate machine client with one bounded
+    delegation.** The `/ai-buyer` client calls the public discovery,
+    conversation, product, cart, approval, checkout, payment-order, and audit
+    contracts directly. It carries one caller-created correlation ID through
+    every request, validates every response with shared Zod schemas, and marks
+    an exchange complete only after a valid response. The client chooses the
+    first deterministic eligible recommendation under the declared hard cap,
+    applies the user's up-front add-on rule, and performs no intermediate human
+    product or cart selection. It then reads PostgreSQL-backed append-only cart
+    evidence before approval and again after provider-order creation, requiring
+    the same correlation ID and a durable `provider_order_created` event. Exact
+    frozen-total approval and Razorpay authentication remain human boundaries;
+    this is bounded autonomous preparation, not authority to spend or enter
+    payment credentials.

@@ -100,12 +100,23 @@ The merchant publishes:
 
 This is a practical UCP-inspired subset for the buildathon, not a claim of full protocol conformance. The catalogue is queried through APIs; “crawlable” means machine-discoverable and machine-readable, not uncontrolled browser scraping.
 
-The shopper surface includes a visible external AI-buyer trace that reads the
+The shopper surface includes a visible machine-contract trace that reads the
 same discovery profile and projects the current journey through catalogue
 search, exact-variant consent, versioned cart construction, frozen approval,
 policy authorization, and one Razorpay test order. It is an explanation of the
 real contracts and current client state, not a second staged checkout or an
 independent source of commerce authority.
+
+A separate autonomous-buyer route proves actual machine execution without
+changing the guided shopper journey. The user supplies one complete instruction,
+a hard spending cap, and an optional add-on rule up front. The client then
+discovers the merchant and performs search, exact-variant validation, cart
+creation, add-on acceptance or refusal, and immutable review through the public
+HTTP contracts without intermediate product-selection clicks. It reads the
+append-only server audit back under one shared correlation ID. The user returns
+only at the existing money boundary to approve the exact frozen total and
+authenticate with Razorpay Standard Checkout; product facts and authorization
+remain deterministic server responsibilities.
 
 ## Growth feature
 

@@ -449,7 +449,7 @@ export function ShopperJourney() {
           type="button"
           onClick={() => setBuyerTraceOpen(true)}
         >
-          AI buyer trace
+          Contract trace
         </button>
         <button
           ref={auditTriggerRef}
@@ -535,10 +535,17 @@ export function ShopperJourney() {
                 >
                   <span aria-hidden="true">↗</span>
                   <span>
-                    <strong>See how an external AI buyer uses StepUp</strong>
-                    <small>Live discovery, catalogue and checkout trace</small>
+                    <strong>Inspect this shopper journey’s contracts</strong>
+                    <small>Discovery, catalogue and checkout state</small>
                   </span>
                 </button>
+                <a className="autonomous-buyer-link" href="/ai-buyer">
+                  <span aria-hidden="true">◎</span>
+                  <span>
+                    <strong>Run a separate autonomous AI buyer</strong>
+                    <small>One delegation · no product-selection clicks</small>
+                  </span>
+                </a>
               </div>
 
               <aside className="store-story" aria-label="StepUp store promise">
