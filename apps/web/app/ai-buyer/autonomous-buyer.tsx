@@ -10,6 +10,7 @@ import {
   catalogueProductSchema,
   checkoutAuthorizationSchema,
   checkoutLaunchSchema,
+  paymentOrderSchema,
   shoppingResponseSchema,
   type Cart,
   type CheckoutSnapshot,
@@ -18,6 +19,7 @@ import {
 } from "@shoppilot/domain";
 import type { z } from "zod";
 
+import { openRazorpayCheckout } from "../checkout/razorpay-client";
 import { discoverySchema } from "../machine-contract";
 
 type BuyerState =
@@ -462,9 +464,70 @@ export function AutonomousBuyer() {
       setPayment(launch.payment);
       setState("payment_ready");
       if (launch.payment.provider === "razorpay") {
-        window.location.assign(
-          `/checkout/${encodeURIComponent(authorization.attempt.id)}?story=happy&source=ai-buyer`,
-        );
+        if (launch.checkout === null) {
+          throw new Error(
+            "Razorpay checkout details were unavailable for this order.",
+          );
+        }
+        const checkoutAttemptId = authorization.attempt.id;
+        await openRazorpayCheckout(launch.checkout, {
+          onSuccess: (response) => {
+            void requestJson(
+              paymentOrderSchema,
+              "/v1/payments/callback",
+              correlationId,
+              {
+                method: "POST",
+                body: JSON.stringify({
+                  checkoutAttemptId,
+                  razorpayOrderId: response.razorpay_order_id,
+                  razorpayPaymentId: response.razorpay_payment_id,
+                  razorpaySignature: response.razorpay_signature,
+                }),
+              },
+            )
+              .then(({ data }) => {
+                setPayment(data);
+                window.location.replace(
+                  `/checkout/${encodeURIComponent(checkoutAttemptId)}/success`,
+                );
+              })
+              .catch((caught: unknown) => {
+                setError(
+                  caught instanceof Error
+                    ? caught.message
+                    : "Payment confirmation could not be completed.",
+                );
+                setState("blocked");
+              });
+          },
+          onDismiss: () => {
+            void requestJson(
+              paymentOrderSchema,
+              "/v1/payments/cancel",
+              correlationId,
+              {
+                method: "POST",
+                body: JSON.stringify({ checkoutAttemptId }),
+              },
+            )
+              .then(({ data }) => {
+                setPayment(data);
+                setError(
+                  "Razorpay was closed before authentication. No payment was captured.",
+                );
+                setState("blocked");
+              })
+              .catch((caught: unknown) => {
+                setError(
+                  caught instanceof Error
+                    ? caught.message
+                    : "Checkout closed before payment was completed.",
+                );
+                setState("blocked");
+              });
+          },
+        });
       }
     } catch (caught: unknown) {
       setError(
@@ -696,8 +759,7 @@ export function AutonomousBuyer() {
                 type="button"
                 onClick={() => void approveAndCreateOrder()}
               >
-                Approve {money(prepared.snapshot.totalPaise)} and create
-                Razorpay order
+                Approve {money(prepared.snapshot.totalPaise)} and pay securely
               </button>
             ) : null}
             {payment !== null && payment.provider === "fake" ? (
