@@ -11,13 +11,17 @@ Last updated: 2026-09-05
   agentic purchase flow and secondary guided demo stories. The v2 catalogue now
   contains 95 footwear styles and 10 compatible add-ons. Final video capture,
   upload, and form submission require submitter account actions
-- Current branch: `session/12-catalogue-expansion`
+- Current branch: `fix/red-colour-search`
 - Previous release tag (before Session 11): `shoppilot-submission-v1` at
   `bd0e4f281bada2c44e1ec936adccafe576434e4d`
 - Session 10 merge: PR #13 at `5b5517b`
 
 ## Completed
 
+- Grounded explicit catalogue colour words deterministically after model
+  extraction. A request containing `red` now binds the search to red catalogue
+  variants even if the model omits or conflicts with that colour; the decision
+  is recorded in the append-only conversation audit.
 - Expanded the PostgreSQL seed to 95 footwear styles, evenly covering running,
   walking, training, trail, and casual use across UK sizes 5–12. Six additional
   exact-search colour families and a ₹1,799–₹8,549 price ladder improve result
@@ -133,6 +137,14 @@ Last updated: 2026-09-05
 
 Passed through 2026-09-05:
 
+- Explicit-colour search follow-up: a live Claude request for red running shoes
+  in UK 8 returned only the Signal Red Enduro Run. The final complete
+  `pnpm quality` pipeline passed repository hygiene (122 files), formatting,
+  lint, strict type checks, 46 unit/contract tests, 32 PostgreSQL/Redis
+  integration tests, all production builds, the 50/50 evaluation (baseline
+  43/50), and all 18 desktop/mobile Playwright journeys. The first full run
+  correctly exposed the new audit event in a fixed-count assertion; the
+  assertion now verifies that event by name and the clean rerun passed.
 - Session 12 catalogue expansion: the complete `pnpm quality` pipeline passed
   repository hygiene (122 files), formatting, lint, strict type checks, 45
   unit/contract tests, 32 PostgreSQL/Redis integration tests, all production

@@ -251,5 +251,8 @@ Acceptance:
   in-stock UK-size variants within the configured price ceiling.
 - [x] Every one of the 10 accessories is reachable through a deterministic
   compatibility relation, while checkout still offers at most one.
+- [x] Explicit catalogue colour words are deterministically grounded from the
+  shopper's latest text before search, so a model omission or conflict cannot
+  silently substitute another colour.
 - [x] The complete quality pipeline passes and the expanded live catalogue is
   reseeded for review.
