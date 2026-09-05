@@ -10,39 +10,8 @@ import type {
   ShoppingRecommendation,
   ShoppingResponse,
 } from "@shoppilot/domain";
-import { z } from "zod";
 
-const discoverySchema = z
-  .object({
-    protocol: z.literal("shoppilot-catalogue"),
-    version: z.literal("1.0"),
-    ucpConformance: z.literal(false),
-    description: z.string().min(1),
-    merchant: z.object({ id: z.string(), name: z.string() }).strict(),
-    capabilities: z
-      .object({
-        search: z
-          .object({
-            method: z.literal("POST"),
-            path: z.string().startsWith("/"),
-          })
-          .strict(),
-        productLookup: z
-          .object({
-            method: z.literal("GET"),
-            pathTemplate: z.string().startsWith("/"),
-          })
-          .strict(),
-        openapi: z
-          .object({
-            method: z.literal("GET"),
-            path: z.string().startsWith("/"),
-          })
-          .strict(),
-      })
-      .strict(),
-  })
-  .strict();
+import { discoverySchema } from "./machine-contract";
 
 type TraceStatus = "complete" | "active" | "waiting" | "blocked";
 
@@ -264,13 +233,13 @@ export function AiBuyerTrace({
       >
         <div className="trace-header">
           <div>
-            <p className="step-label">External AI-buyer proof</p>
-            <h2 id="buyer-trace-title">The machine view of this purchase</h2>
+            <p className="step-label">Machine contract explainer</p>
+            <h2 id="buyer-trace-title">The contract view of this purchase</h2>
           </div>
           <button
             ref={closeRef}
             type="button"
-            aria-label="Close AI buyer trace"
+            aria-label="Close contract trace"
             onClick={onClose}
           >
             ×
@@ -322,10 +291,12 @@ export function AiBuyerTrace({
           ))}
         </ol>
         <div className="trace-footer">
-          <strong>Not a staged parallel demo</strong>
+          <strong>This is the guided shopper journey</strong>
           <p>
             This trace advances from the same catalogue, cart, approval and
-            payment state shown to the shopper.
+            payment state shown to the shopper. It explains those contracts; it
+            is not autonomous execution.{" "}
+            <a href="/ai-buyer">Run the separate AI buyer →</a>
           </p>
         </div>
       </aside>

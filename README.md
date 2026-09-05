@@ -108,10 +108,15 @@ attempt, then retries the same server-created order to demonstrate
 duplicate-safe recovery. Both presets use the same product request because the
 story changes only at payment. The safety trail identifies what the agent
 proposed, what deterministic policy allowed, and what the shopper approved. Open
-“AI buyer trace” at any stage to see the machine-readable contract and the same
-purchase advance from discovery through catalogue, consent, cart, approval,
-policy, and Razorpay. The secure checkout page retains the final
-machine-to-policy-to-provider handoff.
+“Contract trace” at any stage to inspect the machine-readable contract behind
+the guided purchase. To demonstrate actual machine execution, open
+`http://localhost:3000/ai-buyer`: one up-front instruction and spending boundary
+drive merchant discovery, grounded selection, exact-SKU cart preparation, add-on
+policy, and immutable review without intermediate selection clicks. The page
+reads the PostgreSQL-backed audit trail under one correlation ID before the
+exact-total approval and again after creating the single test provider order.
+The secure checkout page retains the final machine-to-policy-to-provider
+handoff.
 
 After Compose is healthy and the database is migrated and seeded, run
 `pnpm demo:rehearse` for the release rehearsal. It drives the live API, web app,

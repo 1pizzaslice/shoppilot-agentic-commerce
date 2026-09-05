@@ -328,12 +328,12 @@ test.describe("deterministic browser states", () => {
     await page.goto("/");
     await page
       .getByRole("button", {
-        name: /See how an external AI buyer uses StepUp/,
+        name: /Inspect this shopper journey’s contracts/,
       })
       .click();
 
     const trace = page.getByRole("dialog", {
-      name: "The machine view of this purchase",
+      name: "The contract view of this purchase",
     });
     await expect(trace).toBeVisible();
     await expect(trace.getByText("GET /.well-known/ucp")).toBeVisible();
@@ -341,17 +341,19 @@ test.describe("deterministic browser states", () => {
       trace.getByText("StepUp Shoes · shoppilot-catalogue v1.0"),
     ).toBeVisible();
     await expect(trace.getByText("POST /v1/payment-orders")).toBeVisible();
-    await expect(trace.getByText("Not a staged parallel demo")).toBeVisible();
+    await expect(
+      trace.getByText("This is the guided shopper journey"),
+    ).toBeVisible();
 
-    await trace.getByRole("button", { name: "Close AI buyer trace" }).click();
+    await trace.getByRole("button", { name: "Close contract trace" }).click();
     await expect(trace).toBeHidden();
   });
 
   test("completes the grounded, consented happy path", async ({ page }) => {
     await reachPayment(page, "Successful checkout");
-    await page.getByRole("button", { name: "AI buyer trace" }).click();
+    await page.getByRole("button", { name: "Contract trace" }).click();
     const buyerTrace = page.getByRole("dialog", {
-      name: "The machine view of this purchase",
+      name: "The contract view of this purchase",
     });
     await expect(buyerTrace).toBeVisible();
     await expect(
@@ -359,7 +361,7 @@ test.describe("deterministic browser states", () => {
     ).toHaveCount(7);
     await expect(buyerTrace).toContainText("order_fake_demo");
     await buyerTrace
-      .getByRole("button", { name: "Close AI buyer trace" })
+      .getByRole("button", { name: "Close contract trace" })
       .click();
     await page.getByRole("button", { name: "View safety trail" }).click();
     await expect(
@@ -412,6 +414,60 @@ test.describe("deterministic browser states", () => {
       "Running shoes under ₹4,000",
     );
   });
+});
+
+test("runs a separate autonomous buyer through the live merchant APIs", async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  const correlatedRequests: string[] = [];
+  let paymentOrderRequests = 0;
+  page.on("request", (outgoing) => {
+    const pathname = new URL(outgoing.url()).pathname;
+    if (pathname === "/.well-known/ucp" || pathname.startsWith("/v1/")) {
+      const correlation = outgoing.headers()["x-request-id"];
+      if (correlation !== undefined) correlatedRequests.push(correlation);
+    }
+    if (pathname === "/v1/payment-orders") paymentOrderRequests += 1;
+  });
+
+  await page.goto("/ai-buyer");
+  await page
+    .getByRole("checkbox", {
+      name: /I delegate product and cart preparation/,
+    })
+    .check();
+  await page.getByRole("button", { name: "Run autonomous buyer" }).click();
+
+  await expect(
+    page.getByRole("heading", {
+      name: "The buyer prepared this exact cart.",
+    }),
+  ).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText("Signal Red · UK 8")).toBeVisible();
+  await expect(page.locator(".buyer-exchange-list > li.completed")).toHaveCount(
+    8,
+  );
+  await expect(page.getByText("No add-on added")).toBeVisible();
+  await expect(page.getByText(/append-only server events/)).toBeVisible();
+
+  await page
+    .getByRole("button", { name: /Approve .* and create Razorpay order/ })
+    .click();
+  await expect(
+    page.getByText("Fake-provider order prepared successfully."),
+  ).toBeVisible({ timeout: 20_000 });
+  await expect(page.locator(".buyer-exchange-list > li.completed")).toHaveCount(
+    12,
+  );
+  await expect(
+    page.getByText(/persisted events include the single provider order/),
+  ).toBeVisible();
+
+  expect(paymentOrderRequests).toBe(1);
+  expect(correlatedRequests.length).toBeGreaterThanOrEqual(12);
+  expect(new Set(correlatedRequests).size).toBe(1);
+  expect(correlatedRequests[0]).toMatch(/^buyer-[a-f0-9-]+$/u);
 });
 
 test("refines an empty search without restarting the journey", async ({

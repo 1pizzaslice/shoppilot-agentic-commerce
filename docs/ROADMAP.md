@@ -257,7 +257,7 @@ Acceptance:
 - [x] The complete quality pipeline passes and the expanded live catalogue is
   reseeded for review.
 
-## Session 13 — visible external AI-buyer trace
+## Session 13 — visible machine-contract trace
 
 This session branch depends on the unmerged Session 11 and 12 commits plus the
 explicit-colour grounding fix; it must not be merged independently. Supporting
@@ -286,3 +286,34 @@ Acceptance:
 - [x] The checkout surface visibly separates AI preparation, deterministic
   authorization, and shopper-authenticated Razorpay execution.
 - [x] The complete quality pipeline passes on the session branch.
+
+## Session 14 — autonomous machine-buyer execution
+
+This session branch depends on the unmerged Sessions 11–13 stack plus the
+explicit-colour grounding fix; it must not be merged independently. Supporting
+product scope: [`docs/PRODUCT.md`](PRODUCT.md).
+
+- [x] Keep the guided shopper journey and its read-only contract explainer
+  separate from a real autonomous machine-client route.
+- [x] Accept one complete instruction, hard spending cap, optional add-on rule,
+  and explicit preparation delegation before execution.
+- [x] Discover the merchant, search, choose and validate one exact variant,
+  construct the versioned cart, apply the add-on rule, and freeze review through
+  validated public HTTP responses without intermediate product-selection clicks.
+- [x] Carry one caller-created correlation ID through every exchange and read
+  PostgreSQL-backed append-only cart evidence back before approval and after
+  provider-order creation.
+- [x] Preserve one exact-total human approval, deterministic checkout policy,
+  one server-created Razorpay test order, and secure payment authentication.
+- [x] Distinguish the autonomous-buyer handoff on the secure checkout page and
+  add desktop/mobile browser coverage for the complete separate flow.
+
+Acceptance:
+
+- [x] The visible exchanges are emitted only after schema-validated live HTTP
+  responses, not projected from pre-filled UI state.
+- [x] A complete instruction reaches an exact frozen cart with no intervening
+  human product or add-on choice.
+- [x] Server audit readback proves the same correlation ID and a durable single
+  provider-order event while the payment boundary remains human-controlled.
+- [ ] The complete quality pipeline passes on the session branch.

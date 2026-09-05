@@ -4,22 +4,38 @@ Last updated: 2026-09-05
 
 ## Current position
 
-- Active session: Session 13 — visible external AI-buyer trace
+- Active session: Session 14 — autonomous machine-buyer execution
 - Overall state: the complete product flow and Razorpay test checkout are
   implemented. The shopper experience now presents StepUp as a focused footwear
   store with ShopPilot as its embedded assistant, while retaining the guarded
-  agentic purchase flow, a visible external AI-buyer trace, and secondary guided
-  demo stories. The v2 catalogue now contains 95 footwear styles and 10
-  compatible add-ons. Final video capture, upload, and form submission require
-  submitter account actions
-- Current branch: `session/13-ai-buyer-trace`
+  agentic purchase flow, a separate autonomous machine client with durable
+  correlated evidence, and secondary guided demo stories. The v2 catalogue now
+  contains 95 footwear styles and 10 compatible add-ons. Final local
+  verification, video capture, upload, and form submission remain.
+- Current branch: `session/14-autonomous-buyer`
 - Previous release tag (before Session 11): `shoppilot-submission-v1` at
   `bd0e4f281bada2c44e1ec936adccafe576434e4d`
 - Session 10 merge: PR #13 at `5b5517b`
 
 ## Completed
 
-- Added a visible, read-only external AI-buyer trace that validates StepUp's
+- Added a separate `/ai-buyer` machine-client journey without changing the
+  guided shopper flow. One complete instruction, hard cap, optional add-on rule,
+  and visible preparation delegation now drive live discovery, grounded search,
+  exact-variant validation, versioned cart construction, add-on decision, and
+  immutable review without intermediate selection clicks.
+- Carried one caller-created correlation ID through every autonomous exchange,
+  validated each response with strict shared schemas, and read PostgreSQL-backed
+  append-only commerce evidence back before approval and after the single
+  provider order. The final read requires both the same correlation ID and a
+  durable `provider_order_created` event.
+- Preserved the exact frozen-total human approval and Razorpay authentication
+  boundaries. The checkout handoff identifies AI preparation without suggesting
+  that the buyer can enter payment credentials or bypass deterministic policy.
+- Reclassified the previous guided-state drawer as a contract explainer and
+  linked it to the separate real execution route, removing the earlier
+  overstatement that a projected UI trace proved autonomous buying.
+- Added a visible, read-only machine-contract trace that validates StepUp's
   public discovery profile and follows the current shopper journey across
   catalogue search, exact-variant consent, versioned cart preparation, frozen
   approval, deterministic checkout policy, and one Razorpay test order.
@@ -148,6 +164,16 @@ Last updated: 2026-09-05
 
 Passed through 2026-09-05:
 
+- Session 14 partial verification: formatting, lint, full strict type checking,
+  all 46 unit/contract tests, every production build, and the frozen evaluation
+  (50/50 ShopPilot versus 43/50 baseline) passed. Before the final server-audit
+  readback was added, the separate live autonomous flow passed on both desktop
+  and mobile with one shared correlation ID and one payment-order request. The
+  final focused browser rerun could not start localhost servers because the
+  managed sandbox rejected port binding after its approval credits were
+  exhausted. PostgreSQL/Redis integration reruns were blocked by the same
+  `EPERM` localhost restriction; they are not reported as passing for Session
+  14.
 - Session 13 final: the uninterrupted `pnpm quality` pipeline passed repository
   hygiene (123 files), formatting, lint, strict type checks, 46 unit/contract
   tests, 32 PostgreSQL/Redis integration tests, every production build, the
@@ -298,6 +324,11 @@ Passed through 2026-09-05:
 
 ## Blockers
 
+- Session 14 still needs one permitted local run of the PostgreSQL/Redis
+  integration suite and the desktop/mobile autonomous-buyer Playwright case.
+  The implementation compiled and the earlier 10-exchange flow passed, but the
+  new audit-readback assertions have not been exercised after the sandbox
+  exhausted approval credits.
 - Final video capture and upload require the submitter's recording environment
   and hosting account. Razorpay test credentials are configured locally; the
   callback/API reconciliation now supports an immediate verified localhost
@@ -313,13 +344,11 @@ Passed through 2026-09-05:
 
 ## Exact next action
 
-Review the external AI-buyer trace at the landing page, after recommendations,
-and at the secure Razorpay handoff, then record the browser flow with live Claude
-and the configured Razorpay test credentials. Include closing one Razorpay modal
-to confirm the recovery route. Record from this stacked session branch using
-`docs/SUBMISSION.md`, keep the final cut at five minutes or less, upload it with
-public/viewer access, verify the link signed out, fill the personal fields, and
-submit the form. Check the two remaining Session 10 acceptance boxes and merge
-this session chain only with explicit approval. Treat a mandate-backed
-unattended-payment path as a future scope decision requiring Razorpay account
-enablement, not as a UI-only mode.
+When localhost permission is available, run
+`DATABASE_URL=postgresql://shoppilot:shoppilot_dev@localhost:5432/shoppilot REDIS_URL=redis://localhost:6380 corepack pnpm quality`. Confirm the autonomous
+desktop/mobile case reaches 12 completed exchanges, reads the durable audit
+twice under one correlation ID, and creates exactly one payment order. Then run
+the page with the ignored live Claude and Razorpay test configuration and record
+the autonomous route followed by Razorpay authentication. Use
+`docs/SUBMISSION.md`, keep the final cut at five minutes or less, and merge this
+stacked session chain only with explicit approval.
