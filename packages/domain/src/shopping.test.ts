@@ -4,10 +4,20 @@ import type { CatalogueProductSummary, CatalogueReader } from "./catalogue.js";
 import {
   createReadonlyCatalogueTools,
   decideNextQuestion,
+  explicitCatalogueColour,
   rankCandidates,
   shoppingIntentSchema,
   transitionConversationState,
 } from "./shopping.js";
+
+describe("explicit catalogue colour grounding", () => {
+  it("deterministically preserves colours stated by the shopper", () => {
+    expect(explicitCatalogueColour("red shoes please")).toBe("Red");
+    expect(explicitCatalogueColour("make it signal red")).toBe("Signal Red");
+    expect(explicitCatalogueColour("purple trail shoes")).toBe("Purple");
+    expect(explicitCatalogueColour("running shoes in UK 8")).toBeUndefined();
+  });
+});
 
 const product = (
   id: string,

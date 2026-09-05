@@ -35,6 +35,50 @@ export const intentPatchSchema = shoppingIntentSchema
   .partial()
   .strict();
 
+const catalogueColourAliases = new Map<string, string>(
+  Object.entries({
+    "midnight blue": "Midnight Blue",
+    "cloud grey": "Cloud Grey",
+    "cloud gray": "Cloud Grey",
+    "clean white": "Clean White",
+    "signal red": "Signal Red",
+    "jet black": "Jet Black",
+    "neon green": "Neon Green",
+    sandstone: "Sandstone",
+    "rose pink": "Rose Pink",
+    "electric orange": "Electric Orange",
+    "sun yellow": "Sun Yellow",
+    "violet purple": "Violet Purple",
+    "cocoa brown": "Cocoa Brown",
+    grey: "Grey",
+    gray: "Grey",
+    black: "Black",
+    white: "White",
+    red: "Red",
+    green: "Green",
+    beige: "Beige",
+    tan: "Tan",
+    blue: "Blue",
+    pink: "Pink",
+    orange: "Orange",
+    yellow: "Yellow",
+    violet: "Violet",
+    purple: "Purple",
+    brown: "Brown",
+  }),
+);
+
+const catalogueColourPattern =
+  /\b(midnight blue|cloud gr(?:e|a)y|clean white|signal red|jet black|neon green|sandstone|rose pink|electric orange|sun yellow|violet purple|cocoa brown|grey|gray|black|white|red|green|beige|tan|blue|pink|orange|yellow|violet|purple|brown)\b/i;
+
+export const explicitCatalogueColour = (
+  message: string,
+): string | undefined => {
+  const match = catalogueColourPattern.exec(message)?.[1]?.toLowerCase();
+  if (match === undefined) return undefined;
+  return catalogueColourAliases.get(match);
+};
+
 export const recommendationExplanationSchema = z
   .object({
     productId: z.string().min(1),
@@ -390,15 +434,28 @@ export const createShoppingConversationHandler = ({
     message: string,
   ): Promise<ShoppingResponse> => {
     const events: ConversationEvent[] = [];
-    const patch = intentPatchSchema.parse(
+    const proposedPatch = intentPatchSchema.parse(
       await model.extractIntent(message, conversation.intent),
     );
+    const statedColour = explicitCatalogueColour(message);
+    const patch = intentPatchSchema.parse({
+      ...proposedPatch,
+      ...(statedColour === undefined ? {} : { colour: statedColour }),
+    });
     events.push({
       type: "model_call",
       name: "extract_intent",
       outcome: "completed",
       metadata: { providerRole: "intent_extraction" },
     });
+    if (statedColour !== undefined) {
+      events.push({
+        type: "policy_decision",
+        name: "explicit_colour_grounding",
+        outcome: "allowed",
+        metadata: { statedColour },
+      });
+    }
     const intent = shoppingIntentSchema.parse({
       ...conversation.intent,
       ...patch,
