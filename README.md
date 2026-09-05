@@ -15,6 +15,8 @@ approved, and recorded.
 - One fictional footwear merchant with a polished storefront, 95 styles, and 10
   compatible care and comfort accessories.
 - Machine-readable discovery, catalogue search, and product lookup endpoints.
+- A visible external AI-buyer trace from discovery through the Razorpay test
+  order, projected from the same shopper journey and deterministic boundaries.
 - Product pages containing Schema.org `Product`/`Offer` JSON-LD.
 - Conversational shopping with minimal clarification.
 - Three ranked, explainable, catalogue-grounded choices.
@@ -105,7 +107,11 @@ external credentials. “Failure & recovery” deliberately fails the first paym
 attempt, then retries the same server-created order to demonstrate
 duplicate-safe recovery. Both presets use the same product request because the
 story changes only at payment. The safety trail identifies what the agent
-proposed, what deterministic policy allowed, and what the shopper approved.
+proposed, what deterministic policy allowed, and what the shopper approved. Open
+“AI buyer trace” at any stage to see the machine-readable contract and the same
+purchase advance from discovery through catalogue, consent, cart, approval,
+policy, and Razorpay. The secure checkout page retains the final
+machine-to-policy-to-provider handoff.
 
 After Compose is healthy and the database is migrated and seeded, run
 `pnpm demo:rehearse` for the release rehearsal. It drives the live API, web app,

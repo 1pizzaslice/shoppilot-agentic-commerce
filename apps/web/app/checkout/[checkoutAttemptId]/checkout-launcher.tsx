@@ -218,6 +218,7 @@ export function CheckoutLauncher({
       : payment?.state === "failed"
         ? "Payment was not completed."
         : "This approval has expired.";
+  const providerReference = payment?.providerOrderId;
 
   return (
     <section className="payment-card" aria-live="polite">
@@ -248,6 +249,37 @@ export function CheckoutLauncher({
       <div className="checkout-responsibility">
         <span>Agent prepared one bounded order</span>
         <span>You complete secure authentication</span>
+      </div>
+      <div
+        className="external-buyer-handoff"
+        role="region"
+        aria-label="AI buyer handoff"
+      >
+        <div>
+          <span className="trace-actor buyer">AI buyer</span>
+          <strong>Catalogue and cart prepared</strong>
+          <code>machine APIs → frozen snapshot</code>
+        </div>
+        <span aria-hidden="true">→</span>
+        <div>
+          <span className="trace-actor policy">Policy</span>
+          <strong>One checkout authorized</strong>
+          <code>approval + stock + price + budget</code>
+        </div>
+        <span aria-hidden="true">→</span>
+        <div>
+          <span className="trace-actor razorpay">Razorpay</span>
+          <strong>
+            {providerReference === null || providerReference === undefined
+              ? "Waiting for shopper"
+              : "Test order created"}
+          </strong>
+          <code>
+            {providerReference === null || providerReference === undefined
+              ? "POST /v1/payment-orders"
+              : providerReference}
+          </code>
+        </div>
       </div>
       {terminalState ? (
         <div className="payment-actions">

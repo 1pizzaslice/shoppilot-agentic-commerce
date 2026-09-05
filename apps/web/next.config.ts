@@ -11,6 +11,14 @@ const config: NextConfig = {
       "http://localhost:3001";
     return Promise.resolve([
       {
+        source: "/.well-known/ucp",
+        destination: `${apiBaseUrl}/.well-known/ucp`,
+      },
+      {
+        source: "/openapi.json",
+        destination: `${apiBaseUrl}/openapi.json`,
+      },
+      {
         source: "/v1/:path*",
         destination: `${apiBaseUrl}/v1/:path*`,
       },
