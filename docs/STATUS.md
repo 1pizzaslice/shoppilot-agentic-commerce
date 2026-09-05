@@ -183,7 +183,10 @@ Passed through 2026-09-05:
 - Checkout above-fold follow-up: repository lint and strict type checking
   passed. The focused signed-callback Playwright journey passed on desktop and
   mobile; its desktop assertion verifies that the card is right of the heading
-  and that its bottom remains within the 720px viewport.
+  and that its bottom remains within the 720px viewport. GitHub's first browser
+  run exposed a four-pixel font-layout variance at that boundary; tighter
+  desktop-only card spacing added a safe margin, and the focused desktop/mobile
+  regression passed again locally.
 - Session 14 final: the uninterrupted `pnpm quality` pipeline passed repository
   hygiene (127 candidate files), formatting, lint, strict type checks, 46
   unit/contract tests, 32 PostgreSQL/Redis integration tests, every production

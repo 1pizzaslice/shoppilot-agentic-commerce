@@ -317,6 +317,8 @@ h1 {
     grid-area: payment-checkout;
     width: 100%;
     max-width: 48rem;
+    gap: 1rem 1.25rem;
+    padding: clamp(1.25rem, 2vw, 1.75rem);
     justify-self: end;
   }
 }
