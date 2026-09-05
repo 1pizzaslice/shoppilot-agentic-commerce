@@ -12,8 +12,8 @@ approved, and recorded.
 
 ## MVP promise
 
-- One fictional shoe merchant with a polished storefront and 30–50 realistic
-  products.
+- One fictional footwear merchant with a polished storefront, 95 styles, and 10
+  compatible care and comfort accessories.
 - Machine-readable discovery, catalogue search, and product lookup endpoints.
 - Product pages containing Schema.org `Product`/`Offer` JSON-LD.
 - Conversational shopping with minimal clarification.
@@ -115,11 +115,11 @@ one provider order, the audit explanation, merchant evidence, machine-readable
 discovery, and the 4:45 rehearsal ceiling.
 
 `pnpm db:seed` is repeatable and installs the `stepup-shoes` demonstration
-catalogue: 48 distinct shoe styles, four compatible accessories, colour-accurate
-public product photography, a ₹2,499–₹6,999 price range, and inventory across UK
-sizes 5–12. Each style has one photographed colour, so the UI never labels a red
-shoe as grey. It contains no real shopper or merchant data. Re-running migration
-and seed commands is safe.
+catalogue: 95 distinct footwear styles, 10 compatible accessories, 12
+colour-accurate families of public product photography, a ₹1,799–₹8,549 price
+range, and inventory across UK sizes 5–12. Each style has one photographed
+colour, so the UI never labels a red shoe as grey. It contains no real shopper
+or merchant data. Re-running migration and seed commands is safe.
 
 Catalogue photography is sourced from public Unsplash and Pexels photo pages.
 The insole image is © Ak12121234 under CC BY-SA 4.0, and the packaged bootlace

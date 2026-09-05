@@ -137,7 +137,7 @@ export const merchantGrowthSummarySchema = z
         series: z.array(activityPointSchema).length(7),
       })
       .strict(),
-    productPerformance: z.array(productPerformanceSchema).max(50),
+    productPerformance: z.array(productPerformanceSchema).max(200),
     categoryPerformance: z.array(categoryPerformanceSchema).max(10),
     insights: z.array(growthInsightSchema).min(1).max(4),
     recentSuggestions: z.array(growthSuggestionSchema).max(10),

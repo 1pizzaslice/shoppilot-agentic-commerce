@@ -651,7 +651,7 @@ test("release rehearsal completes the live failure-recovery story", async ({
   await expect(
     page.getByRole("heading", { name: "Growth without hidden cart changes." }),
   ).toBeVisible();
-  await expect(page.getByText("48 distinct footwear styles")).toBeVisible();
+  await expect(page.getByText("95 distinct footwear styles")).toBeVisible();
   await expect(page.getByText("Explicitly accepted, then paid")).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "What deserves attention now" }),
