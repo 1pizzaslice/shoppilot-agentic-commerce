@@ -129,6 +129,27 @@ const payment = (state: "created" | "failed" | "paid" | "cancelled") => ({
 });
 
 const mockApi = async (page: Page) => {
+  await page.route("**/.well-known/ucp", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        protocol: "shoppilot-catalogue",
+        version: "1.0",
+        ucpConformance: false,
+        description: "A machine-readable test merchant profile.",
+        merchant: { id: "stepup-shoes", name: "StepUp Shoes" },
+        capabilities: {
+          search: { method: "POST", path: "/v1/catalog/search" },
+          productLookup: {
+            method: "GET",
+            pathTemplate: "/v1/catalog/products/{idOrSlug}",
+          },
+          openapi: { method: "GET", path: "/openapi.json" },
+        },
+      }),
+    });
+  });
   await page.route("**/v1/**", async (route) => {
     const request = route.request();
     const url = new URL(request.url());
@@ -275,6 +296,9 @@ const reachPayment = async (
   preset: "Successful checkout" | "Failure & recovery",
 ) => {
   await page.goto("/");
+  await page
+    .getByText("Try a guided buildathon story", { exact: true })
+    .click();
   await page.getByRole("button", { name: preset }).click();
   await page.getByRole("button", { name: "Find my pair" }).click();
   await page.getByLabel("Your answer").fill("8");
@@ -300,8 +324,45 @@ const reachPayment = async (
 test.describe("deterministic browser states", () => {
   test.beforeEach(async ({ page }) => mockApi(page));
 
+  test("shows the live external AI-buyer contract trace", async ({ page }) => {
+    await page.goto("/");
+    await page
+      .getByRole("button", {
+        name: /Inspect this shopper journey’s contracts/,
+      })
+      .click();
+
+    const trace = page.getByRole("dialog", {
+      name: "The contract view of this purchase",
+    });
+    await expect(trace).toBeVisible();
+    await expect(trace.getByText("GET /.well-known/ucp")).toBeVisible();
+    await expect(
+      trace.getByText("StepUp Shoes · shoppilot-catalogue v1.0"),
+    ).toBeVisible();
+    await expect(trace.getByText("POST /v1/payment-orders")).toBeVisible();
+    await expect(
+      trace.getByText("This is the guided shopper journey"),
+    ).toBeVisible();
+
+    await trace.getByRole("button", { name: "Close contract trace" }).click();
+    await expect(trace).toBeHidden();
+  });
+
   test("completes the grounded, consented happy path", async ({ page }) => {
     await reachPayment(page, "Successful checkout");
+    await page.getByRole("button", { name: "Contract trace" }).click();
+    const buyerTrace = page.getByRole("dialog", {
+      name: "The contract view of this purchase",
+    });
+    await expect(buyerTrace).toBeVisible();
+    await expect(
+      buyerTrace.locator(".machine-trace-list > li.complete"),
+    ).toHaveCount(7);
+    await expect(buyerTrace).toContainText("order_fake_demo");
+    await buyerTrace
+      .getByRole("button", { name: "Close contract trace" })
+      .click();
     await page.getByRole("button", { name: "View safety trail" }).click();
     await expect(
       page.getByRole("heading", { name: "Every decision, in order" }),
@@ -342,14 +403,112 @@ test.describe("deterministic browser states", () => {
     page,
   }) => {
     await page.goto("/");
+    await page
+      .getByText("Try a guided buildathon story", { exact: true })
+      .click();
     await page.getByRole("button", { name: /Successful checkout/ }).click();
     await page.getByRole("button", { name: "Find my pair" }).click();
     await expect(page.getByLabel("Your answer")).toBeVisible();
     await page.getByRole("button", { name: "Edit original request" }).click();
-    await expect(page.getByLabel("What are you looking for?")).toHaveValue(
+    await expect(page.getByLabel("Describe your ideal pair")).toHaveValue(
       "Running shoes under ₹4,000",
     );
   });
+});
+
+test("runs a separate autonomous buyer through the live merchant APIs", async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  const correlatedRequests: string[] = [];
+  let paymentOrderRequests = 0;
+  page.on("request", (outgoing) => {
+    const pathname = new URL(outgoing.url()).pathname;
+    if (pathname === "/.well-known/ucp" || pathname.startsWith("/v1/")) {
+      const correlation = outgoing.headers()["x-request-id"];
+      if (correlation !== undefined) correlatedRequests.push(correlation);
+    }
+    if (pathname === "/v1/payment-orders") paymentOrderRequests += 1;
+  });
+  await page.addInitScript(() => {
+    type CheckoutOptions = { order_id: string };
+    const browserWindow = window as typeof window & {
+      Razorpay?: new (options: CheckoutOptions) => { open: () => void };
+    };
+    browserWindow.Razorpay = class {
+      constructor(readonly options: CheckoutOptions) {}
+
+      open() {
+        document.body.dataset.razorpayOpened = this.options.order_id;
+      }
+    };
+  });
+
+  await page.goto("/ai-buyer");
+  const viewport = page.viewportSize();
+  const shellBounds = await page.locator(".autonomous-shell").boundingBox();
+  expect(viewport).not.toBeNull();
+  expect(shellBounds).not.toBeNull();
+  if (viewport !== null && shellBounds !== null) {
+    expect(shellBounds.width).toBeGreaterThan(viewport.width * 0.95);
+    if (viewport.width > 1100) {
+      const heroBounds = await page.locator(".autonomous-hero").boundingBox();
+      const layoutBounds = await page
+        .locator(".autonomous-layout")
+        .boundingBox();
+      expect(heroBounds).not.toBeNull();
+      expect(layoutBounds).not.toBeNull();
+      if (heroBounds !== null && layoutBounds !== null) {
+        expect(layoutBounds.x).toBeGreaterThan(heroBounds.x);
+        expect(layoutBounds.y).toBeLessThan(viewport.height * 0.35);
+      }
+    }
+  }
+  await page
+    .getByRole("checkbox", {
+      name: /I delegate product and cart preparation/,
+    })
+    .check();
+  await page.getByRole("button", { name: "Run autonomous buyer" }).click();
+
+  await expect(
+    page.getByRole("heading", {
+      name: "The buyer prepared this exact cart.",
+    }),
+  ).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText("Signal Red · UK 8")).toBeVisible();
+  await expect(page.locator(".buyer-exchange-list > li.completed")).toHaveCount(
+    8,
+  );
+  await expect(page.getByText("No add-on added")).toBeVisible();
+  await expect(page.getByText(/append-only server events/)).toBeVisible();
+
+  await page
+    .getByRole("button", { name: /Approve .* and pay securely/ })
+    .click();
+  await expect
+    .poll(
+      async () =>
+        (await page.locator("body").getAttribute("data-razorpay-opened")) !==
+          null ||
+        page
+          .getByText("Fake-provider order prepared successfully.")
+          .isVisible(),
+      { timeout: 20_000 },
+    )
+    .toBe(true);
+  await expect(page).toHaveURL(/\/ai-buyer$/u);
+  await expect(page.locator(".buyer-exchange-list > li.completed")).toHaveCount(
+    12,
+  );
+  await expect(
+    page.getByText(/persisted events include the single provider order/),
+  ).toBeVisible();
+
+  expect(paymentOrderRequests).toBe(1);
+  expect(correlatedRequests.length).toBeGreaterThanOrEqual(12);
+  expect(new Set(correlatedRequests).size).toBe(1);
+  expect(correlatedRequests[0]).toMatch(/^buyer-[a-f0-9-]+$/u);
 });
 
 test("refines an empty search without restarting the journey", async ({
@@ -406,7 +565,7 @@ test("refines an empty search without restarting the journey", async ({
 
   await page.goto("/");
   await page
-    .getByLabel("What are you looking for?")
+    .getByLabel("Describe your ideal pair")
     .fill("Running shoes under ₹2,500, UK 8, purple");
   await page.getByRole("button", { name: "Find my pair" }).click();
   await expect(
@@ -462,7 +621,7 @@ test("starts a clean request when replacing recommendation filters", async ({
 
   await page.goto("/");
   await page
-    .getByLabel("What are you looking for?")
+    .getByLabel("Describe your ideal pair")
     .fill("Grey running shoes under ₹8,000 in UK 8");
   await page.getByRole("button", { name: "Find my pair" }).click();
   await expect(
@@ -556,6 +715,9 @@ test("routes a captured Razorpay callback to the verified receipt", async ({
   });
 
   await page.goto("/checkout/attempt-demo");
+  await expect(
+    page.getByRole("region", { name: "AI buyer handoff" }),
+  ).toContainText("Test order created");
   await page
     .getByRole("button", { name: "Open secure Razorpay checkout" })
     .click();
@@ -591,7 +753,7 @@ test("a closed Razorpay attempt has a clear route back to shopping", async ({
   await expect(
     page.getByRole("button", { name: "Open secure Razorpay checkout" }),
   ).toHaveCount(0);
-  await page.getByRole("link", { name: "Return to ShopPilot" }).click();
+  await page.getByRole("link", { name: "Return to StepUp" }).click();
   await expect(page).toHaveURL(/\/$/);
 });
 
@@ -645,7 +807,7 @@ test("release rehearsal completes the live failure-recovery story", async ({
   await expect(
     page.getByRole("heading", { name: "Growth without hidden cart changes." }),
   ).toBeVisible();
-  await expect(page.getByText("48 distinct footwear styles")).toBeVisible();
+  await expect(page.getByText("95 distinct footwear styles")).toBeVisible();
   await expect(page.getByText("Explicitly accepted, then paid")).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "What deserves attention now" }),
@@ -657,12 +819,12 @@ test("release rehearsal completes the live failure-recovery story", async ({
     page.getByRole("heading", { name: "Every live footwear style" }),
   ).toBeVisible();
 
-  const discovery = await page.request.get(
-    "http://127.0.0.1:3001/.well-known/ucp",
-  );
+  const discovery = await page.request.get("/.well-known/ucp");
   expect(discovery.ok()).toBe(true);
   const discoveryBody: unknown = await discovery.json();
   expect(discoveryBody).toMatchObject({ ucpConformance: false });
+  const openapi = await page.request.get("/openapi.json");
+  expect(openapi.ok()).toBe(true);
 
   expect(Date.now() - startedAt).toBeLessThan(285_000);
 });

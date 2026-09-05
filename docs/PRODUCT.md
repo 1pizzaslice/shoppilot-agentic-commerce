@@ -4,6 +4,17 @@
 
 ShopPilot lets a shopper describe the shoes they need, asks only essential follow-ups, recommends catalogue-grounded options, offers one useful add-on, and creates a Razorpay test-mode checkout only after the shopper approves the exact cart.
 
+The shopper-facing product is presented as **StepUp Footwear**, the fictional
+merchant, with **ShopPilot** as its embedded shopping assistant. The storefront
+should feel credible enough to shop from while keeping the conversational,
+agent-readable purchase path—not a conventional browse grid—as the primary
+experience.
+
+The repeatable demo catalogue contains 95 footwear styles—19 each for running,
+walking, training, trail, and casual use—across UK sizes 5–12, 12 photographed
+colour families, and a ₹1,799–₹8,549 price ladder. Ten compatible accessories
+provide varied but still single-choice, consent-only checkout suggestions.
+
 ## Track fit
 
 The product addresses both halves of Track 1:
@@ -88,6 +99,26 @@ The merchant publishes:
 - An OpenAPI document that another client can use without scraping the UI.
 
 This is a practical UCP-inspired subset for the buildathon, not a claim of full protocol conformance. The catalogue is queried through APIs; “crawlable” means machine-discoverable and machine-readable, not uncontrolled browser scraping.
+
+The shopper surface includes a visible machine-contract trace that reads the
+same discovery profile and projects the current journey through catalogue
+search, exact-variant consent, versioned cart construction, frozen approval,
+policy authorization, and one Razorpay test order. It is an explanation of the
+real contracts and current client state, not a second staged checkout or an
+independent source of commerce authority.
+
+A separate autonomous-buyer route proves actual machine execution without
+changing the guided shopper journey. The user supplies one complete instruction,
+a hard spending cap, and an optional add-on rule up front. The client then
+discovers the merchant and performs search, exact-variant validation, cart
+creation, add-on acceptance or refusal, and immutable review through the public
+HTTP contracts without intermediate product-selection clicks. It reads the
+append-only server audit back under one shared correlation ID. The user returns
+only at the existing money boundary to approve the exact frozen total and
+authenticate with Razorpay Standard Checkout. That approval action runs policy,
+creates the single provider order, and opens Razorpay directly rather than
+asking for a second merchant-side confirmation; product facts and authorization
+remain deterministic server responsibilities.
 
 ## Growth feature
 
@@ -201,4 +232,3 @@ User-facing fallback:
 ## Out of scope until the MVP passes
 
 Multi-merchant comparison, arbitrary-site crawling, live payments, user authentication, saved payment instruments, delivery fulfilment, returns, refunds, voice, multilingual UI, dynamic discount generation, merchant onboarding, and full protocol certification.
-

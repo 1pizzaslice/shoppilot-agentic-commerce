@@ -52,12 +52,77 @@ afterAll(async () => {
 });
 
 describe("catalogue HTTP integration", () => {
-  it("seeds 52 catalogue products", async () => {
+  it("seeds 95 footwear styles and 10 compatible accessories", async () => {
     const result = await pool.query<{ count: string }>(
       "SELECT count(*) AS count FROM products WHERE merchant_id = $1",
       ["stepup-shoes"],
     );
-    expect(result.rows[0]?.count).toBe("52");
+    expect(result.rows[0]?.count).toBe("105");
+
+    const categoryCounts = await pool.query<{
+      product_type: string;
+      count: string;
+    }>(
+      `SELECT product_type, count(*) AS count
+         FROM products
+        WHERE merchant_id = $1
+        GROUP BY product_type`,
+      ["stepup-shoes"],
+    );
+    expect(
+      Object.fromEntries(
+        categoryCounts.rows.map((row) => [row.product_type, Number(row.count)]),
+      ),
+    ).toEqual({
+      accessory: 10,
+      casual: 19,
+      running: 19,
+      trail: 19,
+      training: 19,
+      walking: 19,
+    });
+  });
+
+  it("covers expanded exact-colour searches across every footwear use", async () => {
+    const searches = [
+      ["running", "blue", "Midnight Blue"],
+      ["walking", "pink", "Rose Pink"],
+      ["trail", "orange", "Electric Orange"],
+      ["training", "yellow", "Sun Yellow"],
+      ["casual", "purple", "Violet Purple"],
+      ["running", "brown", "Cocoa Brown"],
+    ] as const;
+
+    for (const [productType, colour, canonicalColour] of searches) {
+      const response = await app.inject({
+        method: "POST",
+        url: "/v1/catalog/search",
+        payload: {
+          productType,
+          colour,
+          sizeUk: 8,
+          maxPricePaise: 900_000,
+        },
+      });
+      const body = catalogueSearchResponseSchema.parse(response.json());
+      expect(body.products.length).toBeGreaterThan(0);
+      expect(
+        body.products.every((product) =>
+          product.matchingVariants.every(
+            (variant) => variant.colour === canonicalColour,
+          ),
+        ),
+      ).toBe(true);
+    }
+  });
+
+  it("distributes all ten compatible add-ons across the footwear range", async () => {
+    const result = await pool.query<{ count: string }>(
+      `SELECT count(DISTINCT target_product_id) AS count
+         FROM product_relations
+        WHERE relation_type = 'compatible_addon'`,
+    );
+    expect(result.rows[0]?.count).toBe("10");
   });
 
   it("hard-filters shoes by budget, size, type, colour, and stock", async () => {
