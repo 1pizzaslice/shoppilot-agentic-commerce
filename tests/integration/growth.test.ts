@@ -117,7 +117,7 @@ describe("merchant growth evidence", () => {
     expect(empty.orderValues.attachRateBasisPoints).toBe(0);
     expect(empty.recentSuggestions).toEqual([]);
     expect(empty.activity.series).toHaveLength(7);
-    expect(empty.productPerformance).toHaveLength(48);
+    expect(empty.productPerformance).toHaveLength(95);
     expect(empty.categoryPerformance).toHaveLength(5);
     expect(empty.insights).toHaveLength(4);
 
@@ -168,10 +168,10 @@ describe("merchant growth evidence", () => {
     ]);
     expect(summary.recentSuggestions[0]?.reason).toContain("construction");
     expect(summary.catalogue).toMatchObject({
-      shoeStyles: 48,
-      accessories: 4,
-      priceFloorPaise: 249_900,
-      priceCeilingPaise: 699_900,
+      shoeStyles: 95,
+      accessories: 10,
+      priceFloorPaise: 179_900,
+      priceCeilingPaise: 854_900,
     });
     expect(summary.catalogue.categories).toHaveLength(5);
     expect(summary.catalogue.featuredProducts).toHaveLength(5);

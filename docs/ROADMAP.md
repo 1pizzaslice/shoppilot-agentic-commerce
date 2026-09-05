@@ -223,3 +223,33 @@ Acceptance:
 - [x] Desktop and mobile browser journeys pass with the revised storefront.
 - [x] Formatting, lint, strict types, tests, integration tests, evaluation, and
   production builds pass on the complete branch.
+
+## Session 12 — catalogue breadth and add-on variety
+
+This session branch depends on the unmerged Session 11 storefront commit; it
+must not be merged independently. Supporting product scope:
+[`docs/PRODUCT.md`](PRODUCT.md).
+
+- [x] Expand the repeatable catalogue from 48 to 95 footwear styles while
+  preserving the five bounded recommendation categories.
+- [x] Provide 19 styles per category, UK sizes 5–12, 12 photographed colour
+  families, and a ₹1,799–₹8,549 price ladder.
+- [x] Expand compatible accessories from four to 10 and distribute every one
+  across the new footwear relations.
+- [x] Keep the original 48 products, prices, and compatibility behavior stable
+  so existing demo and commerce evidence remains reproducible.
+- [x] Extend deterministic fake-model colour aliases and merchant performance
+  capacity for the larger catalogue.
+- [x] Add integration coverage for catalogue counts, category balance, exact
+  colour availability, and add-on distribution.
+
+Acceptance:
+
+- [x] Each footwear category contains 19 styles and remains fully considered by
+  the bounded catalogue query.
+- [x] Blue, pink, orange, yellow, purple, and brown exact-colour searches return
+  in-stock UK-size variants within the configured price ceiling.
+- [x] Every one of the 10 accessories is reachable through a deterministic
+  compatibility relation, while checkout still offers at most one.
+- [x] The complete quality pipeline passes and the expanded live catalogue is
+  reseeded for review.

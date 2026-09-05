@@ -10,6 +10,11 @@ should feel credible enough to shop from while keeping the conversational,
 agent-readable purchase path—not a conventional browse grid—as the primary
 experience.
 
+The repeatable demo catalogue contains 95 footwear styles—19 each for running,
+walking, training, trail, and casual use—across UK sizes 5–12, 12 photographed
+colour families, and a ₹1,799–₹8,549 price ladder. Ten compatible accessories
+provide varied but still single-choice, consent-only checkout suggestions.
+
 ## Track fit
 
 The product addresses both halves of Track 1:

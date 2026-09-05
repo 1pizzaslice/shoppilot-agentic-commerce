@@ -4,19 +4,30 @@ Last updated: 2026-09-05
 
 ## Current position
 
-- Active session: Session 11 — footwear storefront identity
+- Active session: Session 12 — catalogue breadth and add-on variety
 - Overall state: the complete product flow and Razorpay test checkout are
   implemented. The shopper experience now presents StepUp as a focused footwear
   store with ShopPilot as its embedded assistant, while retaining the guarded
-  agentic purchase flow and secondary guided demo stories. Final video capture,
+  agentic purchase flow and secondary guided demo stories. The v2 catalogue now
+  contains 95 footwear styles and 10 compatible add-ons. Final video capture,
   upload, and form submission require submitter account actions
-- Current branch: `session/11-footwear-storefront`
+- Current branch: `session/12-catalogue-expansion`
 - Previous release tag (before Session 11): `shoppilot-submission-v1` at
   `bd0e4f281bada2c44e1ec936adccafe576434e4d`
 - Session 10 merge: PR #13 at `5b5517b`
 
 ## Completed
 
+- Expanded the PostgreSQL seed to 95 footwear styles, evenly covering running,
+  walking, training, trail, and casual use across UK sizes 5–12. Six additional
+  exact-search colour families and a ₹1,799–₹8,549 price ladder improve result
+  coverage without increasing the three-choice UI limit.
+- Expanded checkout compatibility from four to 10 accessories. Each footwear
+  product still has exactly one deterministic compatible relation, offers are
+  budget-checked, and no add-on is inserted without consent.
+- Raised the merchant performance contract and query capacity to 200 products,
+  added fake-model aliases for all 12 catalogue colours, and added integration
+  coverage for counts, balance, colour availability, and add-on distribution.
 - Corrected the verified Razorpay receipt so totals, payment state, and order
   reference render in high-contrast white on the dark green ticket.
 - Reframed the complete public UI around StepUp Footwear without changing the
@@ -122,6 +133,21 @@ Last updated: 2026-09-05
 
 Passed through 2026-09-05:
 
+- Session 12 catalogue expansion: the complete `pnpm quality` pipeline passed
+  repository hygiene (122 files), formatting, lint, strict type checks, 45
+  unit/contract tests, 32 PostgreSQL/Redis integration tests, all production
+  builds, the 50/50 evaluation (baseline 43/50), and all 18 desktop/mobile
+  Playwright journeys. The integration setup reseeded catalogue v2 with 95
+  footwear styles and 10 accessories. A first full pass exposed one legacy
+  fake-model `Black` alias assumption; preserving that generic alias restored
+  the expected optional-colour fallback, and the focused seven-test regression
+  plus the final complete pipeline passed.
+- The post-pipeline live review setup loaded the ignored Anthropic and Razorpay
+  test configuration. API and web health both returned ready; the merchant
+  endpoint reported 95 styles, 10 accessories, 747 live variants, and 19
+  styles in each category. Live Claude searches returned grounded in-stock
+  Violet Purple trail and Cocoa Brown casual options in the requested UK sizes
+  and budgets. The review storefront is running at `http://127.0.0.1:3000`.
 - Receipt contrast follow-up: formatting and the focused web strict type check
   passed; the running web and live-configured API health checks returned ready.
 - Session 11 storefront pass: the complete `pnpm quality` pipeline passed with
@@ -248,12 +274,12 @@ Passed through 2026-09-05:
 
 ## Exact next action
 
-Record the browser flow with live Claude and the configured Razorpay test
-credentials from the updated StepUp storefront, including closing one Razorpay
-modal to confirm the recovery route. Then record from this session branch using
-`docs/SUBMISSION.md`, keep the final cut at five minutes or less, upload it with
-public/viewer access, verify the link signed out, fill the personal fields, and
-submit the form.
+Review the expanded catalogue in the locally running StepUp storefront, then
+record the browser flow with live Claude and the configured Razorpay test
+credentials, including closing one Razorpay modal to confirm the recovery
+route. Record from this session branch using `docs/SUBMISSION.md`, keep the
+final cut at five minutes or less, upload it with public/viewer access, verify
+the link signed out, fill the personal fields, and submit the form.
 Check the two remaining Session 10 acceptance boxes and merge this session only
 with explicit approval. Treat a mandate-backed unattended-payment path as a
 future scope decision requiring Razorpay account enablement, not as a UI-only
