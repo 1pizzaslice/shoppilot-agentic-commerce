@@ -4,19 +4,30 @@ Last updated: 2026-09-05
 
 ## Current position
 
-- Active session: Session 12 — catalogue breadth and add-on variety
+- Active session: Session 13 — visible external AI-buyer trace
 - Overall state: the complete product flow and Razorpay test checkout are
   implemented. The shopper experience now presents StepUp as a focused footwear
   store with ShopPilot as its embedded assistant, while retaining the guarded
-  agentic purchase flow and secondary guided demo stories. The v2 catalogue now
-  contains 95 footwear styles and 10 compatible add-ons. Final video capture,
-  upload, and form submission require submitter account actions
-- Current branch: `fix/red-colour-search`
+  agentic purchase flow, a visible external AI-buyer trace, and secondary guided
+  demo stories. The v2 catalogue now contains 95 footwear styles and 10
+  compatible add-ons. Final video capture, upload, and form submission require
+  submitter account actions
+- Current branch: `session/13-ai-buyer-trace`
 - Previous release tag (before Session 11): `shoppilot-submission-v1` at
   `bd0e4f281bada2c44e1ec936adccafe576434e4d`
 - Session 10 merge: PR #13 at `5b5517b`
 
 ## Completed
+
+- Added a visible, read-only external AI-buyer trace that validates StepUp's
+  public discovery profile and follows the current shopper journey across
+  catalogue search, exact-variant consent, versioned cart preparation, frozen
+  approval, deterministic checkout policy, and one Razorpay test order.
+- Proxied discovery and OpenAPI through the same web origin, kept the trace
+  accessible throughout desktop and mobile shopping, and carried the
+  AI-buyer/policy/provider handoff onto the secure checkout page. The surface
+  discloses that the protocol is UCP-inspired rather than conformant, exposes no
+  secrets, and performs no cart or payment mutation.
 
 - Grounded explicit catalogue colour words deterministically after model
   extraction. A request containing `red` now binds the search to red catalogue
@@ -136,6 +147,22 @@ Last updated: 2026-09-05
 ## Verification
 
 Passed through 2026-09-05:
+
+- Session 13 final: the uninterrupted `pnpm quality` pipeline passed repository
+  hygiene (123 files), formatting, lint, strict type checks, 46 unit/contract
+  tests, 32 PostgreSQL/Redis integration tests, every production build, the
+  50/50 evaluation (baseline 43/50), and all 20 desktop/mobile Playwright
+  journeys. The first full attempt stopped at README formatting before tests;
+  after the mechanical reflow, the clean complete rerun passed. Browser coverage
+  verifies initial live discovery, seven-stage progression from the same
+  purchase state, same-origin discovery/OpenAPI routes, and the Razorpay
+  handoff/callback path.
+- Session 13 focused verification: web strict type checking passed. Six focused
+  desktop/mobile Playwright runs passed for initial machine discovery, all
+  seven trace stages advancing on the real journey state, and the existing
+  signed Razorpay callback-to-receipt path with the new checkout handoff. The
+  in-app browser runtime had no connected browser instance, so this session's
+  rendered interaction evidence comes from Playwright.
 
 - Explicit-colour search follow-up: a live Claude request for red running shoes
   in UK 8 returned only the Signal Red Enduro Run. The final complete
@@ -286,13 +313,13 @@ Passed through 2026-09-05:
 
 ## Exact next action
 
-Review the expanded catalogue in the locally running StepUp storefront, then
-record the browser flow with live Claude and the configured Razorpay test
-credentials, including closing one Razorpay modal to confirm the recovery
-route. Record from this session branch using `docs/SUBMISSION.md`, keep the
-final cut at five minutes or less, upload it with public/viewer access, verify
-the link signed out, fill the personal fields, and submit the form.
-Check the two remaining Session 10 acceptance boxes and merge this session only
-with explicit approval. Treat a mandate-backed unattended-payment path as a
-future scope decision requiring Razorpay account enablement, not as a UI-only
-mode.
+Review the external AI-buyer trace at the landing page, after recommendations,
+and at the secure Razorpay handoff, then record the browser flow with live Claude
+and the configured Razorpay test credentials. Include closing one Razorpay modal
+to confirm the recovery route. Record from this stacked session branch using
+`docs/SUBMISSION.md`, keep the final cut at five minutes or less, upload it with
+public/viewer access, verify the link signed out, fill the personal fields, and
+submit the form. Check the two remaining Session 10 acceptance boxes and merge
+this session chain only with explicit approval. Treat a mandate-backed
+unattended-payment path as a future scope decision requiring Razorpay account
+enablement, not as a UI-only mode.

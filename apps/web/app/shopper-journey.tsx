@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   approvalSchema,
@@ -22,6 +22,8 @@ import {
   type ShoppingResponse,
 } from "@shoppilot/domain";
 import { z } from "zod";
+
+import { AiBuyerTrace } from "./ai-buyer-trace";
 
 type DemoScenario = "happy" | "recovery";
 
@@ -144,11 +146,13 @@ export function ShopperJourney() {
   const [stale, setStale] = useState(false);
   const [declinedOnce, setDeclinedOnce] = useState(false);
   const [auditOpen, setAuditOpen] = useState(false);
+  const [buyerTraceOpen, setBuyerTraceOpen] = useState(false);
   const [audit, setAudit] = useState<readonly AuditEvent[]>([]);
   const [cancelled, setCancelled] = useState(false);
   const focusRef = useRef<HTMLHeadingElement>(null);
   const auditTriggerRef = useRef<HTMLButtonElement>(null);
   const auditCloseRef = useRef<HTMLButtonElement>(null);
+  const closeBuyerTrace = useCallback(() => setBuyerTraceOpen(false), []);
 
   useEffect(() => {
     if (
@@ -441,6 +445,13 @@ export function ShopperJourney() {
           <span aria-hidden="true">●</span> Test mode · you approve every change
         </div>
         <button
+          className="text-button trace-trigger"
+          type="button"
+          onClick={() => setBuyerTraceOpen(true)}
+        >
+          AI buyer trace
+        </button>
+        <button
           ref={auditTriggerRef}
           className="text-button"
           type="button"
@@ -517,6 +528,17 @@ export function ShopperJourney() {
                   <li>Only three best-fit choices</li>
                   <li>You approve the exact total</li>
                 </ul>
+                <button
+                  className="machine-proof-button"
+                  type="button"
+                  onClick={() => setBuyerTraceOpen(true)}
+                >
+                  <span aria-hidden="true">↗</span>
+                  <span>
+                    <strong>See how an external AI buyer uses StepUp</strong>
+                    <small>Live discovery, catalogue and checkout trace</small>
+                  </span>
+                </button>
               </div>
 
               <aside className="store-story" aria-label="StepUp store promise">
@@ -1355,6 +1377,17 @@ export function ShopperJourney() {
             ) : null}
           </aside>
         </div>
+      ) : null}
+      {buyerTraceOpen ? (
+        <AiBuyerTrace
+          response={response}
+          selected={selected}
+          cart={cart}
+          snapshot={snapshot}
+          approval={approval}
+          payment={payment}
+          onClose={closeBuyerTrace}
+        />
       ) : null}
     </main>
   );

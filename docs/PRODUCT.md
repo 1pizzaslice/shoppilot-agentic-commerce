@@ -100,6 +100,13 @@ The merchant publishes:
 
 This is a practical UCP-inspired subset for the buildathon, not a claim of full protocol conformance. The catalogue is queried through APIs; “crawlable” means machine-discoverable and machine-readable, not uncontrolled browser scraping.
 
+The shopper surface includes a visible external AI-buyer trace that reads the
+same discovery profile and projects the current journey through catalogue
+search, exact-variant consent, versioned cart construction, frozen approval,
+policy authorization, and one Razorpay test order. It is an explanation of the
+real contracts and current client state, not a second staged checkout or an
+independent source of commerce authority.
+
 ## Growth feature
 
 The merchant curates compatibility relations such as:

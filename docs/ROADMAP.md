@@ -256,3 +256,33 @@ Acceptance:
   silently substitute another colour.
 - [x] The complete quality pipeline passes and the expanded live catalogue is
   reseeded for review.
+
+## Session 13 — visible external AI-buyer trace
+
+This session branch depends on the unmerged Session 11 and 12 commits plus the
+explicit-colour grounding fix; it must not be merged independently. Supporting
+product scope: [`docs/PRODUCT.md`](PRODUCT.md).
+
+- [x] Proxy the public discovery profile and OpenAPI document through the web
+  origin so a browser-visible machine client can read the same contracts.
+- [x] Add an always-reachable trace for discovery, grounded search,
+  exact-variant consent, versioned cart preparation, frozen approval, policy
+  authorization, and one Razorpay test order.
+- [x] Derive progress from the current typed shopper state and validate the live
+  discovery response instead of presenting a parallel scripted checkout.
+- [x] Carry a compact AI-buyer, policy, and provider handoff onto the secure
+  Razorpay checkout page.
+- [x] Keep the trace read-only, redact identifiers, disclose the UCP-inspired
+  subset accurately, and preserve every existing human-consent boundary.
+- [x] Add desktop and mobile browser coverage for initial discovery, complete
+  state progression, same-origin contracts, and the Razorpay handoff.
+
+Acceptance:
+
+- [x] A reviewer can open the trace before or during shopping and understand
+  how an external buyer reaches checkout without scraping the storefront.
+- [x] The seven stages advance only when the corresponding real shopper state
+  exists; the trace itself performs no commerce mutation.
+- [x] The checkout surface visibly separates AI preparation, deterministic
+  authorization, and shopper-authenticated Razorpay execution.
+- [x] The complete quality pipeline passes on the session branch.

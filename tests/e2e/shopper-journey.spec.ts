@@ -129,6 +129,27 @@ const payment = (state: "created" | "failed" | "paid" | "cancelled") => ({
 });
 
 const mockApi = async (page: Page) => {
+  await page.route("**/.well-known/ucp", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        protocol: "shoppilot-catalogue",
+        version: "1.0",
+        ucpConformance: false,
+        description: "A machine-readable test merchant profile.",
+        merchant: { id: "stepup-shoes", name: "StepUp Shoes" },
+        capabilities: {
+          search: { method: "POST", path: "/v1/catalog/search" },
+          productLookup: {
+            method: "GET",
+            pathTemplate: "/v1/catalog/products/{idOrSlug}",
+          },
+          openapi: { method: "GET", path: "/openapi.json" },
+        },
+      }),
+    });
+  });
   await page.route("**/v1/**", async (route) => {
     const request = route.request();
     const url = new URL(request.url());
@@ -303,8 +324,43 @@ const reachPayment = async (
 test.describe("deterministic browser states", () => {
   test.beforeEach(async ({ page }) => mockApi(page));
 
+  test("shows the live external AI-buyer contract trace", async ({ page }) => {
+    await page.goto("/");
+    await page
+      .getByRole("button", {
+        name: /See how an external AI buyer uses StepUp/,
+      })
+      .click();
+
+    const trace = page.getByRole("dialog", {
+      name: "The machine view of this purchase",
+    });
+    await expect(trace).toBeVisible();
+    await expect(trace.getByText("GET /.well-known/ucp")).toBeVisible();
+    await expect(
+      trace.getByText("StepUp Shoes · shoppilot-catalogue v1.0"),
+    ).toBeVisible();
+    await expect(trace.getByText("POST /v1/payment-orders")).toBeVisible();
+    await expect(trace.getByText("Not a staged parallel demo")).toBeVisible();
+
+    await trace.getByRole("button", { name: "Close AI buyer trace" }).click();
+    await expect(trace).toBeHidden();
+  });
+
   test("completes the grounded, consented happy path", async ({ page }) => {
     await reachPayment(page, "Successful checkout");
+    await page.getByRole("button", { name: "AI buyer trace" }).click();
+    const buyerTrace = page.getByRole("dialog", {
+      name: "The machine view of this purchase",
+    });
+    await expect(buyerTrace).toBeVisible();
+    await expect(
+      buyerTrace.locator(".machine-trace-list > li.complete"),
+    ).toHaveCount(7);
+    await expect(buyerTrace).toContainText("order_fake_demo");
+    await buyerTrace
+      .getByRole("button", { name: "Close AI buyer trace" })
+      .click();
     await page.getByRole("button", { name: "View safety trail" }).click();
     await expect(
       page.getByRole("heading", { name: "Every decision, in order" }),
@@ -562,6 +618,9 @@ test("routes a captured Razorpay callback to the verified receipt", async ({
   });
 
   await page.goto("/checkout/attempt-demo");
+  await expect(
+    page.getByRole("region", { name: "AI buyer handoff" }),
+  ).toContainText("Test order created");
   await page
     .getByRole("button", { name: "Open secure Razorpay checkout" })
     .click();
@@ -663,12 +722,12 @@ test("release rehearsal completes the live failure-recovery story", async ({
     page.getByRole("heading", { name: "Every live footwear style" }),
   ).toBeVisible();
 
-  const discovery = await page.request.get(
-    "http://127.0.0.1:3001/.well-known/ucp",
-  );
+  const discovery = await page.request.get("/.well-known/ucp");
   expect(discovery.ok()).toBe(true);
   const discoveryBody: unknown = await discovery.json();
   expect(discoveryBody).toMatchObject({ ucpConformance: false });
+  const openapi = await page.request.get("/openapi.json");
+  expect(openapi.ok()).toBe(true);
 
   expect(Date.now() - startedAt).toBeLessThan(285_000);
 });

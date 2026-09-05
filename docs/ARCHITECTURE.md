@@ -281,3 +281,11 @@ The MVP avoids accounts and minimizes personal data. Use fictional delivery data
     Key-based and credential-shaped redaction is tested. Redis limits abuse at
     selected boundaries, while PostgreSQL remains the only authority for money
     safety.
+15. **The external AI-buyer trace is an observable projection, not another
+    agent.** The web client fetches and validates the merchant discovery
+    profile from the public same-origin route, then maps the current typed
+    recommendation, selected variant, versioned cart, immutable snapshot,
+    approval, policy handoff, and payment order into a seven-stage trace. The
+    checkout page carries a compact handoff through Razorpay navigation. This
+    surface creates no cart or payment side effects, exposes no credentials or
+    raw prompts, and cannot bypass the existing consent or policy boundaries.
