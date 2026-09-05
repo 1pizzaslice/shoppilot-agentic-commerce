@@ -310,6 +310,9 @@ product scope: [`docs/PRODUCT.md`](PRODUCT.md).
 - [x] Use the full desktop viewport for the autonomous route, placing delegation
   and execution beside the buyer explanation while retaining the stacked mobile
   layout.
+- [x] Collapse autonomous approval and checkout launch into one exact-total
+  action that creates the single order and opens Razorpay directly, without an
+  intermediate StepUp payment button.
 
 Acceptance:
 
@@ -321,4 +324,7 @@ Acceptance:
   provider-order event while the payment boundary remains human-controlled.
 - [x] Desktop controls begin above the fold instead of inheriting the global
   narrow-page width, and a browser assertion guards the full-width layout.
-- [ ] The complete quality pipeline passes on the session branch.
+- [x] The autonomous exact-total approval opens the returned Razorpay Standard
+  Checkout configuration on the same page; authentication remains with the
+  shopper and callback evidence remains server-verified.
+- [x] The complete quality pipeline passes on the session branch.

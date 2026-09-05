@@ -430,6 +430,19 @@ test("runs a separate autonomous buyer through the live merchant APIs", async ({
     }
     if (pathname === "/v1/payment-orders") paymentOrderRequests += 1;
   });
+  await page.addInitScript(() => {
+    type CheckoutOptions = { order_id: string };
+    const browserWindow = window as typeof window & {
+      Razorpay?: new (options: CheckoutOptions) => { open: () => void };
+    };
+    browserWindow.Razorpay = class {
+      constructor(readonly options: CheckoutOptions) {}
+
+      open() {
+        document.body.dataset.razorpayOpened = this.options.order_id;
+      }
+    };
+  });
 
   await page.goto("/ai-buyer");
   const viewport = page.viewportSize();
@@ -471,30 +484,26 @@ test("runs a separate autonomous buyer through the live merchant APIs", async ({
   await expect(page.getByText(/append-only server events/)).toBeVisible();
 
   await page
-    .getByRole("button", { name: /Approve .* and create Razorpay order/ })
+    .getByRole("button", { name: /Approve .* and pay securely/ })
     .click();
   await expect
     .poll(
       async () =>
-        page.url().includes("/checkout/") ||
+        (await page.locator("body").getAttribute("data-razorpay-opened")) !==
+          null ||
         page
           .getByText("Fake-provider order prepared successfully.")
           .isVisible(),
       { timeout: 20_000 },
     )
     .toBe(true);
-  if (page.url().includes("/checkout/")) {
-    await expect(
-      page.getByText("AI-prepared cart · human-secured payment"),
-    ).toBeVisible();
-  } else {
-    await expect(
-      page.locator(".buyer-exchange-list > li.completed"),
-    ).toHaveCount(12);
-    await expect(
-      page.getByText(/persisted events include the single provider order/),
-    ).toBeVisible();
-  }
+  await expect(page).toHaveURL(/\/ai-buyer$/u);
+  await expect(page.locator(".buyer-exchange-list > li.completed")).toHaveCount(
+    12,
+  );
+  await expect(
+    page.getByText(/persisted events include the single provider order/),
+  ).toBeVisible();
 
   expect(paymentOrderRequests).toBe(1);
   expect(correlatedRequests.length).toBeGreaterThanOrEqual(12);

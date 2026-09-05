@@ -302,4 +302,8 @@ The MVP avoids accounts and minimizes personal data. Use fictional delivery data
     the same correlation ID and a durable `provider_order_created` event. Exact
     frozen-total approval and Razorpay authentication remain human boundaries;
     this is bounded autonomous preparation, not authority to spend or enter
-    payment credentials.
+    payment credentials. The approval event directly consumes the authorized
+    attempt, reads back the final audit, and opens the public Razorpay checkout
+    configuration in the same client. The shared Razorpay launcher owns script
+    loading and typed callbacks for both autonomous and guided flows, while only
+    the autonomous flow removes the intermediate merchant-side launch button.

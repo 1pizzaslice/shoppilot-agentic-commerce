@@ -115,7 +115,9 @@ creation, add-on acceptance or refusal, and immutable review through the public
 HTTP contracts without intermediate product-selection clicks. It reads the
 append-only server audit back under one shared correlation ID. The user returns
 only at the existing money boundary to approve the exact frozen total and
-authenticate with Razorpay Standard Checkout; product facts and authorization
+authenticate with Razorpay Standard Checkout. That approval action runs policy,
+creates the single provider order, and opens Razorpay directly rather than
+asking for a second merchant-side confirmation; product facts and authorization
 remain deterministic server responsibilities.
 
 ## Growth feature

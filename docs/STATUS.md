@@ -19,6 +19,15 @@ Last updated: 2026-09-05
 
 ## Completed
 
+- Collapsed the autonomous route's two merchant-side payment actions into one
+  exact-total “Approve and pay securely” control. It now records approval, runs
+  deterministic policy, creates and audits one provider order, and opens the
+  returned Razorpay Standard Checkout configuration directly on the same page.
+  Razorpay authentication and server-side signed callback verification remain
+  unchanged.
+- Extracted the Razorpay script and modal adapter for reuse by the autonomous
+  route and the existing guided checkout launcher. Closing the modal records a
+  no-charge cancellation; successful evidence routes to the verified receipt.
 - Corrected the autonomous route's desktop composition after the global narrow
   `main` rule constrained it to the left side. The route now fills the viewport,
   keeps the buyer explanation on the left, and places delegation plus live API
@@ -168,22 +177,25 @@ Last updated: 2026-09-05
 
 Passed through 2026-09-05:
 
+- Session 14 final: the uninterrupted `pnpm quality` pipeline passed repository
+  hygiene (127 candidate files), formatting, lint, strict type checks, 46
+  unit/contract tests, 32 PostgreSQL/Redis integration tests, every production
+  build, the 50/50 evaluation (baseline 43/50), and all 22 desktop/mobile
+  Playwright journeys. The full browser suite includes the one-action autonomous
+  Razorpay launch, single provider-order assertion, durable audit readback,
+  signed callback receipt, and the unchanged guided success/recovery journeys.
+- Session 14 one-click payment follow-up: formatting, lint, and full strict type
+  checking passed. Four focused desktop/mobile Playwright runs passed for the
+  autonomous one-click checkout launch and the existing signed Razorpay
+  callback-to-receipt route. The autonomous test asserts one payment-order
+  request, 12 correlated exchanges, no intermediate navigation, and invocation
+  of the returned checkout configuration.
 - Session 14 responsive follow-up: full strict type checking and the focused
   autonomous Playwright flow passed on desktop and mobile against the running
   live-configured API. The regression verifies full viewport width, above-fold
   desktop controls, one shared correlation ID, and one provider-order request;
-  it now accepts both fake-provider completion and the expected Razorpay
-  test-mode checkout navigation.
-- Session 14 partial verification: formatting, lint, full strict type checking,
-  all 46 unit/contract tests, every production build, and the frozen evaluation
-  (50/50 ShopPilot versus 43/50 baseline) passed. Before the final server-audit
-  readback was added, the separate live autonomous flow passed on both desktop
-  and mobile with one shared correlation ID and one payment-order request. The
-  final focused browser rerun could not start localhost servers because the
-  managed sandbox rejected port binding after its approval credits were
-  exhausted. PostgreSQL/Redis integration reruns were blocked by the same
-  `EPERM` localhost restriction; they are not reported as passing for Session
-  14.
+  the final one-click regression additionally verifies that the returned
+  Razorpay checkout opens without intermediate navigation.
 - Session 13 final: the uninterrupted `pnpm quality` pipeline passed repository
   hygiene (123 files), formatting, lint, strict type checks, 46 unit/contract
   tests, 32 PostgreSQL/Redis integration tests, every production build, the
@@ -334,11 +346,6 @@ Passed through 2026-09-05:
 
 ## Blockers
 
-- Session 14 still needs one permitted local run of the PostgreSQL/Redis
-  integration suite and the desktop/mobile autonomous-buyer Playwright case.
-  The implementation compiled and the earlier 10-exchange flow passed, but the
-  new audit-readback assertions have not been exercised after the sandbox
-  exhausted approval credits.
 - Final video capture and upload require the submitter's recording environment
   and hosting account. Razorpay test credentials are configured locally; the
   callback/API reconciliation now supports an immediate verified localhost
@@ -354,11 +361,8 @@ Passed through 2026-09-05:
 
 ## Exact next action
 
-When localhost permission is available, run
-`DATABASE_URL=postgresql://shoppilot:shoppilot_dev@localhost:5432/shoppilot REDIS_URL=redis://localhost:6380 corepack pnpm quality`. Confirm the autonomous
-desktop/mobile case reaches 12 completed exchanges, reads the durable audit
-twice under one correlation ID, and creates exactly one payment order. Then run
-the page with the ignored live Claude and Razorpay test configuration and record
-the autonomous route followed by Razorpay authentication. Use
-`docs/SUBMISSION.md`, keep the final cut at five minutes or less, and merge this
-stacked session chain only with explicit approval.
+Run the page with the ignored live Claude and Razorpay test configuration and
+confirm that “Approve and pay securely” opens Razorpay directly after the 12
+correlated exchanges. Then record the autonomous route followed by Razorpay
+authentication. Use `docs/SUBMISSION.md`, keep the final cut at five minutes or
+less, and merge this stacked session chain only with explicit approval.

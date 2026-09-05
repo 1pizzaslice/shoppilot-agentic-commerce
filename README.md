@@ -115,7 +115,9 @@ drive merchant discovery, grounded selection, exact-SKU cart preparation, add-on
 policy, and immutable review without intermediate selection clicks. The page
 reads the PostgreSQL-backed audit trail under one correlation ID before the
 exact-total approval and again after creating the single test provider order.
-The secure checkout page retains the final machine-to-policy-to-provider
+Its single “Approve and pay securely” action then opens Razorpay directly; the
+shopper still controls payment authentication and the server still verifies the
+signed callback. The guided journey retains its explicit secure-checkout
 handoff.
 
 After Compose is healthy and the database is migrated and seeded, run
