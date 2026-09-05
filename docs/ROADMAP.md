@@ -197,3 +197,29 @@ Acceptance:
 - [ ] The video is five minutes or less and shows working software, not a code tour.
 - [x] The repository builds from its public instructions and contains no secret.
 - [ ] The submission explicitly shows growth, agentic checkout, bounded/gated money actions, auditability, and graceful failure recovery.
+
+## Session 11 — footwear storefront identity
+
+Supporting product scope: [`docs/PRODUCT.md`](PRODUCT.md).
+
+- [x] Reframe the shopper surface as StepUp Footwear, powered by the ShopPilot
+  assistant, without changing the narrow commerce workflow.
+- [x] Replace the demo-first landing hierarchy with footwear-specific discovery,
+  activity shortcuts, and a secondary guided-story control.
+- [x] Carry the store identity through product detail, checkout, receipt, and
+  merchant surfaces while keeping Razorpay test mode explicit.
+- [x] Turn the machine-readable product route into a credible, responsive
+  catalogue detail page without changing canonical product data.
+- [x] Add store-specific page metadata and a bespoke social preview asset.
+- [x] Update browser coverage for the revised labels and guided-story disclosure.
+- [x] Correct verified-receipt value contrast on the dark summary ticket.
+
+Acceptance:
+
+- [x] A first-time viewer understands that StepUp is a footwear store and
+  ShopPilot is its shopping assistant before interacting.
+- [x] The main journey still exposes no more than three recommendations, one
+  consent-only add-on, exact-total approval, test payment, and the audit trail.
+- [x] Desktop and mobile browser journeys pass with the revised storefront.
+- [x] Formatting, lint, strict types, tests, integration tests, evaluation, and
+  production builds pass on the complete branch.

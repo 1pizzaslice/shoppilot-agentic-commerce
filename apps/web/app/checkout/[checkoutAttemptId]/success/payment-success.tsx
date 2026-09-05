@@ -56,7 +56,7 @@ export function PaymentSuccess({
   return (
     <main className="payment-success-shell">
       <a className="payment-brand" href="/">
-        ShopPilot
+        StepUp <small>powered by ShopPilot</small>
       </a>
       <section className="payment-success-card" aria-live="polite">
         <div className={`receipt-mark ${paid ? "" : "receipt-mark-pending"}`}>
@@ -70,7 +70,7 @@ export function PaymentSuccess({
           {paid
             ? "Razorpay confirmed that this test payment was captured for the one approved order. No real money moved."
             : (error ??
-              "ShopPilot is checking the captured status directly with Razorpay. You can safely keep this page open.")}
+              "StepUp is checking the captured status directly with Razorpay. You can safely keep this page open.")}
         </p>
         {payment !== null ? (
           <div className="receipt-ticket payment-receipt-ticket">

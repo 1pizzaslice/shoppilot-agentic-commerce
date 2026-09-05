@@ -4,19 +4,31 @@ Last updated: 2026-09-05
 
 ## Current position
 
-- Active session: Session 10 — submission and video readiness
+- Active session: Session 11 — footwear storefront identity
 - Overall state: the complete product flow and Razorpay test checkout are
-  implemented; live Claude inference and Razorpay test mode are configured.
-  Budget-safe add-ons, terminal checkout recovery, reliable return navigation,
-  and the redesigned audit timeline are verified. Final video capture, upload,
-  and form submission require submitter account actions
-- Current branch: `session/10-submission-video-readiness`
-- Release tag: `shoppilot-submission-v1` at
+  implemented. The shopper experience now presents StepUp as a focused footwear
+  store with ShopPilot as its embedded assistant, while retaining the guarded
+  agentic purchase flow and secondary guided demo stories. Final video capture,
+  upload, and form submission require submitter account actions
+- Current branch: `session/11-footwear-storefront`
+- Previous release tag (before Session 11): `shoppilot-submission-v1` at
   `bd0e4f281bada2c44e1ec936adccafe576434e4d`
-- Session 9 merge: PR #11 at `fe97407`; follow-up status merge at `e44f057`
+- Session 10 merge: PR #13 at `5b5517b`
 
 ## Completed
 
+- Corrected the verified Razorpay receipt so totals, payment state, and order
+  reference render in high-contrast white on the dark green ticket.
+- Reframed the complete public UI around StepUp Footwear without changing the
+  commerce scope, catalogue authority, approval boundary, or test-mode payment
+  behavior. The landing page now leads with footwear discovery and activity
+  shortcuts; buildathon presets remain available in a secondary disclosure.
+- Rebuilt public product pages as responsive catalogue detail experiences with
+  canonical imagery, live variants, stock, prices, return policy, ShopPilot
+  handoff, product-specific social metadata, and the existing Schema.org data.
+- Carried the StepUp/ShopPilot brand relationship through checkout, receipts,
+  navigation, and merchant evidence. Added a bespoke, repository-owned social
+  preview card and host-derived root metadata.
 - Added `pnpm demo:rehearse`, a self-contained release rehearsal for the
   documented local PostgreSQL/Redis ports. Fresh desktop and mobile contexts
   exercise the live API and web app through declined-payment recovery, assert
@@ -110,6 +122,18 @@ Last updated: 2026-09-05
 
 Passed through 2026-09-05:
 
+- Receipt contrast follow-up: formatting and the focused web strict type check
+  passed; the running web and live-configured API health checks returned ready.
+- Session 11 storefront pass: the complete `pnpm quality` pipeline passed with
+  repository hygiene (122 files), formatting, lint, strict type checks, 44
+  unit/contract tests, 30 PostgreSQL/Redis integration tests, all production
+  builds, the 50/50 evaluation (baseline 43/50), and all 18 desktop/mobile
+  Playwright journeys. A first unconfigured browser attempt lacked the required
+  local database variables; the configured sandbox attempt could not bind
+  localhost. The permitted run then found the intentionally retained preview
+  server on port 3000; after stopping that exact process and updating the
+  renamed search labels, the focused four-run regression and final complete
+  pipeline passed.
 - `DATABASE_URL=postgresql://shoppilot:shoppilot_dev@localhost:5432/shoppilot REDIS_URL=redis://localhost:6380 corepack pnpm quality`
   — repository hygiene (118 files), formatting, lint, strict type checks, 41
   unit/contract tests, 27 PostgreSQL/Redis integration tests, all builds, 50/50
@@ -224,11 +248,13 @@ Passed through 2026-09-05:
 
 ## Exact next action
 
-Rerun the browser flow with live Claude and the configured Razorpay test
-credentials, including closing one Razorpay modal to confirm the recovery
-route. Then record from the updated session branch using `docs/SUBMISSION.md`,
-keep the final cut at five minutes or less, upload it with public/viewer access,
-verify the link signed out, fill the personal fields, and submit the form.
-Check the two remaining Session 10 acceptance boxes and merge only with
-explicit approval. Treat a mandate-backed unattended-payment path as a future
-scope decision requiring Razorpay account enablement, not as a UI-only mode.
+Record the browser flow with live Claude and the configured Razorpay test
+credentials from the updated StepUp storefront, including closing one Razorpay
+modal to confirm the recovery route. Then record from this session branch using
+`docs/SUBMISSION.md`, keep the final cut at five minutes or less, upload it with
+public/viewer access, verify the link signed out, fill the personal fields, and
+submit the form.
+Check the two remaining Session 10 acceptance boxes and merge this session only
+with explicit approval. Treat a mandate-backed unattended-payment path as a
+future scope decision requiring Razorpay account enablement, not as a UI-only
+mode.
