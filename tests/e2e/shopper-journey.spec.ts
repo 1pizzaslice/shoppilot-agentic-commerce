@@ -275,6 +275,9 @@ const reachPayment = async (
   preset: "Successful checkout" | "Failure & recovery",
 ) => {
   await page.goto("/");
+  await page
+    .getByText("Try a guided buildathon story", { exact: true })
+    .click();
   await page.getByRole("button", { name: preset }).click();
   await page.getByRole("button", { name: "Find my pair" }).click();
   await page.getByLabel("Your answer").fill("8");
@@ -342,11 +345,14 @@ test.describe("deterministic browser states", () => {
     page,
   }) => {
     await page.goto("/");
+    await page
+      .getByText("Try a guided buildathon story", { exact: true })
+      .click();
     await page.getByRole("button", { name: /Successful checkout/ }).click();
     await page.getByRole("button", { name: "Find my pair" }).click();
     await expect(page.getByLabel("Your answer")).toBeVisible();
     await page.getByRole("button", { name: "Edit original request" }).click();
-    await expect(page.getByLabel("What are you looking for?")).toHaveValue(
+    await expect(page.getByLabel("Describe your ideal pair")).toHaveValue(
       "Running shoes under ₹4,000",
     );
   });
@@ -406,7 +412,7 @@ test("refines an empty search without restarting the journey", async ({
 
   await page.goto("/");
   await page
-    .getByLabel("What are you looking for?")
+    .getByLabel("Describe your ideal pair")
     .fill("Running shoes under ₹2,500, UK 8, purple");
   await page.getByRole("button", { name: "Find my pair" }).click();
   await expect(
@@ -462,7 +468,7 @@ test("starts a clean request when replacing recommendation filters", async ({
 
   await page.goto("/");
   await page
-    .getByLabel("What are you looking for?")
+    .getByLabel("Describe your ideal pair")
     .fill("Grey running shoes under ₹8,000 in UK 8");
   await page.getByRole("button", { name: "Find my pair" }).click();
   await expect(
@@ -591,7 +597,7 @@ test("a closed Razorpay attempt has a clear route back to shopping", async ({
   await expect(
     page.getByRole("button", { name: "Open secure Razorpay checkout" }),
   ).toHaveCount(0);
-  await page.getByRole("link", { name: "Return to ShopPilot" }).click();
+  await page.getByRole("link", { name: "Return to StepUp" }).click();
   await expect(page).toHaveURL(/\/$/);
 });
 

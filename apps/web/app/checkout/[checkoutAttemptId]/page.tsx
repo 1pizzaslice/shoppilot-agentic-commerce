@@ -13,14 +13,14 @@ export default async function CheckoutPage({
   return (
     <main className="payment-shell">
       <a className="payment-brand" href="/">
-        ShopPilot
+        StepUp <small>powered by ShopPilot</small>
       </a>
       <div className="payment-heading">
         <p className="eyebrow">Approved cart · secure checkout</p>
         <h1>One last secure step.</h1>
         <p>
           Your exact cart is frozen and approved. Complete authentication in
-          Razorpay’s checkout; ShopPilot receives only signed payment evidence.
+          Razorpay’s checkout; StepUp receives only signed payment evidence.
         </p>
       </div>
       <CheckoutLauncher

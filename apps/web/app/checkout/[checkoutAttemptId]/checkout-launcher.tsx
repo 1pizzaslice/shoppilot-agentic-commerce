@@ -241,7 +241,7 @@ export function CheckoutLauncher({
         </h2>
         <p className="payment-message">
           {terminalState
-            ? "No payment was captured. This frozen attempt cannot be reused; return to ShopPilot to start a fresh, fully bounded order."
+            ? "No payment was captured. This frozen attempt cannot be reused; return to StepUp to start a fresh, fully bounded order."
             : message}
         </p>
       </div>
@@ -252,7 +252,7 @@ export function CheckoutLauncher({
       {terminalState ? (
         <div className="payment-actions">
           <a className="primary-button link-button" href="/">
-            Return to ShopPilot
+            Return to StepUp
           </a>
         </div>
       ) : !confirming ? (

@@ -4,6 +4,12 @@
 
 ShopPilot lets a shopper describe the shoes they need, asks only essential follow-ups, recommends catalogue-grounded options, offers one useful add-on, and creates a Razorpay test-mode checkout only after the shopper approves the exact cart.
 
+The shopper-facing product is presented as **StepUp Footwear**, the fictional
+merchant, with **ShopPilot** as its embedded shopping assistant. The storefront
+should feel credible enough to shop from while keeping the conversational,
+agent-readable purchase path—not a conventional browse grid—as the primary
+experience.
+
 ## Track fit
 
 The product addresses both halves of Track 1:
@@ -201,4 +207,3 @@ User-facing fallback:
 ## Out of scope until the MVP passes
 
 Multi-merchant comparison, arbitrary-site crawling, live payments, user authentication, saved payment instruments, delivery fulfilment, returns, refunds, voice, multilingual UI, dynamic discount generation, merchant onboarding, and full protocol certification.
-
