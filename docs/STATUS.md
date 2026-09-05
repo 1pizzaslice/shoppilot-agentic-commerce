@@ -12,13 +12,16 @@ Last updated: 2026-09-05
   correlated evidence, and secondary guided demo stories. The v2 catalogue now
   contains 95 footwear styles and 10 compatible add-ons. Final local
   verification, video capture, upload, and form submission remain.
-- Current branch: `session/14-autonomous-buyer`
+- Current branch: `fix/checkout-above-fold`
 - Previous release tag (before Session 11): `shoppilot-submission-v1` at
   `bd0e4f281bada2c44e1ec936adccafe576434e4d`
 - Session 10 merge: PR #13 at `5b5517b`
 
 ## Completed
 
+- Moved the secure Razorpay handoff card from a second row to the right of its
+  explanation on wide screens. Desktop padding and column widths keep the full
+  card inside a 1280×720 viewport; mobile retains the original stacked flow.
 - Collapsed the autonomous route's two merchant-side payment actions into one
   exact-total “Approve and pay securely” control. It now records approval, runs
   deterministic policy, creates and audits one provider order, and opens the
@@ -177,6 +180,10 @@ Last updated: 2026-09-05
 
 Passed through 2026-09-05:
 
+- Checkout above-fold follow-up: repository lint and strict type checking
+  passed. The focused signed-callback Playwright journey passed on desktop and
+  mobile; its desktop assertion verifies that the card is right of the heading
+  and that its bottom remains within the 720px viewport.
 - Session 14 final: the uninterrupted `pnpm quality` pipeline passed repository
   hygiene (127 candidate files), formatting, lint, strict type checks, 46
   unit/contract tests, 32 PostgreSQL/Redis integration tests, every production

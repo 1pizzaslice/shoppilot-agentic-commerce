@@ -715,6 +715,19 @@ test("routes a captured Razorpay callback to the verified receipt", async ({
   });
 
   await page.goto("/checkout/attempt-demo");
+  const viewport = page.viewportSize();
+  if (viewport !== null && viewport.width >= 1100) {
+    const headingBounds = await page.locator(".payment-heading").boundingBox();
+    const cardBounds = await page.locator(".payment-card").boundingBox();
+    expect(headingBounds).not.toBeNull();
+    expect(cardBounds).not.toBeNull();
+    if (headingBounds !== null && cardBounds !== null) {
+      expect(cardBounds.x).toBeGreaterThan(headingBounds.x);
+      expect(cardBounds.y + cardBounds.height).toBeLessThanOrEqual(
+        viewport.height,
+      );
+    }
+  }
   await expect(
     page.getByRole("region", { name: "AI buyer handoff" }),
   ).toContainText("Test order created");

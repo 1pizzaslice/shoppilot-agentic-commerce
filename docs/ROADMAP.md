@@ -313,6 +313,9 @@ product scope: [`docs/PRODUCT.md`](PRODUCT.md).
 - [x] Collapse autonomous approval and checkout launch into one exact-total
   action that creates the single order and opens Razorpay directly, without an
   intermediate StepUp payment button.
+- [x] Place the secure-checkout card beside its explanation on wide screens so
+  the complete payment handoff remains above the fold, while retaining the
+  stacked small-screen layout.
 
 Acceptance:
 
@@ -327,4 +330,6 @@ Acceptance:
 - [x] The autonomous exact-total approval opens the returned Razorpay Standard
   Checkout configuration on the same page; authentication remains with the
   shopper and callback evidence remains server-verified.
+- [x] The desktop payment card renders to the right of the checkout heading and
+  fits within a 1280×720 viewport without vertical scrolling.
 - [x] The complete quality pipeline passes on the session branch.
