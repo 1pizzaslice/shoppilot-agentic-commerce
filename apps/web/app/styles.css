@@ -3118,7 +3118,10 @@ a {
 }
 
 .autonomous-shell {
+  display: block;
+  width: 100%;
   min-height: 100vh;
+  max-width: none;
   padding: 0 clamp(1rem, 4vw, 4rem) 4rem;
   background:
     radial-gradient(circle at 92% 8%, rgb(232 83 29 / 0.1), transparent 26rem),
@@ -3598,6 +3601,54 @@ a {
 .autonomous-proof-note p {
   max-width: 58rem;
   color: #bed1c4;
+}
+
+@media (min-width: 1101px) {
+  .autonomous-shell {
+    display: grid;
+    grid-template-columns: minmax(22rem, 0.7fr) minmax(42rem, 1.3fr);
+    column-gap: clamp(2.5rem, 4vw, 5rem);
+    align-content: start;
+  }
+
+  .autonomous-header,
+  .autonomous-review,
+  .autonomous-error,
+  .autonomous-proof-note {
+    grid-column: 1 / -1;
+    width: 100%;
+    max-width: 92rem;
+    margin-right: auto;
+    margin-left: auto;
+  }
+
+  .autonomous-hero {
+    display: block;
+    grid-column: 1;
+    align-self: start;
+    max-width: 34rem;
+    margin: 0;
+    padding: clamp(3.5rem, 7vh, 5rem) 0 2rem;
+  }
+
+  .autonomous-hero h1 {
+    max-width: 9ch;
+    font-size: clamp(4.5rem, 5.5vw, 7rem);
+  }
+
+  .autonomous-hero > p {
+    max-width: 29rem;
+    margin-top: 2rem;
+  }
+
+  .autonomous-layout {
+    grid-column: 2;
+    align-self: start;
+    grid-template-columns: minmax(18rem, 0.82fr) minmax(22rem, 1.18fr);
+    width: 100%;
+    max-width: none;
+    margin: clamp(3.5rem, 7vh, 5rem) 0 0;
+  }
 }
 
 @media (max-width: 820px) {

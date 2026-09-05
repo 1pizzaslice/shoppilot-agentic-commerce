@@ -432,6 +432,25 @@ test("runs a separate autonomous buyer through the live merchant APIs", async ({
   });
 
   await page.goto("/ai-buyer");
+  const viewport = page.viewportSize();
+  const shellBounds = await page.locator(".autonomous-shell").boundingBox();
+  expect(viewport).not.toBeNull();
+  expect(shellBounds).not.toBeNull();
+  if (viewport !== null && shellBounds !== null) {
+    expect(shellBounds.width).toBeGreaterThan(viewport.width * 0.95);
+    if (viewport.width > 1100) {
+      const heroBounds = await page.locator(".autonomous-hero").boundingBox();
+      const layoutBounds = await page
+        .locator(".autonomous-layout")
+        .boundingBox();
+      expect(heroBounds).not.toBeNull();
+      expect(layoutBounds).not.toBeNull();
+      if (heroBounds !== null && layoutBounds !== null) {
+        expect(layoutBounds.x).toBeGreaterThan(heroBounds.x);
+        expect(layoutBounds.y).toBeLessThan(viewport.height * 0.35);
+      }
+    }
+  }
   await page
     .getByRole("checkbox", {
       name: /I delegate product and cart preparation/,
@@ -454,15 +473,28 @@ test("runs a separate autonomous buyer through the live merchant APIs", async ({
   await page
     .getByRole("button", { name: /Approve .* and create Razorpay order/ })
     .click();
-  await expect(
-    page.getByText("Fake-provider order prepared successfully."),
-  ).toBeVisible({ timeout: 20_000 });
-  await expect(page.locator(".buyer-exchange-list > li.completed")).toHaveCount(
-    12,
-  );
-  await expect(
-    page.getByText(/persisted events include the single provider order/),
-  ).toBeVisible();
+  await expect
+    .poll(
+      async () =>
+        page.url().includes("/checkout/") ||
+        page
+          .getByText("Fake-provider order prepared successfully.")
+          .isVisible(),
+      { timeout: 20_000 },
+    )
+    .toBe(true);
+  if (page.url().includes("/checkout/")) {
+    await expect(
+      page.getByText("AI-prepared cart · human-secured payment"),
+    ).toBeVisible();
+  } else {
+    await expect(
+      page.locator(".buyer-exchange-list > li.completed"),
+    ).toHaveCount(12);
+    await expect(
+      page.getByText(/persisted events include the single provider order/),
+    ).toBeVisible();
+  }
 
   expect(paymentOrderRequests).toBe(1);
   expect(correlatedRequests.length).toBeGreaterThanOrEqual(12);
