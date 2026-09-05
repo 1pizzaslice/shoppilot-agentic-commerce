@@ -18,6 +18,8 @@ const product = (
   slug: id,
   name: `Product ${id}`,
   description: "Untrusted catalogue description.",
+  imageUrl:
+    "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=82",
   productType: "running",
   returnPolicyDays: 14,
   lowestPricePaise: pricePaise,
@@ -70,7 +72,7 @@ describe("conversation state machine", () => {
 });
 
 describe("deterministic candidate boundary", () => {
-  it("rejects invalid products and returns at most three in stable price order", () => {
+  it("rejects invalid products and returns a stable price spectrum", () => {
     const intent = shoppingIntentSchema.parse({
       productType: "running",
       sizeUk: 8,
@@ -102,7 +104,7 @@ describe("deterministic candidate boundary", () => {
       intent,
     );
 
-    expect(ranked.map(({ id }) => id)).toEqual(["first", "second", "third"]);
+    expect(ranked.map(({ id }) => id)).toEqual(["first", "third", "fourth"]);
   });
 
   it("validates strict read-only tool input before touching the catalogue", async () => {

@@ -39,7 +39,7 @@ approved, and recorded.
 - TypeScript on Node.js 22+
 - Next.js for the shopper and demo experience
 - Fastify for the API and Razorpay webhook boundary
-- OpenAI Responses API behind a Zod-validated model adapter
+- Anthropic Messages API behind a Zod-validated Claude adapter
 - PostgreSQL with Drizzle ORM
 - Redis for readiness and bounded API rate limits
 - A typed Razorpay HTTP adapter and Standard Checkout, test mode only
@@ -100,15 +100,30 @@ pnpm dev:worker
 ```
 
 Open `http://localhost:3000` for the complete responsive shopper journey. The
-“Happy path” preset reaches a verified fake-provider receipt without external
-credentials. “Decline & recover” deliberately fails the first payment attempt,
-then retries the same server-created order to demonstrate duplicate-safe
-recovery. The safety trail identifies what the agent proposed, what
-deterministic policy allowed, and what the shopper approved.
+“Successful checkout” preset reaches a verified fake-provider receipt without
+external credentials. “Failure & recovery” deliberately fails the first payment
+attempt, then retries the same server-created order to demonstrate
+duplicate-safe recovery. Both presets use the same product request because the
+story changes only at payment. The safety trail identifies what the agent
+proposed, what deterministic policy allowed, and what the shopper approved.
 
-`pnpm db:seed` is repeatable and installs the fictional `stepup-shoes`
-catalogue: 36 shoes plus compatible accessories and inventory. It contains no
-real shopper or merchant data. Re-running migration and seed commands is safe.
+After Compose is healthy and the database is migrated and seeded, run
+`pnpm demo:rehearse` for the release rehearsal. It drives the live API, web app,
+PostgreSQL, Redis, and fake payment adapter through the declined-payment
+recovery story on fresh desktop and mobile browser contexts. It also verifies
+one provider order, the audit explanation, merchant evidence, machine-readable
+discovery, and the 4:45 rehearsal ceiling.
+
+`pnpm db:seed` is repeatable and installs the `stepup-shoes` demonstration
+catalogue: 48 distinct shoe styles, four compatible accessories, colour-accurate
+public product photography, a ₹2,499–₹6,999 price range, and inventory across UK
+sizes 5–12. Each style has one photographed colour, so the UI never labels a red
+shoe as grey. It contains no real shopper or merchant data. Re-running migration
+and seed commands is safe.
+
+Catalogue photography is sourced from public Unsplash and Pexels photo pages.
+The insole image is © Ak12121234 under CC BY-SA 4.0, and the packaged bootlace
+image is by Simon Speed under CC0, both via Wikimedia Commons.
 
 ## Runtime architecture
 
@@ -116,7 +131,7 @@ real shopper or merchant data. Re-running migration and seed commands is safe.
 flowchart LR
   B[Shopper browser] --> W[Next.js web]
   W --> A[Fastify API]
-  A --> M[Fake or OpenAI model adapter]
+  A --> M[Fake or Claude model adapter]
   A --> P[(PostgreSQL truth)]
   A --> R[(Redis rate limits)]
   A --> F[Fake or Razorpay test adapter]
@@ -209,8 +224,12 @@ ID, integer-paise amount, and currency, but never either secret. Checkout API
 requests use the web app's same-origin `/v1` proxy; `API_BASE_URL` configures
 its server-side destination and defaults to the local API on port 3001.
 
-The callback endpoint verifies `order_id|payment_id` server-side. The webhook
-endpoint verifies the HMAC over the exact raw request bytes, deduplicates by
+The callback endpoint verifies `order_id|payment_id` server-side, then fetches
+that payment from Razorpay and checks its provider order, amount, currency, and
+captured status before showing the verified receipt. Pending pages repeat that
+server-side reconciliation, so localhost demos do not depend on an inbound
+webhook for immediate success UX. The webhook remains the asynchronous source of
+truth: it verifies the HMAC over the exact raw request bytes, deduplicates by
 `x-razorpay-event-id`, and preserves `paid` when older evidence arrives later.
 Provider calls left in an uncertain `creating` state time out to `expired` and
 remain single-shot rather than risking a duplicate order.
@@ -224,9 +243,10 @@ conversion-lift, causal, or production-revenue claim. Metric definitions and the
 compatibility reason for every recent suggestion are visible in the view.
 
 The default `MODEL_PROVIDER=fake` mode is deterministic and needs no API key.
-Set `MODEL_PROVIDER=openai`, `OPENAI_API_KEY`, and optionally `OPENAI_MODEL` to
-use the server-side OpenAI Responses adapter. Responses are requested with
-structured JSON output and `store: false`; no browser receives the key. For
+Set `MODEL_PROVIDER=anthropic`, `ANTHROPIC_API_KEY`, and optionally
+`ANTHROPIC_MODEL` to use the server-side Claude Messages adapter. The default
+model is `claude-haiku-4-5-20251001`. Responses use JSON-schema structured
+output and are validated again with Zod; no browser receives the key. For
 example, start the required-size flow with:
 
 ```bash
@@ -300,6 +320,6 @@ Compose.
 ## Current state
 
 The accessible demo journey, guarded test-payment flow, operational hardening,
-merchant evidence, and adversarial evaluation harness are implemented through
-Session 9. See [current project state](docs/STATUS.md) for exact verification
-evidence and the next action.
+merchant evidence, adversarial evaluation harness, and submission rehearsal are
+implemented. See [current project state](docs/STATUS.md) for exact release and
+verification evidence.

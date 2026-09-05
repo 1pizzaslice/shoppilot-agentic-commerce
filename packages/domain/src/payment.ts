@@ -13,6 +13,16 @@ export const providerOrderSchema = z
   })
   .strict();
 
+export const providerPaymentSchema = z
+  .object({
+    id: z.string().min(1),
+    orderId: z.string().min(1),
+    amountPaise: z.number().int().positive(),
+    currency: currencySchema,
+    status: z.enum(["created", "authorized", "captured", "failed"]),
+  })
+  .strict();
+
 export const createProviderOrderInputSchema = z
   .object({
     amountPaise: z.number().int().positive(),
@@ -135,6 +145,7 @@ export const paymentErrorSchema = z
   .strict();
 
 export type ProviderOrder = z.infer<typeof providerOrderSchema>;
+export type ProviderPayment = z.infer<typeof providerPaymentSchema>;
 export type CreateProviderOrderInput = z.infer<
   typeof createProviderOrderInputSchema
 >;
@@ -147,6 +158,7 @@ export interface PaymentProvider {
   readonly name: "fake" | "razorpay";
   readonly publicKeyId: string;
   createOrder: (input: CreateProviderOrderInput) => Promise<ProviderOrder>;
+  fetchPayment: (paymentId: string) => Promise<ProviderPayment>;
   verifyCheckoutSignature: (input: {
     orderId: string;
     paymentId: string;

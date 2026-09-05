@@ -83,6 +83,20 @@ const auditCopy: Record<string, string> = {
   payment_webhook_processed: "Verified payment evidence and updated the order.",
 };
 
+const auditTitle: Record<string, string> = {
+  cart_created: "Private cart opened",
+  cart_primary_line_set: "Selected shoe added",
+  addon_offered: "Optional add-on proposed",
+  addon_outcome_recorded: "Add-on choice saved",
+  cart_addon_line_added: "Consented add-on added",
+  cart_snapshot_created: "Exact total frozen",
+  cart_approved: "Approval bound to this cart",
+  checkout_policy_decided: "Safety policy evaluated",
+  checkout_authorized: "One checkout authorized",
+  provider_order_created: "Razorpay order created",
+  payment_webhook_processed: "Payment evidence verified",
+};
+
 const auditActor = (eventType: string): "policy" | "you" | "system" => {
   if (eventType.includes("policy") || eventType === "checkout_authorized")
     return "policy";
@@ -91,9 +105,32 @@ const auditActor = (eventType: string): "policy" | "you" | "system" => {
   return "system";
 };
 
+const auditDescription = (event: AuditEvent): string => {
+  const totalPaise = event.metadata.totalPaise;
+  if (
+    (event.eventType === "cart_snapshot_created" ||
+      event.eventType === "cart_approved") &&
+    typeof totalPaise === "number"
+  ) {
+    return event.eventType === "cart_snapshot_created"
+      ? `Locked every line and the ${money(totalPaise)} total for review.`
+      : `Your approval applies only to the locked ${money(totalPaise)} total.`;
+  }
+  const budgetPaise = event.metadata.budgetPaise;
+  if (event.eventType === "cart_created" && typeof budgetPaise === "number") {
+    return `Opened a private draft with a ${money(budgetPaise)} spending limit.`;
+  }
+  const reason = event.metadata.reason;
+  if (event.outcome === "rejected" && typeof reason === "string") {
+    return `Stopped before order creation: ${reason.replaceAll("_", " ")}.`;
+  }
+  return auditCopy[event.eventType] ?? event.eventType.replaceAll("_", " ");
+};
+
 export function ShopperJourney() {
   const [scenario, setScenario] = useState<DemoScenario>("happy");
   const [prompt, setPrompt] = useState("");
+  const [initialRequest, setInitialRequest] = useState("");
   const [response, setResponse] = useState<ShoppingResponse | null>(null);
   const [selected, setSelected] = useState<ShoppingRecommendation | null>(null);
   const [product, setProduct] = useState<CatalogueProduct | null>(null);
@@ -154,19 +191,39 @@ export function ShopperJourney() {
     }
   };
 
-  const startConversation = async () => {
+  const startConversation = async (
+    mode: "fresh" | "continue" = response === null ? "fresh" : "continue",
+  ) => {
     if (prompt.trim() === "") return;
+    const submittedPrompt = prompt.trim();
+    const startingFresh = mode === "fresh" || response === null;
     await perform(async () => {
       const next = await postJson(
         shoppingResponseSchema,
-        response?.kind === "question"
-          ? `/v1/conversations/${response.conversationId}/messages`
-          : "/v1/conversations",
-        { message: prompt },
+        startingFresh
+          ? "/v1/conversations"
+          : `/v1/conversations/${response.conversationId}/messages`,
+        { message: submittedPrompt },
       );
+      if (startingFresh) {
+        setInitialRequest(submittedPrompt);
+        setSelected(null);
+        setProduct(null);
+        setCart(null);
+        setSnapshot(null);
+        setApproval(null);
+        setPayment(null);
+      }
       setResponse(next);
       setPrompt("");
     });
+  };
+
+  const editOriginalRequest = () => {
+    setPrompt(initialRequest);
+    setResponse(null);
+    setError(null);
+    setStale(false);
   };
 
   const chooseProduct = async (recommendation: ShoppingRecommendation) => {
@@ -256,8 +313,13 @@ export function ShopperJourney() {
         "/v1/checkouts",
         { cartId: cart.id, approvalId: approval.id },
       );
-      if (authorization.attempt === null)
-        throw new Error("Policy did not authorize this checkout.");
+      if (authorization.attempt === null) {
+        throw new Error(
+          authorization.decision.reason === "budget_exceeded"
+            ? "This cart is over your stated budget, so no payment order was created. Remove the optional item or start again with a higher budget."
+            : "The safety policy did not authorize this checkout. No payment order was created.",
+        );
+      }
       const launch = await postJson(
         checkoutLaunchSchema,
         "/v1/payment-orders",
@@ -266,7 +328,9 @@ export function ShopperJourney() {
       setPayment(launch.payment);
       setCart({ ...cart, state: "checkout_started" });
       if (launch.payment.provider === "razorpay") {
-        window.location.assign(`/checkout/${authorization.attempt.id}`);
+        window.location.assign(
+          `/checkout/${authorization.attempt.id}?story=${scenario}`,
+        );
       }
     });
   };
@@ -334,6 +398,7 @@ export function ShopperJourney() {
 
   const reset = () => {
     setPrompt("");
+    setInitialRequest("");
     setResponse(null);
     setSelected(null);
     setProduct(null);
@@ -352,6 +417,9 @@ export function ShopperJourney() {
 
   const showRecommendations =
     !cancelled && response?.kind === "recommendations" && selected === null;
+  const showingColourAlternatives =
+    response?.kind === "recommendations" &&
+    response.notice?.startsWith("No exact ") === true;
   const showAddon =
     !cancelled && cart?.state === "draft" && cart.addonOffer?.outcome === null;
   const canReview =
@@ -360,7 +428,7 @@ export function ShopperJourney() {
   return (
     <main className="shop-shell">
       <header className="site-header">
-        <a className="brand" href="#top" aria-label="ShopPilot home">
+        <a className="brand" href="/" aria-label="ShopPilot home">
           ShopPilot
         </a>
         <div className="trust-chip">
@@ -394,29 +462,43 @@ export function ShopperJourney() {
               </p>
               <div className="preset-row" aria-label="Demo presets">
                 <button
+                  className={scenario === "happy" ? "selected" : undefined}
                   type="button"
+                  aria-pressed={scenario === "happy"}
                   onClick={() => {
                     setScenario("happy");
                     setPrompt("Running shoes under ₹4,000");
                   }}
                 >
-                  <span>01</span> Happy path
+                  <span>01</span>
+                  <div>
+                    <strong>Successful checkout</strong>
+                    <small>
+                      Prefill the search; choose Success in Razorpay
+                    </small>
+                  </div>
                 </button>
                 <button
+                  className={scenario === "recovery" ? "selected" : undefined}
                   type="button"
+                  aria-pressed={scenario === "recovery"}
                   onClick={() => {
                     setScenario("recovery");
                     setPrompt("Running shoes under ₹4,000");
                   }}
                 >
-                  <span>02</span> Decline & recover
+                  <span>02</span>
+                  <div>
+                    <strong>Failure & recovery</strong>
+                    <small>Same search; choose Failure at payment</small>
+                  </div>
                 </button>
               </div>
               <form
                 className="prompt-form"
                 onSubmit={(event) => {
                   event.preventDefault();
-                  void startConversation();
+                  void startConversation("continue");
                 }}
               >
                 <label htmlFor="shopping-prompt">
@@ -475,6 +557,13 @@ export function ShopperJourney() {
                 Size is required because it changes which variants are actually
                 available.
               </p>
+              <button
+                className="back-button"
+                type="button"
+                onClick={editOriginalRequest}
+              >
+                ← Edit original request
+              </button>
               <form
                 className="answer-form"
                 onSubmit={(event) => {
@@ -503,17 +592,54 @@ export function ShopperJourney() {
           ) : null}
 
           {!cancelled && response?.kind === "no_results" ? (
-            <section className="state-card centered-state">
+            <section className="state-card no-results-state">
               <span className="state-icon" aria-hidden="true">
                 0
               </span>
               <h1 ref={focusRef} tabIndex={-1}>
-                No valid matches yet
+                Nothing exact—yet.
               </h1>
-              <p>{response.notice}</p>
-              <button className="primary-button" type="button" onClick={reset}>
-                Revise the search
-              </button>
+              <p>
+                {response.message} Keep the details that matter and adjust just
+                one below—we’ll search the same live catalogue again.
+              </p>
+              <form
+                className="answer-form refinement-form"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void startConversation();
+                }}
+              >
+                <label htmlFor="no-result-refinement">Update this search</label>
+                <div>
+                  <input
+                    id="no-result-refinement"
+                    value={prompt}
+                    onChange={(event) => setPrompt(event.target.value)}
+                    placeholder="Try another colour or a higher budget"
+                    autoFocus
+                  />
+                  <button
+                    className="primary-button"
+                    disabled={busy || prompt.trim() === ""}
+                  >
+                    Update current search
+                  </button>
+                </div>
+              </form>
+              <div className="inline-actions">
+                <button
+                  className="text-button"
+                  type="button"
+                  disabled={busy || prompt.trim() === ""}
+                  onClick={() => void startConversation("fresh")}
+                >
+                  Use this text as a brand-new search
+                </button>
+                <button className="text-button" type="button" onClick={reset}>
+                  Clear everything
+                </button>
+              </div>
             </section>
           ) : null}
 
@@ -523,7 +649,13 @@ export function ShopperJourney() {
                 <div>
                   <p className="step-label">Grounded recommendations</p>
                   <h1 ref={focusRef} tabIndex={-1}>
-                    Three strong matches. No endless scroll.
+                    {showingColourAlternatives
+                      ? "No exact colour match. Here are close alternatives."
+                      : response.intent.colour !== undefined
+                        ? `Exact ${response.intent.colour} matches.`
+                        : response.recommendations.length === 3
+                          ? "Three options across your budget."
+                          : `${String(response.recommendations.length)} strong ${response.recommendations.length === 1 ? "match" : "matches"}.`}
                   </h1>
                 </div>
                 <p>
@@ -531,23 +663,52 @@ export function ShopperJourney() {
                     "Every option matches your required size, use and budget."}
                 </p>
               </div>
+              <div
+                className="active-filters"
+                aria-label="Active search filters"
+              >
+                <span>{response.intent.productType}</span>
+                <span>UK {response.intent.sizeUk}</span>
+                {response.intent.maxPricePaise === undefined ? null : (
+                  <span>Up to {money(response.intent.maxPricePaise)}</span>
+                )}
+                {response.intent.colour === undefined ? (
+                  <span>Any colour</span>
+                ) : (
+                  <span>{response.intent.colour}</span>
+                )}
+              </div>
               <div className="recommendation-grid">
                 {response.recommendations.map((item, index) => (
                   <article className="product-card" key={item.productId}>
-                    <div
-                      className={`shoe-art shoe-${String(index + 1)}`}
-                      aria-hidden="true"
-                    >
-                      <span />
+                    <div className="product-image-wrap">
+                      <img
+                        src={item.imageUrl}
+                        alt={`${item.name} product photo`}
+                      />
                     </div>
-                    <div className="rank">0{String(index + 1)}</div>
-                    <p className="product-type">
-                      {item.productType} · UK {item.variant.sizeUk}
+                    <div className="rank">
+                      {(["Value", "Mid-range", "Top range"] as const)[index]}
+                    </div>
+                    <p className="product-type product-meta">
+                      {item.productType} · {item.variant.colour} · UK{" "}
+                      {item.variant.sizeUk}
                     </p>
                     <h2>{item.name}</h2>
                     <strong className="price">
                       {money(item.variant.pricePaise)}
                     </strong>
+                    <div
+                      className="product-assurances"
+                      aria-label="Product assurances"
+                    >
+                      <span>
+                        {item.variant.stockQuantity <= 3
+                          ? `Only ${String(item.variant.stockQuantity)} left`
+                          : `${String(item.variant.stockQuantity)} in stock`}
+                      </span>
+                      <span>{item.returnPolicyDays}-day returns</span>
+                    </div>
                     <p>{item.fit}</p>
                     <small>{item.tradeoff}</small>
                     <ul>
@@ -565,8 +726,38 @@ export function ShopperJourney() {
                   </article>
                 ))}
               </div>
-              <button className="text-button" type="button" onClick={reset}>
-                Change my request
+              <form
+                className="answer-form refinement-form compact-refinement"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void startConversation("fresh");
+                }}
+              >
+                <label htmlFor="recommendation-refinement">
+                  Want something different?
+                </label>
+                <div>
+                  <input
+                    id="recommendation-refinement"
+                    value={prompt}
+                    onChange={(event) => setPrompt(event.target.value)}
+                    placeholder="e.g. make it black, budget ₹4,500"
+                  />
+                  <button
+                    className="secondary-button"
+                    disabled={busy || prompt.trim() === ""}
+                  >
+                    Search as new request
+                  </button>
+                </div>
+              </form>
+              <button
+                className="text-button refine-current-button"
+                type="button"
+                disabled={busy || prompt.trim() === ""}
+                onClick={() => void startConversation("continue")}
+              >
+                Or keep the active filters and change one detail
               </button>
             </section>
           ) : null}
@@ -587,8 +778,11 @@ export function ShopperJourney() {
                 ← Back to matches
               </button>
               <div className="detail-grid">
-                <div className="shoe-art detail-art" aria-hidden="true">
-                  <span />
+                <div className="detail-image-wrap">
+                  <img
+                    src={product.imageUrl}
+                    alt={`${product.name} product view`}
+                  />
                 </div>
                 <div>
                   <p className="step-label">Your selected match</p>
@@ -639,8 +833,11 @@ export function ShopperJourney() {
                 Useful together. Entirely your call.
               </h1>
               <div className="addon-card">
-                <div className="addon-art" aria-hidden="true">
-                  +
+                <div className="addon-image-wrap">
+                  <img
+                    src={cart.addonOffer.imageUrl}
+                    alt={`${cart.addonOffer.name} product photo`}
+                  />
                 </div>
                 <div>
                   <span>Compatible with your pair</span>
@@ -690,6 +887,11 @@ export function ShopperJourney() {
                   <strong>{cart.addonOffer.name}</strong>
                   <span>{money(cart.addonOffer.pricePaise)}</span>
                 </div>
+              ) : cart.addonOffer === null ? (
+                <p className="declined-note">
+                  No compatible add-on fits this cart and budget — checkout
+                  continues with your selected shoe only.
+                </p>
               ) : (
                 <p className="declined-note">
                   Optional add-on declined — checkout continues normally.
@@ -742,7 +944,7 @@ export function ShopperJourney() {
                 />
                 <span>
                   I approve this exact cart and total. I understand the next
-                  step creates one test-mode payment order.
+                  step creates one secure payment order.
                 </span>
               </label>
               <button
@@ -772,13 +974,41 @@ export function ShopperJourney() {
                 Your approval matches the frozen cart. Stock and price will be
                 checked again before a payment order is created.
               </p>
+              <div
+                className="money-boundary"
+                aria-label="Payment responsibilities"
+              >
+                <div>
+                  <span>ShopPilot agent</span>
+                  <strong>Prepares and submits</strong>
+                  <p>
+                    Selected the exact SKU, froze the total, checked policy, and
+                    will create one server-side Razorpay order.
+                  </p>
+                </div>
+                <div>
+                  <span>You</span>
+                  <strong>Authorize and authenticate</strong>
+                  <p>
+                    You approved the exact amount and complete the secure test
+                    authentication inside Razorpay.
+                  </p>
+                </div>
+              </div>
               <button
                 className="primary-button"
                 type="button"
                 onClick={() => void beginPayment()}
                 disabled={busy}
               >
-                Create one test payment order
+                Continue to secure payment
+              </button>
+              <button
+                className="text-button approval-audit-link"
+                type="button"
+                onClick={() => void openAudit()}
+              >
+                Review the complete safety trail
               </button>
             </section>
           ) : null}
@@ -952,7 +1182,7 @@ export function ShopperJourney() {
               <span>5</span>
               <div>
                 <strong>Pay</strong>
-                <small>Test mode</small>
+                <small>Razorpay checkout</small>
               </div>
             </li>
           </ol>
@@ -961,7 +1191,8 @@ export function ShopperJourney() {
             <p>
               <strong>The model proposes.</strong>
               <br />
-              Deterministic policy code authorizes every cart and money action.
+              Policy bounds the order. You approve the total. Razorpay handles
+              payment authentication.
             </p>
           </div>
           {(response !== null || selected !== null) &&
@@ -989,7 +1220,7 @@ export function ShopperJourney() {
             <div className="drawer-header">
               <div>
                 <p className="step-label">Human-readable audit</p>
-                <h2 id="audit-title">Who decided what</h2>
+                <h2 id="audit-title">Every decision, in order</h2>
               </div>
               <button
                 ref={auditCloseRef}
@@ -1003,21 +1234,29 @@ export function ShopperJourney() {
             <div className="audit-primer">
               <div>
                 <span className="actor agent">Agent</span>
-                <p>Proposes matches and explains trade-offs.</p>
+                <p>
+                  Suggests catalogue matches. It cannot edit the cart or spend.
+                </p>
               </div>
               <div>
                 <span className="actor policy">Policy</span>
-                <p>Validates catalogue facts and allows bounded actions.</p>
+                <p>Checks product IDs, stock, price, budget and approval.</p>
               </div>
               <div>
                 <span className="actor you">You</span>
-                <p>Select, consent, approve and pay.</p>
+                <p>Selects, consents and approves the exact frozen total.</p>
               </div>
             </div>
             <ol className="audit-list">
-              <li>
-                <span className="actor agent">Agent</span>
-                <div>
+              <li className="audit-event">
+                <span className="audit-step" aria-hidden="true">
+                  01
+                </span>
+                <div className="audit-event-card">
+                  <div className="audit-event-meta">
+                    <span className="actor agent">Agent</span>
+                    <span className="audit-outcome completed">Proposed</span>
+                  </div>
                   <strong>Proposed catalogue matches</strong>
                   <p>
                     {selected === null
@@ -1026,32 +1265,42 @@ export function ShopperJourney() {
                   </p>
                 </div>
               </li>
-              {audit.map((event) => (
-                <li key={event.id}>
-                  <span className={`actor ${auditActor(event.eventType)}`}>
-                    {auditActor(event.eventType) === "policy"
-                      ? "Policy"
-                      : auditActor(event.eventType) === "you"
-                        ? "You"
-                        : "System"}
-                  </span>
-                  <div>
-                    <strong>
-                      {event.outcome === "rejected" ? "Blocked" : "Recorded"}
-                    </strong>
-                    <p>
-                      {auditCopy[event.eventType] ??
-                        event.eventType.replaceAll("_", " ")}
-                    </p>
-                    <time>
-                      {new Date(event.createdAt).toLocaleTimeString("en-IN", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </time>
-                  </div>
-                </li>
-              ))}
+              {audit.map((event, index) => {
+                const actor = auditActor(event.eventType);
+                return (
+                  <li className="audit-event" key={event.id}>
+                    <span className="audit-step" aria-hidden="true">
+                      {String(index + 2).padStart(2, "0")}
+                    </span>
+                    <div className="audit-event-card">
+                      <div className="audit-event-meta">
+                        <span className={`actor ${actor}`}>
+                          {actor === "policy"
+                            ? "Policy"
+                            : actor === "you"
+                              ? "You"
+                              : "System"}
+                        </span>
+                        <span className={`audit-outcome ${event.outcome}`}>
+                          {event.outcome === "rejected"
+                            ? "Blocked"
+                            : "Complete"}
+                        </span>
+                      </div>
+                      <strong>
+                        {auditTitle[event.eventType] ?? "Action recorded"}
+                      </strong>
+                      <p>{auditDescription(event)}</p>
+                      <time>
+                        {new Date(event.createdAt).toLocaleTimeString("en-IN", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </time>
+                    </div>
+                  </li>
+                );
+              })}
             </ol>
             {audit.length === 0 ? (
               <p className="empty-audit">

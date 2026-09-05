@@ -159,14 +159,41 @@ Acceptance:
 
 ## Session 10 — submission and video readiness
 
-- [ ] Freeze a tagged release and record exact commit/hash used for the video.
-- [ ] Run the five-minute demo script without manual repair or hidden setup.
-- [ ] Capture final evaluation numbers and the failure-recovery evidence.
-- [ ] Complete public repository, architecture, pitch, and form-field checklists.
-- [ ] Verify all URLs from a signed-out/private browser where applicable.
+- [x] Freeze a tagged release and record exact commit/hash used for the video.
+- [x] Run the five-minute demo script without manual repair or hidden setup.
+- [x] Capture final evaluation numbers and the failure-recovery evidence.
+- [x] Complete public repository, architecture, pitch, and form-field checklists.
+- [x] Verify all URLs from a signed-out/private browser where applicable.
+- [x] Reconcile successful Standard Checkout callbacks directly with Razorpay
+  and route desktop/mobile shoppers to a verified receipt without requiring a
+  localhost webhook.
+- [x] Replace the unused OpenAI runtime configuration with a typed Claude
+  Messages adapter and Anthropic structured output.
+- [x] Harden Claude's structured responses against unsupported schema keywords,
+  unknown products, duplicate explanations, invented catalogue facts, and
+  first-request latency.
+- [x] Polish catalogue realism with public product photography, 48 shoe styles,
+  in-journey search refinement, and safe alternatives when an optional colour
+  has no exact match.
+- [x] Correct catalogue merchandising integrity: use one photographed colour
+  per style, return value/mid/top price coverage for broad requests, start clean
+  replacement searches, show accessory photography, and expose live catalogue
+  health on the merchant surface.
+- [x] Turn the merchant surface into an evidence-backed operating dashboard
+  with seven-day activity, funnel and category charts, growth insights,
+  best-seller/demand-gap states, and a complete 48-style performance table;
+  surface live stock and return windows on shopper catalogue cards.
+- [x] Clarify the human-gated payment boundary in the journey: distinguish the
+  success and recovery demo stories, carry the selected story into Razorpay
+  guidance, expose the audit trail before payment, and let shoppers return from
+  clarification to edit their original request.
+- [x] Harden the final commerce UX: constrain optional add-ons to the remaining
+  shopper budget, make cancelled/failed/expired Razorpay attempts recoverable,
+  restore reliable home navigation, and turn the safety drawer into an
+  amount-aware, actor-labelled decision timeline.
 
 Acceptance:
 
 - [ ] The video is five minutes or less and shows working software, not a code tour.
-- [ ] The repository builds from its public instructions and contains no secret.
+- [x] The repository builds from its public instructions and contains no secret.
 - [ ] The submission explicitly shows growth, agentic checkout, bounded/gated money actions, auditability, and graceful failure recovery.

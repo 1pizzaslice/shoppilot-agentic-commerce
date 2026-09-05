@@ -135,7 +135,7 @@ These are manual and excluded from normal CI:
 - Standard Checkout success and failure
 - Callback signature verification
 - Test webhook delivery and reconciliation
-- OpenAI model run with trace-sensitive data disabled
+- Claude model run with trace-sensitive data disabled
 
 Record the date, environment, and outcome in `docs/STATUS.md`. Never capture credentials, OTPs, or complete payment details.
 
