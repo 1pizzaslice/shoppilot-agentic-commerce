@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   approvalSchema,
@@ -22,6 +22,8 @@ import {
   type ShoppingResponse,
 } from "@shoppilot/domain";
 import { z } from "zod";
+
+import { AiBuyerTrace } from "./ai-buyer-trace";
 
 type DemoScenario = "happy" | "recovery";
 
@@ -144,11 +146,13 @@ export function ShopperJourney() {
   const [stale, setStale] = useState(false);
   const [declinedOnce, setDeclinedOnce] = useState(false);
   const [auditOpen, setAuditOpen] = useState(false);
+  const [buyerTraceOpen, setBuyerTraceOpen] = useState(false);
   const [audit, setAudit] = useState<readonly AuditEvent[]>([]);
   const [cancelled, setCancelled] = useState(false);
   const focusRef = useRef<HTMLHeadingElement>(null);
   const auditTriggerRef = useRef<HTMLButtonElement>(null);
   const auditCloseRef = useRef<HTMLButtonElement>(null);
+  const closeBuyerTrace = useCallback(() => setBuyerTraceOpen(false), []);
 
   useEffect(() => {
     if (
@@ -428,12 +432,25 @@ export function ShopperJourney() {
   return (
     <main className="shop-shell">
       <header className="site-header">
-        <a className="brand" href="/" aria-label="ShopPilot home">
-          ShopPilot
+        <a className="brand" href="/" aria-label="StepUp Footwear home">
+          <span className="brand-mark" aria-hidden="true">
+            S
+          </span>
+          <span className="brand-copy">
+            <strong>StepUp</strong>
+            <small>Footwear · powered by ShopPilot</small>
+          </span>
         </a>
         <div className="trust-chip">
           <span aria-hidden="true">●</span> Test mode · you approve every change
         </div>
+        <button
+          className="text-button trace-trigger"
+          type="button"
+          onClick={() => setBuyerTraceOpen(true)}
+        >
+          Contract trace
+        </button>
         <button
           ref={auditTriggerRef}
           className="text-button"
@@ -449,83 +466,139 @@ export function ShopperJourney() {
         <section className="journey-main" aria-busy={busy}>
           {response === null && !cancelled ? (
             <div className="hero-panel">
-              <p className="eyebrow">Your shortest route to the right pair</p>
-              <h1>
-                Tell us the need.
-                <br />
-                <em>Keep the control.</em>
-              </h1>
-              <p className="hero-copy">
-                ShopPilot asks only what changes the answer, checks every fact
-                against live catalogue data, and waits for your approval before
-                checkout.
-              </p>
-              <div className="preset-row" aria-label="Demo presets">
-                <button
-                  className={scenario === "happy" ? "selected" : undefined}
-                  type="button"
-                  aria-pressed={scenario === "happy"}
-                  onClick={() => {
-                    setScenario("happy");
-                    setPrompt("Running shoes under ₹4,000");
+              <div className="hero-content">
+                <p className="eyebrow">Footwear, fitted to real life</p>
+                <h1>
+                  Your next pair,
+                  <br />
+                  <em>without the endless scroll.</em>
+                </h1>
+                <p className="hero-copy">
+                  Tell ShopPilot where you’re going, your size and your budget.
+                  It searches StepUp’s live footwear collection and brings back
+                  up to three pairs that actually fit the brief.
+                </p>
+                <form
+                  className="prompt-form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void startConversation("continue");
                   }}
                 >
-                  <span>01</span>
+                  <label htmlFor="shopping-prompt">
+                    Describe your ideal pair
+                  </label>
                   <div>
-                    <strong>Successful checkout</strong>
-                    <small>
-                      Prefill the search; choose Success in Razorpay
-                    </small>
+                    <input
+                      id="shopping-prompt"
+                      value={prompt}
+                      onChange={(event) => setPrompt(event.target.value)}
+                      placeholder="Running shoes under ₹4,000"
+                      autoComplete="off"
+                    />
+                    <button
+                      className="primary-button"
+                      type="submit"
+                      disabled={busy || prompt.trim() === ""}
+                    >
+                      {busy ? "Finding…" : "Find my pair"}
+                    </button>
                   </div>
-                </button>
-                <button
-                  className={scenario === "recovery" ? "selected" : undefined}
-                  type="button"
-                  aria-pressed={scenario === "recovery"}
-                  onClick={() => {
-                    setScenario("recovery");
-                    setPrompt("Running shoes under ₹4,000");
-                  }}
-                >
-                  <span>02</span>
-                  <div>
-                    <strong>Failure & recovery</strong>
-                    <small>Same search; choose Failure at payment</small>
-                  </div>
-                </button>
-              </div>
-              <form
-                className="prompt-form"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  void startConversation("continue");
-                }}
-              >
-                <label htmlFor="shopping-prompt">
-                  What are you looking for?
-                </label>
-                <div>
-                  <input
-                    id="shopping-prompt"
-                    value={prompt}
-                    onChange={(event) => setPrompt(event.target.value)}
-                    placeholder="e.g. Running shoes under ₹4,000"
-                    autoComplete="off"
-                  />
-                  <button
-                    className="primary-button"
-                    type="submit"
-                    disabled={busy || prompt.trim() === ""}
-                  >
-                    {busy ? "Finding…" : "Find my pair"}
-                  </button>
+                </form>
+                <div className="quick-shop" aria-label="Shop by activity">
+                  <span>Popular:</span>
+                  {(
+                    [
+                      ["Running", "Running shoes under ₹4,000"],
+                      ["Walking", "Walking shoes under ₹5,000"],
+                      ["Everyday", "Casual shoes under ₹4,500"],
+                    ] as const
+                  ).map(([label, request]) => (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => setPrompt(request)}
+                    >
+                      {label}
+                    </button>
+                  ))}
                 </div>
-              </form>
-              <ul className="proof-row" aria-label="ShopPilot guarantees">
-                <li>Catalogue-grounded</li>
-                <li>One optional add-on</li>
-                <li>Exact-total approval</li>
-              </ul>
+                <ul className="proof-row" aria-label="ShopPilot guarantees">
+                  <li>Live stock and prices</li>
+                  <li>Only three best-fit choices</li>
+                  <li>You approve the exact total</li>
+                </ul>
+                <button
+                  className="machine-proof-button"
+                  type="button"
+                  onClick={() => setBuyerTraceOpen(true)}
+                >
+                  <span aria-hidden="true">↗</span>
+                  <span>
+                    <strong>Inspect this shopper journey’s contracts</strong>
+                    <small>Discovery, catalogue and checkout state</small>
+                  </span>
+                </button>
+                <a className="autonomous-buyer-link" href="/ai-buyer">
+                  <span aria-hidden="true">◎</span>
+                  <span>
+                    <strong>Run a separate autonomous AI buyer</strong>
+                    <small>One delegation · no product-selection clicks</small>
+                  </span>
+                </a>
+              </div>
+
+              <aside className="store-story" aria-label="StepUp store promise">
+                <p className="store-story-label">StepUp collection</p>
+                <div className="collection-display" aria-hidden="true">
+                  <span className="collection-number">01</span>
+                  <div className="shoe-orbit shoe-orbit-one" />
+                  <div className="shoe-orbit shoe-orbit-two" />
+                  <strong>MOVE</strong>
+                  <small>Running · Walking · Training · Trail · Casual</small>
+                </div>
+                <p>
+                  One focused footwear store. Every recommendation checked
+                  against the size, budget, colour and stock that matter to you.
+                </p>
+                <details className="demo-stories">
+                  <summary>Try a guided buildathon story</summary>
+                  <div className="preset-row" aria-label="Demo presets">
+                    <button
+                      className={scenario === "happy" ? "selected" : undefined}
+                      type="button"
+                      aria-pressed={scenario === "happy"}
+                      onClick={() => {
+                        setScenario("happy");
+                        setPrompt("Running shoes under ₹4,000");
+                      }}
+                    >
+                      <span>01</span>
+                      <div>
+                        <strong>Successful checkout</strong>
+                        <small>Prefill the guided purchase</small>
+                      </div>
+                    </button>
+                    <button
+                      className={
+                        scenario === "recovery" ? "selected" : undefined
+                      }
+                      type="button"
+                      aria-pressed={scenario === "recovery"}
+                      onClick={() => {
+                        setScenario("recovery");
+                        setPrompt("Running shoes under ₹4,000");
+                      }}
+                    >
+                      <span>02</span>
+                      <div>
+                        <strong>Failure & recovery</strong>
+                        <small>See a safe payment retry</small>
+                      </div>
+                    </button>
+                  </div>
+                </details>
+              </aside>
             </div>
           ) : null}
 
@@ -549,7 +622,7 @@ export function ShopperJourney() {
 
           {!cancelled && response?.kind === "question" ? (
             <section className="conversation-panel">
-              <p className="step-label">One detail needed</p>
+              <p className="step-label">Let’s get the fit right</p>
               <h1 ref={focusRef} tabIndex={-1}>
                 {response.message}
               </h1>
@@ -647,7 +720,9 @@ export function ShopperJourney() {
             <section className="recommendation-panel">
               <div className="section-heading">
                 <div>
-                  <p className="step-label">Grounded recommendations</p>
+                  <p className="step-label">
+                    Picked from the StepUp collection
+                  </p>
                   <h1 ref={focusRef} tabIndex={-1}>
                     {showingColourAlternatives
                       ? "No exact colour match. Here are close alternatives."
@@ -1128,13 +1203,13 @@ export function ShopperJourney() {
         </section>
 
         <aside className="control-rail" aria-label="Purchase progress">
-          <p>Safe purchase path</p>
+          <p>Your fitting journey</p>
           <ol>
             <li className={response !== null ? "done" : "active"}>
               <span>1</span>
               <div>
-                <strong>Describe</strong>
-                <small>Your need</small>
+                <strong>Tell us</strong>
+                <small>Need and budget</small>
               </div>
             </li>
             <li
@@ -1144,8 +1219,8 @@ export function ShopperJourney() {
             >
               <span>2</span>
               <div>
-                <strong>Choose</strong>
-                <small>Grounded match</small>
+                <strong>Find a pair</strong>
+                <small>Up to 3 matches</small>
               </div>
             </li>
             <li
@@ -1189,7 +1264,7 @@ export function ShopperJourney() {
           <div className="rail-note">
             <span aria-hidden="true">◇</span>
             <p>
-              <strong>The model proposes.</strong>
+              <strong>ShopPilot finds the pair.</strong>
               <br />
               Policy bounds the order. You approve the total. Razorpay handles
               payment authentication.
@@ -1309,6 +1384,17 @@ export function ShopperJourney() {
             ) : null}
           </aside>
         </div>
+      ) : null}
+      {buyerTraceOpen ? (
+        <AiBuyerTrace
+          response={response}
+          selected={selected}
+          cart={cart}
+          snapshot={snapshot}
+          approval={approval}
+          payment={payment}
+          onClose={closeBuyerTrace}
+        />
       ) : null}
     </main>
   );

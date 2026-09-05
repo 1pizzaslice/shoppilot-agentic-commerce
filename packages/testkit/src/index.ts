@@ -115,14 +115,55 @@ const parseSize = (
 };
 
 const parseColour = (message: string): string | undefined => {
-  const named = /\b(midnight blue|cloud grey|grey|gray|black|neutral)\b/i.exec(
-    message,
-  )?.[1];
-  if (named === undefined) return undefined;
-  return named
-    .toLowerCase()
-    .replaceAll("gray", "grey")
-    .replace(/\b\w/g, (character) => character.toUpperCase());
+  const named =
+    /\b(midnight blue|cloud gr(?:e|a)y|clean white|signal red|neon green|rose pink|electric orange|sun yellow|violet purple|cocoa brown|grey|gray|black|white|red|green|sandstone|beige|tan|blue|pink|orange|yellow|violet|purple|brown|neutral)\b/i
+      .exec(message)?.[1]
+      ?.toLowerCase();
+  switch (named) {
+    case "midnight blue":
+    case "blue":
+      return "Midnight Blue";
+    case "cloud grey":
+    case "cloud gray":
+    case "grey":
+    case "gray":
+      return "Cloud Grey";
+    case "black":
+      return "Black";
+    case "clean white":
+    case "white":
+      return "Clean White";
+    case "signal red":
+    case "red":
+      return "Signal Red";
+    case "neon green":
+    case "green":
+      return "Neon Green";
+    case "sandstone":
+    case "beige":
+    case "tan":
+      return "Sandstone";
+    case "rose pink":
+    case "pink":
+      return "Rose Pink";
+    case "electric orange":
+    case "orange":
+      return "Electric Orange";
+    case "sun yellow":
+    case "yellow":
+      return "Sun Yellow";
+    case "violet purple":
+    case "violet":
+    case "purple":
+      return "Violet Purple";
+    case "cocoa brown":
+    case "brown":
+      return "Cocoa Brown";
+    case "neutral":
+      return "Neutral";
+    default:
+      return undefined;
+  }
 };
 
 export const createFakeShoppingModel = (): ShoppingModel => ({

@@ -28,7 +28,7 @@ export default async function MerchantPage() {
   } catch {
     return (
       <main className="merchant-shell">
-        <p className="eyebrow">StepUp Shoes · merchant evidence</p>
+        <p className="eyebrow">StepUp Footwear · merchant studio</p>
         <h1 className="merchant-title">Growth view unavailable</h1>
         <p className="status">
           Start the ShopPilot API and reload. No estimate is shown when stored
@@ -104,7 +104,7 @@ export default async function MerchantPage() {
     <main className="merchant-shell">
       <header className="merchant-header">
         <div>
-          <p className="eyebrow">StepUp Shoes · merchant evidence</p>
+          <p className="eyebrow">StepUp Footwear · merchant studio</p>
           <h1 className="merchant-title">
             Growth without hidden cart changes.
           </h1>

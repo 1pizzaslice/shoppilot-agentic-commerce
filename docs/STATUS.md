@@ -4,19 +4,86 @@ Last updated: 2026-09-05
 
 ## Current position
 
-- Active session: Session 10 — submission and video readiness
+- Active session: Session 14 — autonomous machine-buyer execution
 - Overall state: the complete product flow and Razorpay test checkout are
-  implemented; live Claude inference and Razorpay test mode are configured.
-  Budget-safe add-ons, terminal checkout recovery, reliable return navigation,
-  and the redesigned audit timeline are verified. Final video capture, upload,
-  and form submission require submitter account actions
-- Current branch: `session/10-submission-video-readiness`
-- Release tag: `shoppilot-submission-v1` at
+  implemented. The shopper experience now presents StepUp as a focused footwear
+  store with ShopPilot as its embedded assistant, while retaining the guarded
+  agentic purchase flow, a separate autonomous machine client with durable
+  correlated evidence, and secondary guided demo stories. The v2 catalogue now
+  contains 95 footwear styles and 10 compatible add-ons. Final local
+  verification, video capture, upload, and form submission remain.
+- Current branch: `session/14-autonomous-buyer`
+- Previous release tag (before Session 11): `shoppilot-submission-v1` at
   `bd0e4f281bada2c44e1ec936adccafe576434e4d`
-- Session 9 merge: PR #11 at `fe97407`; follow-up status merge at `e44f057`
+- Session 10 merge: PR #13 at `5b5517b`
 
 ## Completed
 
+- Collapsed the autonomous route's two merchant-side payment actions into one
+  exact-total “Approve and pay securely” control. It now records approval, runs
+  deterministic policy, creates and audits one provider order, and opens the
+  returned Razorpay Standard Checkout configuration directly on the same page.
+  Razorpay authentication and server-side signed callback verification remain
+  unchanged.
+- Extracted the Razorpay script and modal adapter for reuse by the autonomous
+  route and the existing guided checkout launcher. Closing the modal records a
+  no-charge cancellation; successful evidence routes to the verified receipt.
+- Corrected the autonomous route's desktop composition after the global narrow
+  `main` rule constrained it to the left side. The route now fills the viewport,
+  keeps the buyer explanation on the left, and places delegation plus live API
+  execution in the available right side; mobile continues to stack naturally.
+- Added a separate `/ai-buyer` machine-client journey without changing the
+  guided shopper flow. One complete instruction, hard cap, optional add-on rule,
+  and visible preparation delegation now drive live discovery, grounded search,
+  exact-variant validation, versioned cart construction, add-on decision, and
+  immutable review without intermediate selection clicks.
+- Carried one caller-created correlation ID through every autonomous exchange,
+  validated each response with strict shared schemas, and read PostgreSQL-backed
+  append-only commerce evidence back before approval and after the single
+  provider order. The final read requires both the same correlation ID and a
+  durable `provider_order_created` event.
+- Preserved the exact frozen-total human approval and Razorpay authentication
+  boundaries. The checkout handoff identifies AI preparation without suggesting
+  that the buyer can enter payment credentials or bypass deterministic policy.
+- Reclassified the previous guided-state drawer as a contract explainer and
+  linked it to the separate real execution route, removing the earlier
+  overstatement that a projected UI trace proved autonomous buying.
+- Added a visible, read-only machine-contract trace that validates StepUp's
+  public discovery profile and follows the current shopper journey across
+  catalogue search, exact-variant consent, versioned cart preparation, frozen
+  approval, deterministic checkout policy, and one Razorpay test order.
+- Proxied discovery and OpenAPI through the same web origin, kept the trace
+  accessible throughout desktop and mobile shopping, and carried the
+  AI-buyer/policy/provider handoff onto the secure checkout page. The surface
+  discloses that the protocol is UCP-inspired rather than conformant, exposes no
+  secrets, and performs no cart or payment mutation.
+
+- Grounded explicit catalogue colour words deterministically after model
+  extraction. A request containing `red` now binds the search to red catalogue
+  variants even if the model omits or conflicts with that colour; the decision
+  is recorded in the append-only conversation audit.
+- Expanded the PostgreSQL seed to 95 footwear styles, evenly covering running,
+  walking, training, trail, and casual use across UK sizes 5–12. Six additional
+  exact-search colour families and a ₹1,799–₹8,549 price ladder improve result
+  coverage without increasing the three-choice UI limit.
+- Expanded checkout compatibility from four to 10 accessories. Each footwear
+  product still has exactly one deterministic compatible relation, offers are
+  budget-checked, and no add-on is inserted without consent.
+- Raised the merchant performance contract and query capacity to 200 products,
+  added fake-model aliases for all 12 catalogue colours, and added integration
+  coverage for counts, balance, colour availability, and add-on distribution.
+- Corrected the verified Razorpay receipt so totals, payment state, and order
+  reference render in high-contrast white on the dark green ticket.
+- Reframed the complete public UI around StepUp Footwear without changing the
+  commerce scope, catalogue authority, approval boundary, or test-mode payment
+  behavior. The landing page now leads with footwear discovery and activity
+  shortcuts; buildathon presets remain available in a secondary disclosure.
+- Rebuilt public product pages as responsive catalogue detail experiences with
+  canonical imagery, live variants, stock, prices, return policy, ShopPilot
+  handoff, product-specific social metadata, and the existing Schema.org data.
+- Carried the StepUp/ShopPilot brand relationship through checkout, receipts,
+  navigation, and merchant evidence. Added a bespoke, repository-owned social
+  preview card and host-derived root metadata.
 - Added `pnpm demo:rehearse`, a self-contained release rehearsal for the
   documented local PostgreSQL/Redis ports. Fresh desktop and mobile contexts
   exercise the live API and web app through declined-payment recovery, assert
@@ -110,6 +177,76 @@ Last updated: 2026-09-05
 
 Passed through 2026-09-05:
 
+- Session 14 final: the uninterrupted `pnpm quality` pipeline passed repository
+  hygiene (127 candidate files), formatting, lint, strict type checks, 46
+  unit/contract tests, 32 PostgreSQL/Redis integration tests, every production
+  build, the 50/50 evaluation (baseline 43/50), and all 22 desktop/mobile
+  Playwright journeys. The full browser suite includes the one-action autonomous
+  Razorpay launch, single provider-order assertion, durable audit readback,
+  signed callback receipt, and the unchanged guided success/recovery journeys.
+- Session 14 one-click payment follow-up: formatting, lint, and full strict type
+  checking passed. Four focused desktop/mobile Playwright runs passed for the
+  autonomous one-click checkout launch and the existing signed Razorpay
+  callback-to-receipt route. The autonomous test asserts one payment-order
+  request, 12 correlated exchanges, no intermediate navigation, and invocation
+  of the returned checkout configuration.
+- Session 14 responsive follow-up: full strict type checking and the focused
+  autonomous Playwright flow passed on desktop and mobile against the running
+  live-configured API. The regression verifies full viewport width, above-fold
+  desktop controls, one shared correlation ID, and one provider-order request;
+  the final one-click regression additionally verifies that the returned
+  Razorpay checkout opens without intermediate navigation.
+- Session 13 final: the uninterrupted `pnpm quality` pipeline passed repository
+  hygiene (123 files), formatting, lint, strict type checks, 46 unit/contract
+  tests, 32 PostgreSQL/Redis integration tests, every production build, the
+  50/50 evaluation (baseline 43/50), and all 20 desktop/mobile Playwright
+  journeys. The first full attempt stopped at README formatting before tests;
+  after the mechanical reflow, the clean complete rerun passed. Browser coverage
+  verifies initial live discovery, seven-stage progression from the same
+  purchase state, same-origin discovery/OpenAPI routes, and the Razorpay
+  handoff/callback path.
+- Session 13 focused verification: web strict type checking passed. Six focused
+  desktop/mobile Playwright runs passed for initial machine discovery, all
+  seven trace stages advancing on the real journey state, and the existing
+  signed Razorpay callback-to-receipt path with the new checkout handoff. The
+  in-app browser runtime had no connected browser instance, so this session's
+  rendered interaction evidence comes from Playwright.
+
+- Explicit-colour search follow-up: a live Claude request for red running shoes
+  in UK 8 returned only the Signal Red Enduro Run. The final complete
+  `pnpm quality` pipeline passed repository hygiene (122 files), formatting,
+  lint, strict type checks, 46 unit/contract tests, 32 PostgreSQL/Redis
+  integration tests, all production builds, the 50/50 evaluation (baseline
+  43/50), and all 18 desktop/mobile Playwright journeys. The first full run
+  correctly exposed the new audit event in a fixed-count assertion; the
+  assertion now verifies that event by name and the clean rerun passed.
+- Session 12 catalogue expansion: the complete `pnpm quality` pipeline passed
+  repository hygiene (122 files), formatting, lint, strict type checks, 45
+  unit/contract tests, 32 PostgreSQL/Redis integration tests, all production
+  builds, the 50/50 evaluation (baseline 43/50), and all 18 desktop/mobile
+  Playwright journeys. The integration setup reseeded catalogue v2 with 95
+  footwear styles and 10 accessories. A first full pass exposed one legacy
+  fake-model `Black` alias assumption; preserving that generic alias restored
+  the expected optional-colour fallback, and the focused seven-test regression
+  plus the final complete pipeline passed.
+- The post-pipeline live review setup loaded the ignored Anthropic and Razorpay
+  test configuration. API and web health both returned ready; the merchant
+  endpoint reported 95 styles, 10 accessories, 747 live variants, and 19
+  styles in each category. Live Claude searches returned grounded in-stock
+  Violet Purple trail and Cocoa Brown casual options in the requested UK sizes
+  and budgets. The review storefront is running at `http://127.0.0.1:3000`.
+- Receipt contrast follow-up: formatting and the focused web strict type check
+  passed; the running web and live-configured API health checks returned ready.
+- Session 11 storefront pass: the complete `pnpm quality` pipeline passed with
+  repository hygiene (122 files), formatting, lint, strict type checks, 44
+  unit/contract tests, 30 PostgreSQL/Redis integration tests, all production
+  builds, the 50/50 evaluation (baseline 43/50), and all 18 desktop/mobile
+  Playwright journeys. A first unconfigured browser attempt lacked the required
+  local database variables; the configured sandbox attempt could not bind
+  localhost. The permitted run then found the intentionally retained preview
+  server on port 3000; after stopping that exact process and updating the
+  renamed search labels, the focused four-run regression and final complete
+  pipeline passed.
 - `DATABASE_URL=postgresql://shoppilot:shoppilot_dev@localhost:5432/shoppilot REDIS_URL=redis://localhost:6380 corepack pnpm quality`
   — repository hygiene (118 files), formatting, lint, strict type checks, 41
   unit/contract tests, 27 PostgreSQL/Redis integration tests, all builds, 50/50
@@ -224,11 +361,8 @@ Passed through 2026-09-05:
 
 ## Exact next action
 
-Rerun the browser flow with live Claude and the configured Razorpay test
-credentials, including closing one Razorpay modal to confirm the recovery
-route. Then record from the updated session branch using `docs/SUBMISSION.md`,
-keep the final cut at five minutes or less, upload it with public/viewer access,
-verify the link signed out, fill the personal fields, and submit the form.
-Check the two remaining Session 10 acceptance boxes and merge only with
-explicit approval. Treat a mandate-backed unattended-payment path as a future
-scope decision requiring Razorpay account enablement, not as a UI-only mode.
+Run the page with the ignored live Claude and Razorpay test configuration and
+confirm that “Approve and pay securely” opens Razorpay directly after the 12
+correlated exchanges. Then record the autonomous route followed by Razorpay
+authentication. Use `docs/SUBMISSION.md`, keep the final cut at five minutes or
+less, and merge this stacked session chain only with explicit approval.

@@ -85,6 +85,7 @@ describe("PostgreSQL shopping conversation", () => {
       runs: string;
       events: string;
       toolEvents: string;
+      groundedColourEvents: string;
       correlations: string[];
     }>(
       `SELECT
@@ -92,6 +93,7 @@ describe("PostgreSQL shopping conversation", () => {
         (SELECT count(*) FROM agent_runs WHERE conversation_id = $1) AS runs,
         (SELECT count(*) FROM conversation_events WHERE conversation_id = $1) AS events,
         (SELECT count(*) FROM conversation_events WHERE conversation_id = $1 AND type = 'tool_call') AS "toolEvents",
+        (SELECT count(*) FROM conversation_events WHERE conversation_id = $1 AND name = 'explicit_colour_grounding') AS "groundedColourEvents",
         (SELECT array_agg(DISTINCT correlation_id ORDER BY correlation_id)
            FROM agent_runs WHERE conversation_id = $1) AS correlations`,
       [first.conversationId],
@@ -99,8 +101,9 @@ describe("PostgreSQL shopping conversation", () => {
     expect(counts.rows[0]).toEqual({
       messages: "4",
       runs: "2",
-      events: "6",
+      events: "7",
       toolEvents: "1",
+      groundedColourEvents: "1",
       correlations: ["conversation-request-1", "conversation-request-2"],
     });
   });

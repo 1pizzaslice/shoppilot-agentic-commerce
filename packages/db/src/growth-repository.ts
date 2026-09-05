@@ -341,7 +341,7 @@ export const createPostgresMerchantGrowthReader = (
          LEFT JOIN paid_sales USING (product_id)
          ORDER BY units_sold DESC, gross_value_paise DESC, cart_adds DESC,
                   stock_quantity ASC, name ASC
-         LIMIT 50`,
+         LIMIT 200`,
         [merchantId],
       ),
     ]);

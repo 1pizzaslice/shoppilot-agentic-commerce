@@ -10,51 +10,9 @@ import {
 } from "@shoppilot/domain";
 import type { z } from "zod";
 
-declare global {
-  interface Window {
-    Razorpay?: new (options: RazorpayOptions) => { open: () => void };
-  }
-}
-
-interface RazorpayOptions {
-  key: string;
-  amount: number;
-  currency: string;
-  name: string;
-  description: string;
-  order_id: string;
-  handler: (response: {
-    razorpay_order_id: string;
-    razorpay_payment_id: string;
-    razorpay_signature: string;
-  }) => void;
-  modal: { ondismiss: () => void };
-}
+import { openRazorpayCheckout } from "../razorpay-client";
 
 const apiBaseUrl = "";
-
-const loadCheckoutScript = (): Promise<void> =>
-  new Promise((resolve, reject) => {
-    if (window.Razorpay !== undefined) return resolve();
-    const existing = document.querySelector<HTMLScriptElement>(
-      'script[src="https://checkout.razorpay.com/v1/checkout.js"]',
-    );
-    if (existing !== null) {
-      existing.addEventListener("load", () => resolve(), { once: true });
-      existing.addEventListener(
-        "error",
-        () => reject(new Error("Checkout failed to load.")),
-        { once: true },
-      );
-      return;
-    }
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.async = true;
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error("Checkout failed to load."));
-    document.head.append(script);
-  });
 
 const requestJson = async <T,>(
   schema: z.ZodType<T>,
@@ -136,18 +94,9 @@ export function CheckoutLauncher({
         );
         return;
       }
-      await loadCheckoutScript();
-      const Razorpay = window.Razorpay;
-      if (Razorpay === undefined) throw new Error("Checkout failed to load.");
       const checkout = launch.checkout;
-      new Razorpay({
-        key: checkout.keyId,
-        amount: checkout.amountPaise,
-        currency: checkout.currency,
-        name: checkout.merchantName,
-        description: checkout.description,
-        order_id: checkout.orderId,
-        handler: (response) => {
+      await openRazorpayCheckout(checkout, {
+        onSuccess: (response) => {
           void requestJson<PaymentOrder>(
             paymentOrderSchema,
             "/v1/payments/callback",
@@ -182,24 +131,22 @@ export function CheckoutLauncher({
               );
             });
         },
-        modal: {
-          ondismiss: () => {
-            void requestJson<PaymentOrder>(
-              paymentOrderSchema,
-              "/v1/payments/cancel",
-              {
-                method: "POST",
-                headers: { "content-type": "application/json" },
-                body: JSON.stringify({ checkoutAttemptId }),
-              },
-            )
-              .then(setPayment)
-              .catch(() =>
-                setMessage("Checkout closed before payment was completed."),
-              );
-          },
+        onDismiss: () => {
+          void requestJson<PaymentOrder>(
+            paymentOrderSchema,
+            "/v1/payments/cancel",
+            {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({ checkoutAttemptId }),
+            },
+          )
+            .then(setPayment)
+            .catch(() =>
+              setMessage("Checkout closed before payment was completed."),
+            );
         },
-      }).open();
+      });
     } catch (error: unknown) {
       setMessage(error instanceof Error ? error.message : "Checkout failed.");
     } finally {
@@ -218,6 +165,7 @@ export function CheckoutLauncher({
       : payment?.state === "failed"
         ? "Payment was not completed."
         : "This approval has expired.";
+  const providerReference = payment?.providerOrderId;
 
   return (
     <section className="payment-card" aria-live="polite">
@@ -241,7 +189,7 @@ export function CheckoutLauncher({
         </h2>
         <p className="payment-message">
           {terminalState
-            ? "No payment was captured. This frozen attempt cannot be reused; return to ShopPilot to start a fresh, fully bounded order."
+            ? "No payment was captured. This frozen attempt cannot be reused; return to StepUp to start a fresh, fully bounded order."
             : message}
         </p>
       </div>
@@ -249,10 +197,41 @@ export function CheckoutLauncher({
         <span>Agent prepared one bounded order</span>
         <span>You complete secure authentication</span>
       </div>
+      <div
+        className="external-buyer-handoff"
+        role="region"
+        aria-label="AI buyer handoff"
+      >
+        <div>
+          <span className="trace-actor buyer">AI buyer</span>
+          <strong>Catalogue and cart prepared</strong>
+          <code>machine APIs → frozen snapshot</code>
+        </div>
+        <span aria-hidden="true">→</span>
+        <div>
+          <span className="trace-actor policy">Policy</span>
+          <strong>One checkout authorized</strong>
+          <code>approval + stock + price + budget</code>
+        </div>
+        <span aria-hidden="true">→</span>
+        <div>
+          <span className="trace-actor razorpay">Razorpay</span>
+          <strong>
+            {providerReference === null || providerReference === undefined
+              ? "Waiting for shopper"
+              : "Test order created"}
+          </strong>
+          <code>
+            {providerReference === null || providerReference === undefined
+              ? "POST /v1/payment-orders"
+              : providerReference}
+          </code>
+        </div>
+      </div>
       {terminalState ? (
         <div className="payment-actions">
           <a className="primary-button link-button" href="/">
-            Return to ShopPilot
+            Return to StepUp
           </a>
         </div>
       ) : !confirming ? (

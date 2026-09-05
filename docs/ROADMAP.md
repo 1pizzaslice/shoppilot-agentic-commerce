@@ -197,3 +197,134 @@ Acceptance:
 - [ ] The video is five minutes or less and shows working software, not a code tour.
 - [x] The repository builds from its public instructions and contains no secret.
 - [ ] The submission explicitly shows growth, agentic checkout, bounded/gated money actions, auditability, and graceful failure recovery.
+
+## Session 11 — footwear storefront identity
+
+Supporting product scope: [`docs/PRODUCT.md`](PRODUCT.md).
+
+- [x] Reframe the shopper surface as StepUp Footwear, powered by the ShopPilot
+  assistant, without changing the narrow commerce workflow.
+- [x] Replace the demo-first landing hierarchy with footwear-specific discovery,
+  activity shortcuts, and a secondary guided-story control.
+- [x] Carry the store identity through product detail, checkout, receipt, and
+  merchant surfaces while keeping Razorpay test mode explicit.
+- [x] Turn the machine-readable product route into a credible, responsive
+  catalogue detail page without changing canonical product data.
+- [x] Add store-specific page metadata and a bespoke social preview asset.
+- [x] Update browser coverage for the revised labels and guided-story disclosure.
+- [x] Correct verified-receipt value contrast on the dark summary ticket.
+
+Acceptance:
+
+- [x] A first-time viewer understands that StepUp is a footwear store and
+  ShopPilot is its shopping assistant before interacting.
+- [x] The main journey still exposes no more than three recommendations, one
+  consent-only add-on, exact-total approval, test payment, and the audit trail.
+- [x] Desktop and mobile browser journeys pass with the revised storefront.
+- [x] Formatting, lint, strict types, tests, integration tests, evaluation, and
+  production builds pass on the complete branch.
+
+## Session 12 — catalogue breadth and add-on variety
+
+This session branch depends on the unmerged Session 11 storefront commit; it
+must not be merged independently. Supporting product scope:
+[`docs/PRODUCT.md`](PRODUCT.md).
+
+- [x] Expand the repeatable catalogue from 48 to 95 footwear styles while
+  preserving the five bounded recommendation categories.
+- [x] Provide 19 styles per category, UK sizes 5–12, 12 photographed colour
+  families, and a ₹1,799–₹8,549 price ladder.
+- [x] Expand compatible accessories from four to 10 and distribute every one
+  across the new footwear relations.
+- [x] Keep the original 48 products, prices, and compatibility behavior stable
+  so existing demo and commerce evidence remains reproducible.
+- [x] Extend deterministic fake-model colour aliases and merchant performance
+  capacity for the larger catalogue.
+- [x] Add integration coverage for catalogue counts, category balance, exact
+  colour availability, and add-on distribution.
+
+Acceptance:
+
+- [x] Each footwear category contains 19 styles and remains fully considered by
+  the bounded catalogue query.
+- [x] Blue, pink, orange, yellow, purple, and brown exact-colour searches return
+  in-stock UK-size variants within the configured price ceiling.
+- [x] Every one of the 10 accessories is reachable through a deterministic
+  compatibility relation, while checkout still offers at most one.
+- [x] Explicit catalogue colour words are deterministically grounded from the
+  shopper's latest text before search, so a model omission or conflict cannot
+  silently substitute another colour.
+- [x] The complete quality pipeline passes and the expanded live catalogue is
+  reseeded for review.
+
+## Session 13 — visible machine-contract trace
+
+This session branch depends on the unmerged Session 11 and 12 commits plus the
+explicit-colour grounding fix; it must not be merged independently. Supporting
+product scope: [`docs/PRODUCT.md`](PRODUCT.md).
+
+- [x] Proxy the public discovery profile and OpenAPI document through the web
+  origin so a browser-visible machine client can read the same contracts.
+- [x] Add an always-reachable trace for discovery, grounded search,
+  exact-variant consent, versioned cart preparation, frozen approval, policy
+  authorization, and one Razorpay test order.
+- [x] Derive progress from the current typed shopper state and validate the live
+  discovery response instead of presenting a parallel scripted checkout.
+- [x] Carry a compact AI-buyer, policy, and provider handoff onto the secure
+  Razorpay checkout page.
+- [x] Keep the trace read-only, redact identifiers, disclose the UCP-inspired
+  subset accurately, and preserve every existing human-consent boundary.
+- [x] Add desktop and mobile browser coverage for initial discovery, complete
+  state progression, same-origin contracts, and the Razorpay handoff.
+
+Acceptance:
+
+- [x] A reviewer can open the trace before or during shopping and understand
+  how an external buyer reaches checkout without scraping the storefront.
+- [x] The seven stages advance only when the corresponding real shopper state
+  exists; the trace itself performs no commerce mutation.
+- [x] The checkout surface visibly separates AI preparation, deterministic
+  authorization, and shopper-authenticated Razorpay execution.
+- [x] The complete quality pipeline passes on the session branch.
+
+## Session 14 — autonomous machine-buyer execution
+
+This session branch depends on the unmerged Sessions 11–13 stack plus the
+explicit-colour grounding fix; it must not be merged independently. Supporting
+product scope: [`docs/PRODUCT.md`](PRODUCT.md).
+
+- [x] Keep the guided shopper journey and its read-only contract explainer
+  separate from a real autonomous machine-client route.
+- [x] Accept one complete instruction, hard spending cap, optional add-on rule,
+  and explicit preparation delegation before execution.
+- [x] Discover the merchant, search, choose and validate one exact variant,
+  construct the versioned cart, apply the add-on rule, and freeze review through
+  validated public HTTP responses without intermediate product-selection clicks.
+- [x] Carry one caller-created correlation ID through every exchange and read
+  PostgreSQL-backed append-only cart evidence back before approval and after
+  provider-order creation.
+- [x] Preserve one exact-total human approval, deterministic checkout policy,
+  one server-created Razorpay test order, and secure payment authentication.
+- [x] Distinguish the autonomous-buyer handoff on the secure checkout page and
+  add desktop/mobile browser coverage for the complete separate flow.
+- [x] Use the full desktop viewport for the autonomous route, placing delegation
+  and execution beside the buyer explanation while retaining the stacked mobile
+  layout.
+- [x] Collapse autonomous approval and checkout launch into one exact-total
+  action that creates the single order and opens Razorpay directly, without an
+  intermediate StepUp payment button.
+
+Acceptance:
+
+- [x] The visible exchanges are emitted only after schema-validated live HTTP
+  responses, not projected from pre-filled UI state.
+- [x] A complete instruction reaches an exact frozen cart with no intervening
+  human product or add-on choice.
+- [x] Server audit readback proves the same correlation ID and a durable single
+  provider-order event while the payment boundary remains human-controlled.
+- [x] Desktop controls begin above the fold instead of inheriting the global
+  narrow-page width, and a browser assertion guards the full-width layout.
+- [x] The autonomous exact-total approval opens the returned Razorpay Standard
+  Checkout configuration on the same page; authentication remains with the
+  shopper and callback evidence remains server-verified.
+- [x] The complete quality pipeline passes on the session branch.

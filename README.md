@@ -12,9 +12,11 @@ approved, and recorded.
 
 ## MVP promise
 
-- One fictional shoe merchant with a polished storefront and 30–50 realistic
-  products.
+- One fictional footwear merchant with a polished storefront, 95 styles, and 10
+  compatible care and comfort accessories.
 - Machine-readable discovery, catalogue search, and product lookup endpoints.
+- A visible external AI-buyer trace from discovery through the Razorpay test
+  order, projected from the same shopper journey and deterministic boundaries.
 - Product pages containing Schema.org `Product`/`Offer` JSON-LD.
 - Conversational shopping with minimal clarification.
 - Three ranked, explainable, catalogue-grounded choices.
@@ -105,7 +107,18 @@ external credentials. “Failure & recovery” deliberately fails the first paym
 attempt, then retries the same server-created order to demonstrate
 duplicate-safe recovery. Both presets use the same product request because the
 story changes only at payment. The safety trail identifies what the agent
-proposed, what deterministic policy allowed, and what the shopper approved.
+proposed, what deterministic policy allowed, and what the shopper approved. Open
+“Contract trace” at any stage to inspect the machine-readable contract behind
+the guided purchase. To demonstrate actual machine execution, open
+`http://localhost:3000/ai-buyer`: one up-front instruction and spending boundary
+drive merchant discovery, grounded selection, exact-SKU cart preparation, add-on
+policy, and immutable review without intermediate selection clicks. The page
+reads the PostgreSQL-backed audit trail under one correlation ID before the
+exact-total approval and again after creating the single test provider order.
+Its single “Approve and pay securely” action then opens Razorpay directly; the
+shopper still controls payment authentication and the server still verifies the
+signed callback. The guided journey retains its explicit secure-checkout
+handoff.
 
 After Compose is healthy and the database is migrated and seeded, run
 `pnpm demo:rehearse` for the release rehearsal. It drives the live API, web app,
@@ -115,11 +128,11 @@ one provider order, the audit explanation, merchant evidence, machine-readable
 discovery, and the 4:45 rehearsal ceiling.
 
 `pnpm db:seed` is repeatable and installs the `stepup-shoes` demonstration
-catalogue: 48 distinct shoe styles, four compatible accessories, colour-accurate
-public product photography, a ₹2,499–₹6,999 price range, and inventory across UK
-sizes 5–12. Each style has one photographed colour, so the UI never labels a red
-shoe as grey. It contains no real shopper or merchant data. Re-running migration
-and seed commands is safe.
+catalogue: 95 distinct footwear styles, 10 compatible accessories, 12
+colour-accurate families of public product photography, a ₹1,799–₹8,549 price
+range, and inventory across UK sizes 5–12. Each style has one photographed
+colour, so the UI never labels a red shoe as grey. It contains no real shopper
+or merchant data. Re-running migration and seed commands is safe.
 
 Catalogue photography is sourced from public Unsplash and Pexels photo pages.
 The insole image is © Ak12121234 under CC BY-SA 4.0, and the packaged bootlace
